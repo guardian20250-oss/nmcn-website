@@ -39,6 +39,9 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <Link href="/admin/login" className="btn-outline text-sm">
+            Staff Login
+          </Link>
           <Link
             href="/join"
             target="_blank"
@@ -70,6 +73,13 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/admin/login"
+              onClick={() => setMobileOpen(false)}
+              className="btn-outline mt-2 text-center text-sm"
+            >
+              Staff Login
+            </Link>
             <Link
               href="/join"
               onClick={() => setMobileOpen(false)}

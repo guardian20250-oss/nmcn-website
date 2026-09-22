@@ -49,6 +49,12 @@ export default function Footer() {
               >
                 Contact
               </Link>
+              <Link
+                href="/admin/login"
+                className="text-sm text-nmcn-muted transition hover:text-nmcn-blue"
+              >
+                Staff Login
+              </Link>
             </div>
           </div>
 
