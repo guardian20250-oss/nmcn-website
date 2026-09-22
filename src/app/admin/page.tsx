@@ -3,22 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, MessageSquare, LogOut, Loader2, Quote } from "lucide-react";
+import { Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon } from "lucide-react";
 
 interface Stats {
   totalApplications: number;
   pendingApplications: number;
-  approvedApplications: number;
   totalContacts: number;
   unreadContacts: number;
   totalTestimonials: number;
   pendingTestimonials: number;
+  role: string;
+  totalCreators: number;
+  totalCourses: number;
 }
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("");
+  const [role, setRole] = useState("");
   const router = useRouter();
 
   const fetchStats = async () => {
@@ -28,6 +31,7 @@ export default function AdminDashboard() {
         const data = await res.json();
         setStats(data.stats);
         setAdminName(data.adminName);
+        setRole(data.stats?.role || "");
       } else {
         router.push("/admin/login");
       }
@@ -49,6 +53,11 @@ export default function AdminDashboard() {
     router.push("/admin/login");
   };
 
+  const isAdmin = role === "admin";
+  const canViewApps = isAdmin;
+  const canViewContacts = isAdmin;
+  const canViewTestimonials = isAdmin;
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -63,7 +72,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-heading text-3xl font-bold text-white">Dashboard</h1>
-            <p className="text-nmcn-muted">Welcome back, {adminName}</p>
+            <p className="text-nmcn-muted capitalize">Welcome back, {adminName} — {role}</p>
           </div>
           <button onClick={handleLogout} className="btn-outline flex items-center gap-2 text-sm">
             <LogOut className="h-4 w-4" /> Logout
@@ -71,48 +80,120 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <div className="stat-card">
-            <div className="stat-num">{stats?.totalApplications || 0}</div>
-            <div className="stat-label">Total Applications</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-num">{stats?.pendingApplications || 0}</div>
-            <div className="stat-label">Pending Review</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-num">{stats?.totalContacts || 0}</div>
-            <div className="stat-label">Contact Messages</div>
-          </div>
+          {isAdmin && (
+            <>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalApplications || 0}</div>
+                <div className="stat-label">Total Applications</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.pendingApplications || 0}</div>
+                <div className="stat-label">Pending Review</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalContacts || 0}</div>
+                <div className="stat-label">Contact Messages</div>
+              </div>
+            </>
+          )}
+          {(role === "manager" || role === "team_lead" || role === "scout" || role === "battle_coordinator" || role === "creator") && (
+            <>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalCreators || 0}</div>
+                <div className="stat-label">Total Creators</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalCourses || 0}</div>
+                <div className="stat-label">Total Courses</div>
+              </div>
+              {role === "team_lead" && (
+                <div className="stat-card">
+                  <div className="stat-num">—</div>
+                  <div className="stat-label">Team Lead View</div>
+                </div>
+              )}
+              {role === "manager" && (
+                <div className="stat-card">
+                  <div className="stat-num">—</div>
+                  <div className="stat-label">Manager View</div>
+                </div>
+              )}
+              {role === "scout" && (
+                <div className="stat-card">
+                  <div className="stat-num">—</div>
+                  <div className="stat-label">Scout View</div>
+                </div>
+              )}
+              {role === "battle_coordinator" && (
+                <div className="stat-card">
+                  <div className="stat-num">—</div>
+                  <div className="stat-label">Battle Coordinator View</div>
+                </div>
+              )}
+              {role === "creator" && (
+                <div className="stat-card">
+                  <div className="stat-num">—</div>
+                  <div className="stat-label">Creator View</div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Link href="/admin/applications" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+          {canViewApps && (
+            <Link href="/admin/applications" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+                <UsersIcon className="h-6 w-6 text-nmcn-blue" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg font-semibold text-white">Join Applications</h3>
+                <p className="text-sm text-nmcn-muted">{stats?.pendingApplications || 0} pending review</p>
+              </div>
+            </Link>
+          )}
+
+          {canViewContacts && (
+            <Link href="/admin/contacts" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-gold/10">
+                <MessageSquare className="h-6 w-6 text-nmcn-gold" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg font-semibold text-white">Contact Messages</h3>
+                <p className="text-sm text-nmcn-muted">{stats?.unreadContacts || 0} unread</p>
+              </div>
+            </Link>
+          )}
+
+          {canViewTestimonials && (
+            <Link href="/admin/testimonials" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-blue/10">
+                <Quote className="h-6 w-6 text-nmcn-blue" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg font-semibold text-white">Testimonials</h3>
+                <p className="text-sm text-nmcn-muted">{stats?.pendingTestimonials || 0} pending review</p>
+              </div>
+            </Link>
+          )}
+
+          <Link href="/admin/creators" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
               <Users className="h-6 w-6 text-nmcn-blue" />
             </div>
             <div>
-              <h3 className="font-heading text-lg font-semibold text-white">Join Applications</h3>
-              <p className="text-sm text-nmcn-muted">{stats?.pendingApplications || 0} pending review</p>
+              <h3 className="font-heading text-lg font-semibold text-white">Creators</h3>
+              <p className="text-sm text-nmcn-muted">{stats?.totalCreators || 0} total</p>
             </div>
           </Link>
 
-          <Link href="/admin/contacts" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-gold/10">
-              <MessageSquare className="h-6 w-6 text-nmcn-gold" />
-            </div>
-            <div>
-              <h3 className="font-heading text-lg font-semibold text-white">Contact Messages</h3>
-              <p className="text-sm text-nmcn-muted">{stats?.unreadContacts || 0} unread</p>
-            </div>
-          </Link>
-
-          <Link href="/admin/testimonials" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+          <Link href="/academy" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
-              <Quote className="h-6 w-6 text-nmcn-blue" />
+              <BookOpen className="h-6 w-6 text-nmcn-blue" />
             </div>
             <div>
-              <h3 className="font-heading text-lg font-semibold text-white">Testimonials</h3>
-              <p className="text-sm text-nmcn-muted">{stats?.pendingTestimonials || 0} pending review</p>
+              <h3 className="font-heading text-lg font-semibold text-white">Academy</h3>
+              <p className="text-sm text-nmcn-muted">{stats?.totalCourses || 0} courses</p>
             </div>
           </Link>
         </div>

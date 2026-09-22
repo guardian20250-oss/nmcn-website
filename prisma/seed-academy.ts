@@ -29,6 +29,7 @@ type SeedCourse = {
   description: string;
   icon: string;
   order: number;
+  role: string;
   lessons: SeedLesson[];
 };
 
@@ -40,6 +41,7 @@ const courses: SeedCourse[] = [
       "Master the essentials of going live on TikTok — setup, engagement, battles mindset, and growth habits.",
     icon: "Video",
     order: 0,
+    role: "creator",
     lessons: [
       {
         title: "Before You Go LIVE",
@@ -378,6 +380,7 @@ const courses: SeedCourse[] = [
       "Learn how NMCN Battle Exchange works — matchmaking, coordination, scoring, and post-battle follow-up.",
     icon: "Swords",
     order: 1,
+    role: "creator",
     lessons: [
       {
         title: "What Is Battle Exchange",
@@ -683,6 +686,7 @@ const courses: SeedCourse[] = [
       "Use Discord to run community, coordinate battles, and support your creator brand safely.",
     icon: "MessagesSquare",
     order: 2,
+    role: "creator",
     lessons: [
       {
         title: "Why Discord Matters",
@@ -978,6 +982,732 @@ const courses: SeedCourse[] = [
       },
     ],
   },
+  {
+    title: "Team Lead Operations",
+    slug: "team-lead-ops",
+    description:
+      "Run day-to-day creator team operations — assignments, check-ins, and progress tracking for your creators.",
+    icon: "UserCog",
+    order: 3,
+    role: "team_lead",
+    lessons: [
+      {
+        title: "What a Team Lead Does",
+        slug: "what-a-team-lead-does",
+        summary: "Your role in the creator pipeline and daily operations.",
+        sections: [
+          { type: "heading", text: "Your lane" },
+          {
+            type: "paragraph",
+            text: "A team lead owns the day-to-day for a small group of creators — scheduling, feedback, and making sure each creator has what they need to perform.",
+          },
+          {
+            type: "list",
+            items: [
+              "Track each creator's streaming schedule and consistency",
+              "Collect quick daily or weekly check-ins from your group",
+              "Flag issues early — content gaps, burnout, engagement drops",
+              "Coordinate with managers when bigger decisions are needed",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Team leads translate strategy into routine. Consistency is your main lever.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the main job of a team lead?",
+            options: [
+              "Own day-to-day creator operations",
+              "Write company-wide policy",
+              "Handle every payroll issue",
+              "Replace all managers",
+            ],
+            correctIndex: 0,
+            explanation: "Team leads keep the daily routine running for their group.",
+          },
+          {
+            prompt: "Which signal should a team lead watch closely?",
+            options: [
+              "Creator streaming consistency",
+              "Only gift totals",
+              "Competitor follower counts",
+              "Platform engineering changes",
+            ],
+            correctIndex: 0,
+            explanation: "Consistency and engagement trends are early warning signals.",
+          },
+          {
+            prompt: "When should a team lead escalate to a manager?",
+            options: [
+              "When bigger decisions are needed",
+              "Never — leads do everything alone",
+              "Only when asked about lunch",
+              "Only after a complaint goes public",
+            ],
+            correctIndex: 0,
+            explanation: "Escalation is for decisions outside the lead's lane.",
+          },
+        ],
+      },
+      {
+        title: "Managing Creator Teams",
+        slug: "managing-creator-teams",
+        summary: "Feedback, motivation, and keeping your group aligned.",
+        sections: [
+          { type: "heading", text: "Lead people, not spreadsheets" },
+          {
+            type: "paragraph",
+            text: "Your creators are performers, not just metrics. Give specific feedback, celebrate progress, and keep goals realistic and visible.",
+          },
+          {
+            type: "list",
+            items: [
+              "Give feedback tied to specific streams or moments",
+              "Set one clear goal per creator per week",
+              "Notice burnout signs before they become drop-offs",
+              "Keep your group informed about agency priorities",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Creators who feel seen stay longer and perform better.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What makes feedback most useful?",
+            options: [
+              "Specific to a stream or moment",
+              "Vague praise only",
+              "Long essays no one reads",
+              "Only negative notes",
+            ],
+            correctIndex: 0,
+            explanation: "Specific feedback is actionable and fair.",
+          },
+          {
+            prompt: "How much should a team lead set per creator per week?",
+            options: [
+              "One clear goal",
+              "Fifty competing goals",
+              "No goals at all",
+              "Goals only for top creators",
+            ],
+            correctIndex: 0,
+            explanation: "One clear goal is easier to track and achieve.",
+          },
+          {
+            prompt: "What is an early burnout signal?",
+            options: [
+              "Sudden drop in stream consistency",
+              "Higher gift totals",
+              "More comments than usual",
+              "Every viewer leaving at once",
+            ],
+            correctIndex: 0,
+            explanation: "Consistency drops often show up before a full drop-off.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Managing Creator Teams",
+    slug: "managing-creator-teams",
+    description:
+      "Feedback, motivation, and keeping your group aligned.",
+    icon: "UserCog",
+    order: 4,
+    role: "team_lead",
+    lessons: [
+      {
+        title: "Creator Feedback Loops",
+        slug: "creator-feedback-loops",
+        summary: "How to give feedback that creators actually use.",
+        sections: [
+          { type: "heading", text: "Keep it short and specific" },
+          {
+            type: "paragraph",
+            text: "Long reviews get ignored. Pick one win, one issue, and one next step after each review cycle.",
+          },
+          {
+            type: "list",
+            items: [
+              "Lead with a concrete win from the last stream",
+              "Describe the issue as a behavior, not a personality trait",
+              "End with one next step the creator can repeat",
+              "Follow up on the same point next time",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Creators improve faster when feedback is short, specific, and repeated.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the best structure for feedback?",
+            options: [
+              "One win, one issue, one next step",
+              "A ten-page essay",
+              "Only praise no matter what",
+              "Only criticism no matter what",
+            ],
+            correctIndex: 0,
+            explanation: "Short structured feedback is easier to act on.",
+          },
+          {
+            prompt: "How should you describe an issue?",
+            options: [
+              "As a behavior, not a personality trait",
+              "As a personal attack",
+              "By guessing their motives",
+              "By comparing to unrelated creators",
+            ],
+            correctIndex: 0,
+            explanation: "Behavior-focused feedback is fair and fixable.",
+          },
+          {
+            prompt: "What makes feedback stick?",
+            options: [
+              "Following up on the same point next time",
+              "Saying it once and forgetting it",
+              "Only talking about other creators",
+              "Giving no examples at all",
+            ],
+            correctIndex: 0,
+            explanation: "Repeatable follow-up turns advice into a habit.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Agency Management Basics",
+    slug: "agency-management-basics",
+    description:
+      "Core management skills for running creator operations at Nexus Mafia.",
+    icon: "Briefcase",
+    order: 5,
+    role: "manager",
+    lessons: [
+      {
+        title: "Running Creator Operations",
+        slug: "running-creator-ops",
+        summary: "How managers keep the agency moving day to day.",
+        sections: [
+          { type: "heading", text: "Your responsibilities" },
+          {
+            type: "paragraph",
+            text: "Managers translate agency goals into action for team leads and creators — prioritizing work, removing blockers, and keeping standards consistent.",
+          },
+          {
+            type: "list",
+            items: [
+              "Set clear priorities for the week and month",
+              "Make sure team leads have the info they need",
+              "Remove blockers before they stall a creator",
+              "Keep standards consistent across teams",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Good managers make the work easier for the people doing it.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is a manager's main job in creator ops?",
+            options: [
+              "Translate goals into action and remove blockers",
+              "Micromanage every stream",
+              "Avoid all decisions",
+              "Only attend meetings",
+            ],
+            correctIndex: 0,
+            explanation: "Managers clear the path for the team.",
+          },
+          {
+            prompt: "What should a manager do when a creator stalls?",
+            options: [
+              "Remove blockers early",
+              "Wait until the creator quits",
+              "Publicly shame the creator",
+              "Ignore it and hope for the best",
+            ],
+            correctIndex: 0,
+            explanation: "Early blocker removal keeps momentum alive.",
+          },
+          {
+            prompt: "What keeps standards consistent?",
+            options: [
+              "Clear priorities across teams",
+              "Every team inventing its own rules",
+              "No written expectations",
+              "Only verbal instructions",
+            ],
+            correctIndex: 0,
+            explanation: "Clear shared priorities keep teams aligned.",
+          },
+        ],
+      },
+      {
+        title: "Staff & Creator Oversight",
+        slug: "staff-creator-oversight",
+        summary: "Supporting both your staff and your creators.",
+        sections: [
+          { type: "heading", text: "Two levels of leadership" },
+          {
+            type: "paragraph",
+            text: "Managers support team leads and scouts, and team leads support creators. When either layer is overloaded, quality drops.",
+          },
+          {
+            type: "list",
+            items: [
+              "Check in with team leads before checking on creators",
+              "Notice when staff are overloaded",
+              "Balance creator demands with staff capacity",
+              "Keep communication short, direct, and documented",
+            ],
+          },
+          {
+            type: "callout",
+            text: "A healthy agency protects both the creators and the people managing them.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "Who do managers support directly?",
+            options: [
+              "Team leads and scouts",
+              "Only their own stream",
+              "No one",
+              "Only the founder",
+            ],
+            correctIndex: 0,
+            explanation: "Managers work through team leads and scouts.",
+          },
+          {
+            prompt: "What happens when a layer is overloaded?",
+            options: [
+              "Quality drops",
+              "Quality automatically improves",
+              "Nothing changes",
+              "Only the top performers suffer",
+            ],
+            correctIndex: 0,
+            explanation: "Overloaded layers create bottlenecks and mistakes.",
+          },
+          {
+            prompt: "What is a good communication habit for managers?",
+            options: [
+              "Short, direct, and documented",
+              "Long vague messages",
+              "Only in-person shouting",
+              "Never documenting anything",
+            ],
+            correctIndex: 0,
+            explanation: "Clear documented communication reduces confusion.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Creator Discovery & Scouting",
+    slug: "creator-discovery-scouting",
+    description:
+      "How scouts find, evaluate, and bring promising creators into the agency.",
+    icon: "Search",
+    order: 6,
+    role: "scout",
+    lessons: [
+      {
+        title: "How to Spot Talent",
+        slug: "how-to-spot-talent",
+        summary: "What to look for when evaluating a creator before outreach.",
+        sections: [
+          { type: "heading", text: "Look beyond follower count" },
+          {
+            type: "paragraph",
+            text: "A big follower count is not enough. Look for engagement, personality, consistency, and the kind of audience the creator has built.",
+          },
+          {
+            type: "list",
+            items: [
+              "Watch several recent streams, not just one viral clip",
+              "Notice how the creator talks with chat",
+              "Check consistency of schedule and energy",
+              "Think about fit with the agency's brand and goals",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Good scouts evaluate the whole creator, not just one number.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What matters most when scouting a creator?",
+            options: [
+              "Engagement and consistency across streams",
+              "Only one viral clip",
+              "Only follower count",
+              "The creator's profile photo",
+            ],
+            correctIndex: 0,
+            explanation: "Multiple signals give a fuller picture.",
+          },
+          {
+            prompt: "What should a scout watch before outreach?",
+            options: [
+              "Several recent streams",
+              "Only a single clip",
+              "Nothing, just send a message",
+              "Only comments from one viewer",
+            ],
+            correctIndex: 0,
+            explanation: "Recent patterns matter more than one moment.",
+          },
+          {
+            prompt: "What is a good fit check for the agency?",
+            options: [
+              "Brand and goal alignment",
+              "Only whether the creator is famous",
+              "Only the creator's font choice",
+              "Only the camera used",
+            ],
+            correctIndex: 0,
+            explanation: "Fit with the agency determines long-term success.",
+          },
+        ],
+      },
+      {
+        title: "Evaluating Potential Creators",
+        slug: "evaluating-potential-creators",
+        summary: "A simple framework for ranking and recommending creators.",
+        sections: [
+          { type: "heading", text: "Score what you can measure" },
+          {
+            type: "paragraph",
+            text: "Use a simple set of criteria so scouts make comparable recommendations instead of random impressions.",
+          },
+          {
+            type: "list",
+            items: [
+              "Content quality and personality",
+              "Engagement rate and chat activity",
+              "Streaming consistency and reliability",
+              "Growth trend over the last few weeks",
+            ],
+          },
+          {
+            type: "callout",
+            text: "A simple scoring framework beats gut feeling when you compare creators.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "Why use a scoring framework?",
+            options: [
+              "To compare creators consistently",
+              "To slow down every decision",
+              "To avoid all outreach",
+              "To make every creator identical",
+            ],
+            correctIndex: 0,
+            explanation: "A framework makes comparisons fairer and clearer.",
+          },
+          {
+            prompt: "Which factor belongs in a creator evaluation?",
+            options: [
+              "Engagement rate",
+              "Favorite color",
+              "Stream title font",
+              "Personal relationships only",
+            ],
+            correctIndex: 0,
+            explanation: "Engagement is a core creator performance signal.",
+          },
+          {
+            prompt: "What trend should scouts track?",
+            options: [
+              "Growth over recent weeks",
+              "Last year's drama",
+              "Only one old stream",
+              "Only the creator's age",
+            ],
+            correctIndex: 0,
+            explanation: "Recent growth trends are more relevant than old data.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Scouting Outreach & Tracking",
+    slug: "scouting-outreach-tracking",
+    description:
+      "How to reach out, follow up, and keep clean records on creator prospects.",
+    icon: "Mail",
+    order: 7,
+    role: "scout",
+    lessons: [
+      {
+        title: "Reaching Out to Creators",
+        slug: "reaching-out-to-creators",
+        summary: "First contact that feels personal and respectful.",
+        sections: [
+          { type: "heading", text: "Personalize the first message" },
+          {
+            type: "paragraph",
+            text: "Creators get a lot of copy-paste messages. Lead with something specific from their content, keep it short, and make the next step easy.",
+          },
+          {
+            type: "list",
+            items: [
+              "Mention a recent stream or moment you liked",
+              "Keep the message short and specific",
+              "Say what the agency offers without overselling",
+              "Give an easy next step, like a reply or call time",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Personal outreach gets replies. Generic outreach gets ignored.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What makes outreach more effective?",
+            options: [
+              "A specific recent moment you liked",
+              "The same message for everyone",
+              "Only legalese and disclaimers",
+              "A very long intro paragraph",
+            ],
+            correctIndex: 0,
+            explanation: "Specificity shows you actually watched the creator.",
+          },
+          {
+            prompt: "What should an outreach message include?",
+            options: [
+              "A clear next step",
+              "Nothing but a link",
+              "Only demands",
+              "Only praise with no ask",
+            ],
+            correctIndex: 0,
+            explanation: "A clear next step makes reply easy.",
+          },
+          {
+            prompt: "What should you avoid in outreach?",
+            options: [
+              "Overselling the agency too hard",
+              "Being short and specific",
+              "Watching the creator first",
+              "Sending a follow-up",
+            ],
+            correctIndex: 0,
+            explanation: "Too much pressure pushes creators away.",
+          },
+        ],
+      },
+      {
+        title: "Tracking Scout Pipeline",
+        slug: "tracking-scout-pipeline",
+        summary: "Keep every prospect organized so nothing falls through the cracks.",
+        sections: [
+          { type: "heading", text: "Run a clean pipeline" },
+          {
+            type: "paragraph",
+            text: "Track every creator you discover, what stage they are in, and when to follow up. A pipeline you can trust beats memory.",
+          },
+          {
+            type: "list",
+            items: [
+              "Log every prospect with a source and date",
+              "Move each creator through clear stages",
+              "Set a follow-up date for every open lead",
+              "Review your pipeline before every reporting cycle",
+            ],
+          },
+          {
+            type: "callout",
+            text: "If it is not tracked, it is probably forgotten.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What should every prospect record include?",
+            options: [
+              "Source and date",
+              "Only the creator's name",
+              "Only your opinion",
+              "Only the creator's follower count",
+            ],
+            correctIndex: 0,
+            explanation: "Source and date help you track how prospects come in.",
+          },
+          {
+            prompt: "What keeps a pipeline reliable?",
+            options: [
+              "Clear stages and follow-up dates",
+              "Memory alone",
+              "Only a single note",
+              "No stages at all",
+            ],
+            correctIndex: 0,
+            explanation: "Stages and dates make the pipeline actionable.",
+          },
+          {
+            prompt: "When should you review your pipeline?",
+            options: [
+              "Before every reporting cycle",
+              "Never",
+              "Only when something goes viral",
+              "Only when someone complains",
+            ],
+            correctIndex: 0,
+            explanation: "Regular review keeps the pipeline current.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Battle Coordination Fundamentals",
+    slug: "battle-coordination-fundamentals",
+    description:
+      "How battle coordinators set up, communicate, and close out LIVE battles.",
+    icon: "Swords",
+    order: 8,
+    role: "battle_coordinator",
+    lessons: [
+      {
+        title: "What a Battle Coordinator Owns",
+        slug: "what-a-battle-coordinator-owns",
+        summary: "The coordination steps behind every clean battle.",
+        sections: [
+          { type: "heading", text: "Your role in a battle" },
+          {
+            type: "paragraph",
+            text: "Battle coordinators make sure both sides agree on timing, format, and expectations before the LIVE starts, and that the result is recorded cleanly afterward.",
+          },
+          {
+            type: "list",
+            items: [
+              "Confirm both creators and their teams ahead of time",
+              "Agree on format, timing, and any stakes upfront",
+              "Keep communication clear and documented",
+              "Close the loop with a clean post-battle record",
+            ],
+          },
+          {
+            type: "callout",
+            text: "A good coordinator makes the battle easy to run and hard to dispute.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What does a battle coordinator own?",
+            options: [
+              "Pre-battle setup and post-battle closure",
+              "Only the stream title",
+              "Only one creator's chat",
+              "Only the gift totals",
+            ],
+            correctIndex: 0,
+            explanation: "Coordinators own the full battle flow.",
+          },
+          {
+            prompt: "What must be agreed before a battle?",
+            options: [
+              "Timing, format, and expectations",
+              "Nothing at all",
+              "Only the loser's payout",
+              "Personal details of fans",
+            ],
+            correctIndex: 0,
+            explanation: "Clear pre-agreement prevents disputes.",
+          },
+          {
+            prompt: "What happens after a battle?",
+            options: [
+              "Record the result cleanly",
+              "Delete everything immediately",
+              "Argue in public",
+              "Ignore both sides",
+            ],
+            correctIndex: 0,
+            explanation: "Clean closure builds trust for future battles.",
+          },
+        ],
+      },
+      {
+        title: "Running Cross-Agency Events",
+        slug: "running-cross-agency-events",
+        summary: "Coordinate multi-agency battles without chaos.",
+        sections: [
+          { type: "heading", text: "Work across teams cleanly" },
+          {
+            type: "paragraph",
+            text: "Cross-agency battles add complexity because two teams have to align. Make the shared parts explicit and keep each agency's internal prep separate but informed.",
+          },
+          {
+            type: "list",
+            items: [
+              "Confirm the shared agreement in writing",
+              "Keep each agency's internal prep clear",
+              "Share only the info both sides need",
+              "Use one main point of contact per side",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Cross-agency events run better when every side knows exactly what is shared and what is internal.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the hardest part of cross-agency battles?",
+            options: [
+              "Getting two teams aligned",
+              "Choosing a camera",
+              "Picking a username",
+              "Deciding the weather",
+            ],
+            correctIndex: 0,
+            explanation: "Alignment across teams is the main challenge.",
+          },
+          {
+            prompt: "What should be confirmed in writing?",
+            options: [
+              "The shared agreement",
+              "Only the snacks",
+              "Only the font choice",
+              "Only the wifi password",
+            ],
+            correctIndex: 0,
+            explanation: "Written agreements prevent later disputes.",
+          },
+          {
+            prompt: "How many main contacts should each side have?",
+            options: [
+              "One main point of contact",
+              "Too many to count",
+              "No contacts at all",
+              "Only random viewers",
+            ],
+            correctIndex: 0,
+            explanation: "One contact per side keeps communication clean.",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 async function main() {
@@ -991,6 +1721,7 @@ async function main() {
         order: courseData.order,
         status: "published",
         passingScore: 70,
+        role: courseData.role,
       },
       create: {
         title: courseData.title,
@@ -1000,6 +1731,7 @@ async function main() {
         order: courseData.order,
         status: "published",
         passingScore: 70,
+        role: courseData.role,
       },
     });
 

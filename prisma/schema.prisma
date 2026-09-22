@@ -14,8 +14,8 @@ model Admin {
   name      String   @default("Admin")
   role      String   @default("admin")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  creators  Creator[]
+  updatedAt   DateTime   @default(now()) @updatedAt
+  creators    Creator[]
 }
 
 model Creator {
@@ -30,7 +30,7 @@ model Creator {
   certificates Certificate[]
   quizAttempts QuizAttempt[]
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model Course {
@@ -42,10 +42,11 @@ model Course {
   passingScore Int       @default(70)
   order        Int       @default(0)
   status       String    @default("draft")
+  role          String    @default("creator")
   lessons      Lesson[]
   certificates Certificate[]
   createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  updatedAt    DateTime  @default(now()) @updatedAt
 }
 
 model Lesson {
@@ -62,7 +63,7 @@ model Lesson {
   progress  CreatorProgress[]
   attempts  QuizAttempt[]
   createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  updatedAt DateTime     @default(now()) @updatedAt
 
   @@unique([courseId, slug])
 }
@@ -78,7 +79,7 @@ model Question {
   explanation String? @db.Text
   order       Int     @default(0)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model CreatorProgress {
@@ -92,7 +93,7 @@ model CreatorProgress {
   attempts    Int     @default(0)
   completedAt DateTime?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 
   @@unique([creatorId, lessonId])
 }
@@ -107,6 +108,7 @@ model QuizAttempt {
   passed     Boolean
   answers    Json     @default("[]")
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
 }
 
 model Certificate {
@@ -119,7 +121,7 @@ model Certificate {
   course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   completedAt  DateTime @default(now())
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @default(now()) @updatedAt
 }
 
 model JoinApplication {
@@ -133,7 +135,7 @@ model JoinApplication {
   status           String   @default("pending")
   notes            String?
   createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  updatedAt        DateTime @default(now()) @updatedAt
 }
 
 model Testimonial {
@@ -144,7 +146,7 @@ model Testimonial {
   rating    Int      @default(5)
   status    String   @default("pending")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model ContactMessage {

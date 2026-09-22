@@ -17,7 +17,7 @@ export interface CreatorPayload {
   name: string;
 }
 
-const VALID_ROLES = ["admin", "manager", "editor"] as const;
+const VALID_ROLES = ["admin", "manager", "team_lead", "scout", "battle_coordinator"] as const;
 type StaffRole = (typeof VALID_ROLES)[number];
 
 export async function verifyAdmin(email: string, password: string) {
@@ -80,7 +80,7 @@ export function isStaffRole(role: unknown): role is StaffRole {
 }
 
 export function canManageCourses(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "admin" || role === "manager" || role === "team_lead";
 }
 
 export function canManageStaff(role: StaffRole): boolean {
@@ -88,9 +88,13 @@ export function canManageStaff(role: StaffRole): boolean {
 }
 
 export function canViewCreatorDashboard(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "admin" || role === "manager" || role === "team_lead";
 }
 
 export function canCreateAcademyAccount(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "admin" || role === "manager" || role === "team_lead" || role === "scout";
+}
+
+export function canManageBattleExchange(role: StaffRole): boolean {
+  return role === "admin" || role === "manager" || role === "battle_coordinator";
 }
