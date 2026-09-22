@@ -63,6 +63,27 @@ export function joinApplicationEmail(data: {
   };
 }
 
+export function testimonialEmail(data: {
+  name: string;
+  role: string;
+  quote: string;
+  rating: number;
+}) {
+  return {
+    to: "nmcn@nexusmafiaagency.com",
+    subject: `New Testimonial Submission - ${data.name}`,
+    html: `
+      <h2>New Testimonial Submission</h2>
+      <p><strong>Name:</strong> ${data.name}</p>
+      <p><strong>Role:</strong> ${data.role || "Not provided"}</p>
+      <p><strong>Rating:</strong> ${data.rating}/5</p>
+      <hr />
+      <p>${data.quote.replace(/\n/g, "<br />")}</p>
+      <p><em>Awaiting approval in the admin dashboard.</em></p>
+    `,
+  };
+}
+
 export function contactMessageEmail(data: {
   name: string;
   email: string;

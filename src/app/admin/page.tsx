@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, MessageSquare, LogOut, Loader2 } from "lucide-react";
+import { Users, MessageSquare, LogOut, Loader2, Quote } from "lucide-react";
 
 interface Stats {
   totalApplications: number;
@@ -11,6 +11,8 @@ interface Stats {
   approvedApplications: number;
   totalContacts: number;
   unreadContacts: number;
+  totalTestimonials: number;
+  pendingTestimonials: number;
 }
 
 export default function AdminDashboard() {
@@ -18,10 +20,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("");
   const router = useRouter();
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   const fetchStats = async () => {
     try {
@@ -39,6 +37,12 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogout = () => {
     document.cookie = "admin-token=; path=/; max-age=0";
@@ -99,6 +103,16 @@ export default function AdminDashboard() {
             <div>
               <h3 className="font-heading text-lg font-semibold text-white">Contact Messages</h3>
               <p className="text-sm text-nmcn-muted">{stats?.unreadContacts || 0} unread</p>
+            </div>
+          </Link>
+
+          <Link href="/admin/testimonials" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+              <Quote className="h-6 w-6 text-nmcn-blue" />
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-white">Testimonials</h3>
+              <p className="text-sm text-nmcn-muted">{stats?.pendingTestimonials || 0} pending review</p>
             </div>
           </Link>
         </div>

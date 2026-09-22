@@ -1,4 +1,5 @@
 import Link from "next/link";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import {
   Swords,
   Users,
@@ -7,7 +8,6 @@ import {
   Trophy,
   Globe,
   ChevronRight,
-  Star,
 } from "lucide-react";
 
 const features = [
@@ -38,27 +38,6 @@ const stats = [
   { num: "12", label: "Partner Agencies" },
   { num: "500+", label: "Battles Completed" },
   { num: "2", label: "Countries" },
-];
-
-const testimonials = [
-  {
-    name: "Creator",
-    role: "TikTok LIVE Creator",
-    quote:
-      "NMCN changed my LIVE game completely. The battle exchange gives me opportunities I never had before.",
-  },
-  {
-    name: "Agency Partner",
-    role: "Agency Manager",
-    quote:
-      "Working with NMCN has expanded our reach. The platform makes cross-agency battles seamless.",
-  },
-  {
-    name: "Creator",
-    role: "TikTok LIVE Creator",
-    quote:
-      "The training and support here is unmatched. They actually care about your growth as a creator.",
-  },
 ];
 
 export default function HomePage() {
@@ -190,37 +169,7 @@ export default function HomePage() {
       <div className="section-divider mx-auto max-w-5xl" />
 
       {/* Testimonials */}
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-7xl">
-          <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
-            Testimonials
-          </span>
-          <h2 className="mb-12 font-heading text-3xl font-bold text-white md:text-4xl">
-            Hear From Our <span className="gold-text">Creators</span>
-          </h2>
-          <div className="grid gap-6 md:grid-cols-3">
-            {testimonials.map((t, i) => (
-              <div key={i} className="card p-6">
-                <div className="mb-4 flex gap-1">
-                  {[...Array(5)].map((_, j) => (
-                    <Star
-                      key={j}
-                      className="h-4 w-4 fill-nmcn-gold text-nmcn-gold"
-                    />
-                  ))}
-                </div>
-                <p className="mb-4 text-sm text-nmcn-muted">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div>
-                  <p className="text-sm font-semibold text-white">{t.name}</p>
-                  <p className="text-xs text-nmcn-muted">{t.role}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TestimonialsSection />
 
       <div className="section-divider mx-auto max-w-5xl" />
 
