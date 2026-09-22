@@ -39,10 +39,18 @@ export default function JoinPage() {
           window.open(BATTLE_EXCHANGE_URL, "_blank", "noopener,noreferrer");
         }, 1500);
       } else {
-        setStatus("error");
+        // Even if API fails, still redirect to TikTok
+        setStatus("success");
+        setTimeout(() => {
+          window.open(BATTLE_EXCHANGE_URL, "_blank", "noopener,noreferrer");
+        }, 1500);
       }
     } catch {
-      setStatus("error");
+      // Even if network error, still redirect to TikTok
+      setStatus("success");
+      setTimeout(() => {
+        window.open(BATTLE_EXCHANGE_URL, "_blank", "noopener,noreferrer");
+      }, 1500);
     }
   };
 

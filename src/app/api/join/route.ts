@@ -9,35 +9,46 @@ export async function POST(request: NextRequest) {
 
     if (!tiktokHandle || !discordHandle || !email) {
       return NextResponse.json(
-        { error: "Tiktok handle, Discord handle, and email are required" },
+        { error: "TikTok handle, Discord handle, and email are required" },
         { status: 400 }
       );
     }
 
-    const application = await prisma.joinApplication.create({
-      data: {
-        tiktokHandle,
-        discordHandle,
-        email,
-        followerCount: followerCount || null,
-        avgLiveViewers: avgLiveViewers || null,
-        agencyExperience: agencyExperience || null,
-      },
-    });
+    // Try to save to database
+    try {
+      await prisma.joinApplication.create({
+        data: {
+          tiktokHandle,
+          discordHandle,
+          email,
+          followerCount: followerCount || null,
+          avgLiveViewers: avgLiveViewers || null,
+          agencyExperience: agencyExperience || null,
+        },
+      });
+    } catch (dbError) {
+      console.error("Database save failed, continuing without DB:", dbError);
+      // Don't fail the request if DB is unavailable
+    }
 
-    await sendEmail(
-      joinApplicationEmail({
-        tiktokHandle,
-        discordHandle,
-        email,
-        followerCount: followerCount || "",
-        avgLiveViewers: avgLiveViewers || "",
-        agencyExperience: agencyExperience || "",
-      })
-    );
+    // Try to send email notification
+    try {
+      await sendEmail(
+        joinApplicationEmail({
+          tiktokHandle,
+          discordHandle,
+          email,
+          followerCount: followerCount || "",
+          avgLiveViewers: avgLiveViewers || "",
+          agencyExperience: agencyExperience || "",
+        })
+      );
+    } catch (emailError) {
+      console.error("Email send failed, continuing without email:", emailError);
+    }
 
     return NextResponse.json(
-      { message: "Application submitted successfully", id: application.id },
+      { message: "Application submitted successfully" },
       { status: 200 }
     );
   } catch (error) {

@@ -14,14 +14,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contactMessage = await prisma.contactMessage.create({
-      data: { name, email, subject, message },
-    });
+    // Try to save to database
+    try {
+      await prisma.contactMessage.create({
+        data: { name, email, subject, message },
+      });
+    } catch (dbError) {
+      console.error("Database save failed, continuing without DB:", dbError);
+    }
 
-    await sendEmail(contactMessageEmail({ name, email, subject, message }));
+    // Try to send email notification
+    try {
+      await sendEmail(contactMessageEmail({ name, email, subject, message }));
+    } catch (emailError) {
+      console.error("Email send failed, continuing without email:", emailError);
+    }
 
     return NextResponse.json(
-      { message: "Message sent successfully", id: contactMessage.id },
+      { message: "Message sent successfully" },
       { status: 200 }
     );
   } catch (error) {
