@@ -40,7 +40,7 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <Link
-            href="https://www.tiktok.com/t/ZTkotVJB5/"
+            href="/join"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-gold text-sm"

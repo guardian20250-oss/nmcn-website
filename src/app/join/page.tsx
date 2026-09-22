@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Send, CheckCircle, Loader2 } from "lucide-react";
 
-const BATTLE_EXCHANGE_URL = "https://www.tiktok.com/t/ZTkotVJB5/";
+const BATTLE_EXCHANGE_URL = "https://nmcnbattleexchange.com";
 
 export default function JoinPage() {
   const [form, setForm] = useState({

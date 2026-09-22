@@ -54,7 +54,7 @@ export default function BattleExchangePage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
-              href="https://www.tiktok.com/t/ZTkotVJB5/"
+              href="https://nmcnbattleexchange.com"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-gold flex items-center gap-2 px-8 py-3 text-base"
@@ -142,7 +142,7 @@ export default function BattleExchangePage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
-              href="https://www.tiktok.com/t/ZTkotVJB5/"
+              href="https://nmcnbattleexchange.com"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-gold flex items-center gap-2 px-8 py-3 text-base"
