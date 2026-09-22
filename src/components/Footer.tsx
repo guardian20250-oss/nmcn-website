@@ -38,6 +38,12 @@ export default function Footer() {
                 Battle Exchange
               </Link>
               <Link
+                href="/academy"
+                className="text-sm text-nmcn-muted transition hover:text-nmcn-blue"
+              >
+                Academy
+              </Link>
+              <Link
                 href="/join"
                 className="text-sm text-nmcn-muted transition hover:text-nmcn-blue"
               >

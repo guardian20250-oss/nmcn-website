@@ -61,6 +61,9 @@ export default function HomePage() {
             creators and agencies across the US &amp; Canada.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/academy" className="btn-outline px-8 py-3 text-base">
+              Creator Academy
+            </Link>
             <Link href="/join" className="btn-gold px-8 py-3 text-base">
               Join NMCN
             </Link>

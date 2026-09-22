@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/battle-exchange", label: "Battle Exchange" },
+  { href: "/academy", label: "Academy" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -39,6 +40,9 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <Link href="/academy" className="btn-outline text-sm">
+            Academy
+          </Link>
           <Link href="/admin/login" className="btn-outline text-sm">
             Staff Login
           </Link>
@@ -74,12 +78,19 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
-              href="/admin/login"
-              onClick={() => setMobileOpen(false)}
-              className="btn-outline mt-2 text-center text-sm"
-            >
-              Staff Login
-            </Link>
+                href="/academy"
+                onClick={() => setMobileOpen(false)}
+                className="btn-outline mt-2 text-center text-sm"
+              >
+                Academy
+              </Link>
+              <Link
+                href="/admin/login"
+                onClick={() => setMobileOpen(false)}
+                className="btn-outline mt-2 text-center text-sm"
+              >
+                Staff Login
+              </Link>
             <Link
               href="/join"
               onClick={() => setMobileOpen(false)}
