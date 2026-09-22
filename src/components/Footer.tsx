@@ -64,7 +64,7 @@ export default function Footer() {
             </h4>
             <div className="flex flex-col gap-2 text-sm text-nmcn-muted">
               <span>423-561-3080</span>
-              <span>nmcn@nexusmafiaagency.com</span>
+              <span>nexusmafiacreatornetworkllc@outlook.com</span>
               <span>US &amp; Canada</span>
             </div>
             <div className="mt-4 flex gap-3">

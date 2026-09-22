@@ -47,7 +47,7 @@ export function joinApplicationEmail(data: {
   agencyExperience: string;
 }) {
   return {
-    to: "nmcn@nexusmafiaagency.com",
+    to: process.env.CONTACT_EMAIL || "nexusmafiacreatornetworkllc@outlook.com",
     subject: `New Join Application - ${data.tiktokHandle}`,
     html: `
       <h2>New Join Application</h2>
@@ -70,7 +70,7 @@ export function testimonialEmail(data: {
   rating: number;
 }) {
   return {
-    to: "nmcn@nexusmafiaagency.com",
+    to: process.env.CONTACT_EMAIL || "nexusmafiacreatornetworkllc@outlook.com",
     subject: `New Testimonial Submission - ${data.name}`,
     html: `
       <h2>New Testimonial Submission</h2>
@@ -91,7 +91,7 @@ export function contactMessageEmail(data: {
   message: string;
 }) {
   return {
-    to: "nmcn@nexusmafiaagency.com",
+    to: process.env.CONTACT_EMAIL || "nexusmafiacreatornetworkllc@outlook.com",
     subject: `New Contact Message - ${data.subject}`,
     html: `
       <h2>New Contact Message</h2>

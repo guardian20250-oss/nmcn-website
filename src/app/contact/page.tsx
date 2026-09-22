@@ -67,7 +67,7 @@ export default function ContactPage() {
                 <Mail className="mb-3 h-6 w-6 text-nmcn-blue" />
                 <h3 className="mb-1 text-sm font-semibold text-white">Email</h3>
                 <p className="text-sm text-nmcn-muted">
-                  nmcn@nexusmafiaagency.com
+                  nexusmafiacreatornetworkllc@outlook.com
                 </p>
               </div>
               <div className="card p-6">

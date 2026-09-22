@@ -1,0 +1,78 @@
+npm warn Unknown project config "enable-pre-post-scripts". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm notice run nmcn-website@0.1.0 dev
+npm notice run next dev
+⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+▲ Next.js 16.3.5 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://172.23.192.1:3001
+- Environments: .env
+✓ Ready in 1383ms
+⚠ Warning: Next.js ignored package-lock.json in C:\Users\Administrator because it is outside the current Git repository (C:\Users\Administrator\OneDrive\Documents\projects\nmcn-website).
+ To use this directory, set `turbopack.root` in your Next.js config.
+
+✓ Running next.config.ts took 312ms
+
+○ Compiling /academy ...
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... course={{...}} Icon={{$$typeof: ..., render: ...}}>
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... course={{...}} Icon={{$$typeof: ..., render: ...}}>
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... course={{...}} Icon={{$$typeof: ..., render: ...}}>
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Video}
+                          ^^^^^^^^^^^^^^
+    at ignore-listed frames {
+  digest: '2633011267'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Swords}
+                          ^^^^^^^^^^^^^^^
+    at ignore-listed frames {
+  digest: '3895974307'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function MessagesSquare}
+                          ^^^^^^^^^^^^^^^^^^^^^^^
+    at ignore-listed frames {
+  digest: '2547751619'
+}
+ GET /academy 500 in 6.8s (next.js: 5.7s, application-code: 1012ms)
+ GET /api/academy/courses 200 in 786ms (next.js: 656ms, application-code: 130ms)
+ GET /academy/tiktok-live 200 in 4.3s (next.js: 4.0s, application-code: 345ms)
+ GET /admin/courses 200 in 514ms (next.js: 415ms, application-code: 99ms)
+ GET /admin/certificates 200 in 487ms (next.js: 392ms, application-code: 96ms)
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... course={{...}} Icon={{$$typeof: ..., render: ...}}>
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... course={{...}} Icon={{$$typeof: ..., render: ...}}>
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... course={{...}} Icon={{$$typeof: ..., render: ...}}>
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Video}
+                          ^^^^^^^^^^^^^^
+    at ignore-listed frames {
+  digest: '2633011267'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function Swords}
+                          ^^^^^^^^^^^^^^^
+    at ignore-listed frames {
+  digest: '3895974307'
+}
+⨯ Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.
+  {$$typeof: ..., render: function MessagesSquare}
+                          ^^^^^^^^^^^^^^^^^^^^^^^
+    at ignore-listed frames {
+  digest: '2547751619'
+}
+ GET /academy 500 in 342ms (next.js: 105ms, application-code: 237ms)
+ GET /academy 200 in 426ms (next.js: 172ms, application-code: 254ms)
+ GET /api/academy/lessons/1 200 in 2.4s (next.js: 2.4s, application-code: 46ms)
+ POST /api/academy/quiz 200 in 513ms (next.js: 453ms, application-code: 59ms)

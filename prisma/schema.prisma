@@ -12,7 +12,114 @@ model Admin {
   email     String   @unique
   password  String
   name      String   @default("Admin")
+  role      String   @default("admin")
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  creators  Creator[]
+}
+
+model Creator {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  password     String
+  name         String
+  tiktokHandle String?  @db.VarChar(100)
+  createdById Int?
+  createdBy   Admin?   @relation(fields: [createdById], references: [id])
+  progress     CreatorProgress[]
+  certificates Certificate[]
+  quizAttempts QuizAttempt[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Course {
+  id           Int       @id @default(autoincrement())
+  title        String
+  slug         String    @unique
+  description  String    @default("")
+  icon         String    @default("GraduationCap")
+  passingScore Int       @default(70)
+  order        Int       @default(0)
+  status       String    @default("draft")
+  lessons      Lesson[]
+  certificates Certificate[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Lesson {
+  id       Int           @id @default(autoincrement())
+  courseId Int
+  course   Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title    String
+  slug     String
+  summary  String?       @db.Text
+  sections Json          @default("[]")
+  order    Int           @default(0)
+  status   String        @default("draft")
+  questions Question[]
+  progress  CreatorProgress[]
+  attempts  QuizAttempt[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([courseId, slug])
+}
+
+model Question {
+  id          Int     @id @default(autoincrement())
+  lessonId    Int
+  lesson      Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  prompt      String
+  type        String  @default("multiple_choice")
+  options     Json    @default("[]")
+  correctIndex Int
+  explanation String? @db.Text
+  order       Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CreatorProgress {
+  id          Int   @id @default(autoincrement())
+  creatorId   Int
+  creator     Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  lessonId    Int
+  lesson      Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  bestScore   Int     @default(0)
+  passed      Boolean @default(false)
+  attempts    Int     @default(0)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([creatorId, lessonId])
+}
+
+model QuizAttempt {
+  id         Int      @id @default(autoincrement())
+  creatorId  Int?
+  creator    Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  lessonId   Int
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  score      Int
+  passed     Boolean
+  answers    Json     @default("[]")
+  createdAt  DateTime @default(now())
+}
+
+model Certificate {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique
+  learnerName  String
+  creatorId    Int?
+  creator      Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  courseId     Int
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  completedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model JoinApplication {
