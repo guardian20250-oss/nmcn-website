@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Send, CheckCircle, Loader2 } from "lucide-react";
 
-const BATTLE_EXCHANGE_URL = "https://nmcnbattleexchange.com";
+const TIKTOK_APPLICATION_URL = "https://www.tiktok.com/t/ZTkotVJB5/";
 
 export default function JoinPage() {
   const [form, setForm] = useState({
@@ -36,20 +36,20 @@ export default function JoinPage() {
       if (res.ok) {
         setStatus("success");
         setTimeout(() => {
-          window.open(BATTLE_EXCHANGE_URL, "_blank", "noopener,noreferrer");
+          window.open(TIKTOK_APPLICATION_URL, "_blank", "noopener,noreferrer");
         }, 1500);
       } else {
         // Even if API fails, still redirect to TikTok
         setStatus("success");
         setTimeout(() => {
-          window.open(BATTLE_EXCHANGE_URL, "_blank", "noopener,noreferrer");
+          window.open(TIKTOK_APPLICATION_URL, "_blank", "noopener,noreferrer");
         }, 1500);
       }
     } catch {
       // Even if network error, still redirect to TikTok
       setStatus("success");
       setTimeout(() => {
-        window.open(BATTLE_EXCHANGE_URL, "_blank", "noopener,noreferrer");
+        window.open(TIKTOK_APPLICATION_URL, "_blank", "noopener,noreferrer");
       }, 1500);
     }
   };
