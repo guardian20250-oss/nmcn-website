@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getCreatorAccountByToken, getCoursesForRole } from "@/lib/auth";
 import CourseCard from "@/components/academy/CourseCard";
+import AcademyLogoutButton from "@/components/academy/AcademyLogoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -120,12 +121,19 @@ export default async function AcademyPage() {
                 Your account is pending approval. Please wait for an admin to assign
                 your role and activate your account.
               </p>
+              <div className="mt-4">
+                <AcademyLogoutButton />
+              </div>
             </div>
           )}
 
           {isLoggedIn && !isPending && (
-            <div className="mt-4 text-sm text-nmcn-muted">
-              Signed in — showing courses for <span className="text-nmcn-blue">{roleLabel}</span>
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <div className="text-sm text-nmcn-muted">
+                Signed in — showing courses for{" "}
+                <span className="text-nmcn-blue">{roleLabel}</span>
+              </div>
+              <AcademyLogoutButton />
             </div>
           )}
         </div>

@@ -352,7 +352,7 @@ export function canDeleteTickets(role: StaffRole): boolean {
 }
 
 export function canViewCreatorDashboard(role: StaffRole): boolean {
-  return role === "admin" || role === "manager" || role === "team_lead";
+  return isStaffRole(role);
 }
 
 export function canCreateAcademyAccount(role: StaffRole): boolean {

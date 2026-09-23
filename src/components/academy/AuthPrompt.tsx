@@ -89,7 +89,7 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
     await fetch("/api/academy/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "logout" }),
+      body: JSON.stringify({ mode: "logout" }),
     });
     window.location.reload();
   };

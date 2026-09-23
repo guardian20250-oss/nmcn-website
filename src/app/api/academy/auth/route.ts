@@ -13,6 +13,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { mode, name, email, password, tiktokHandle } = body;
 
+    if (mode === "logout" || body.action === "logout") {
+      const response = NextResponse.json({ ok: true });
+      response.cookies.set("creator-token", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 0,
+        path: "/",
+      });
+      return response;
+    }
+
     if (mode === "changePassword") {
       const account = await getCreatorAccountFromRequest(request);
       if (!account) {

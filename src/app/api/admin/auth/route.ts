@@ -5,6 +5,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    if (body.action === "logout") {
+      const response = NextResponse.json({ ok: true });
+      response.cookies.set("admin-token", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 0,
+        path: "/",
+      });
+      return response;
+    }
+
     if (body.action === "changePassword") {
       const staff = await getStaffFromRequest(request);
       if (!staff) {

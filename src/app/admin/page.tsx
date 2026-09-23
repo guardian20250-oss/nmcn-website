@@ -58,8 +58,16 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogout = () => {
-    document.cookie = "admin-token=; path=/; max-age=0";
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout" }),
+      });
+    } catch {
+      // still redirect
+    }
     router.push("/admin/login");
   };
 
@@ -68,6 +76,13 @@ export default function AdminDashboard() {
   const canViewApps = isAdmin;
   const canViewContacts = isAdmin;
   const canViewTestimonials = isAdmin;
+  const canViewCreators =
+    isAdmin ||
+    role === "manager" ||
+    role === "team_lead" ||
+    role === "scout" ||
+    role === "battle_coordinator" ||
+    role === "creator";
 
   if (loading) {
     return (
@@ -112,6 +127,24 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-nmcn-gold/30 bg-nmcn-gold/10 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+              <Users className="h-5 w-5 text-nmcn-blue" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Creators</p>
+              <p className="text-xs text-nmcn-muted">
+                {stats?.totalCreators || 0} creators · {stats?.totalIndependent || 0} independent ·{" "}
+                {stats?.pendingAccounts || 0} pending accounts
+              </p>
+            </div>
+          </div>
+          <Link href="/admin/creators" className="btn-gold text-sm">
+            Creator Progress
+          </Link>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           {isAdmin && (
             <>
@@ -126,6 +159,10 @@ export default function AdminDashboard() {
               <div className="stat-card">
                 <div className="stat-num">{stats?.pendingAccounts || 0}</div>
                 <div className="stat-label">Pending Accounts</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalCreators || 0}</div>
+                <div className="stat-label">Total Creators</div>
               </div>
               <div className="stat-card">
                 <div className="stat-num">{stats?.totalIndependent || 0}</div>
@@ -234,7 +271,7 @@ export default function AdminDashboard() {
             </Link>
           )}
 
-          {(role === "manager" || role === "team_lead" || role === "scout" || role === "battle_coordinator" || role === "creator") && (
+          {canViewCreators && (
             <Link href="/admin/creators" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
                 <Users className="h-6 w-6 text-nmcn-blue" />
