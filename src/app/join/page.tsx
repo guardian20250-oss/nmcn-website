@@ -60,7 +60,7 @@ export default function JoinPage() {
         <div className="mx-auto max-w-2xl">
           <div className="text-center">
             <span className="mb-6 inline-block text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
-              Join NMCN
+              Apply Now
             </span>
             <h1 className="mb-4 font-heading text-4xl font-bold text-white md:text-5xl">
               Apply to <span className="gold-text">Join the Network</span>
@@ -201,3 +201,4 @@ export default function JoinPage() {
     </div>
   );
 }
+

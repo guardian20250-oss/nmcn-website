@@ -47,7 +47,7 @@ export default function Footer() {
                 href="/join"
                 className="text-sm text-nmcn-muted transition hover:text-nmcn-blue"
               >
-                Join NMCN
+                Apply Now
               </Link>
               <Link
                 href="/contact"
@@ -118,3 +118,4 @@ export default function Footer() {
     </footer>
   );
 }
+

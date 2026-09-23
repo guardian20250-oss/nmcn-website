@@ -55,7 +55,7 @@ export default function Navbar() {
             rel="noopener noreferrer"
             className="btn-gold text-sm"
           >
-            Join NMCN
+            Apply Now
           </Link>
         </div>
 
@@ -106,7 +106,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="btn-gold mt-2 text-center text-sm"
             >
-              Join NMCN
+              Apply Now
             </Link>
           </nav>
         </div>
@@ -114,3 +114,4 @@ export default function Navbar() {
     </header>
   );
 }
+

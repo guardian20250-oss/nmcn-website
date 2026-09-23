@@ -63,7 +63,7 @@ export default function BattleExchangePage() {
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link href="/join" className="btn-outline px-8 py-3 text-base">
-              Join NMCN
+              Apply Now
             </Link>
           </div>
         </div>
@@ -137,7 +137,7 @@ export default function BattleExchangePage() {
             Ready to <span className="gold-text">Battle</span>?
           </h2>
           <p className="mb-8 text-nmcn-muted">
-            Join NMCN to get access to the Battle Exchange platform and start
+            Apply Now to get access to the Battle Exchange platform and start
             competing with agencies across the US and Canada.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
@@ -151,7 +151,7 @@ export default function BattleExchangePage() {
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link href="/join" className="btn-outline px-8 py-3 text-base">
-              Apply to Join NMCN
+              Apply Now
             </Link>
           </div>
         </div>
@@ -159,3 +159,5 @@ export default function BattleExchangePage() {
     </div>
   );
 }
+
+

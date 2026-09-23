@@ -69,7 +69,7 @@ export default function HomePage() {
               Creator Academy
             </Link>
             <Link href="/join" className="btn-gold px-8 py-3 text-base">
-              Join NMCN
+              Apply Now
             </Link>
             <Link
               href="/battle-exchange"
@@ -241,3 +241,4 @@ export default function HomePage() {
     </div>
   );
 }
+
