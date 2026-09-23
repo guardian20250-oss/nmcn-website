@@ -3,7 +3,8 @@ export type SectionType =
   | "paragraph"
   | "image"
   | "list"
-  | "callout";
+  | "callout"
+  | "youtube";
 
 export interface LessonSection {
   type: SectionType;
@@ -11,6 +12,7 @@ export interface LessonSection {
   src?: string;
   alt?: string;
   items?: string[];
+  videoUrl?: string;
 }
 
 export interface PublicQuestion {

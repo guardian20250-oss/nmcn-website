@@ -219,7 +219,9 @@ export default function AdminCourseEditorPage() {
         ? { type, items: [""] }
         : type === "image"
           ? { type, src: "", alt: "" }
-          : { type, text: "" };
+          : type === "youtube"
+            ? { type, videoUrl: "" }
+            : { type, text: "" };
     updateLesson(lesson.id, { sections: [...lesson.sections, section] });
   };
 
@@ -419,6 +421,7 @@ export default function AdminCourseEditorPage() {
                             "list",
                             "callout",
                             "image",
+                            "youtube",
                           ] as const
                         ).map((t) => (
                           <button
@@ -477,6 +480,26 @@ export default function AdminCourseEditorPage() {
                                   updateSection(lesson, si, { alt: e.target.value })
                                 }
                               />
+                            </div>
+                          ) : s.type === "youtube" ? (
+                            <div className="space-y-2">
+                              <input
+                                className="input"
+                                placeholder="YouTube URL or embed ID"
+                                value={s.videoUrl || ""}
+                                onChange={(e) =>
+                                  updateSection(lesson, si, { videoUrl: e.target.value })
+                                }
+                              />
+                              {s.videoUrl && (
+                                <div className="aspect-video rounded-lg border border-nmcn-border bg-black overflow-hidden">
+                                  <iframe
+                                    src={`https://www.youtube.com/embed/${s.videoUrl.replace(/.*(?:v=|embed\/)([\w-]{11}).*/, "$1")}`}
+                                    className="h-full w-full"
+                                    allowFullScreen
+                                  />
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <textarea

@@ -6,7 +6,9 @@ type Section =
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "list"; items: string[] }
-  | { type: "callout"; text: string };
+  | { type: "callout"; text: string }
+  | { type: "image"; src: string; alt: string }
+  | { type: "youtube"; videoUrl: string };
 
 type SeedQuestion = {
   prompt: string;

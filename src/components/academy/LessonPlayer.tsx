@@ -25,6 +25,13 @@ interface LessonData {
   siblingLessonIds: number[];
 }
 
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(/(?:v=|embed\/)([\w-]{11})/);
+  if (match) return match[1];
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+  return null;
+}
+
 function SectionRenderer({ section }: { section: LessonSection }) {
   switch (section.type) {
     case "heading":
@@ -59,6 +66,19 @@ function SectionRenderer({ section }: { section: LessonSection }) {
           <p>{section.text}</p>
         </div>
       );
+    case "youtube": {
+      const videoId = extractYouTubeId(section.videoUrl || "");
+      return videoId ? (
+        <div className="mb-4 aspect-video w-full">
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            className="h-full w-full rounded-lg border border-nmcn-border"
+            allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        </div>
+      ) : null;
+    }
     default:
       return null;
   }
