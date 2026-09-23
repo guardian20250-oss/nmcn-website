@@ -16,7 +16,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="border-b border-nmcn-border bg-nmcn-black/85 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-nmcn-border bg-nmcn-black/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-nmcn-blue bg-nmcn-blue/10 font-heading text-lg font-bold text-nmcn-blue">

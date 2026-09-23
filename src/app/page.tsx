@@ -1,6 +1,7 @@
 import Link from "next/link";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import GetHelpButton from "@/components/GetHelpButton";
+import TodaySchedule from "@/components/TodaySchedule";
 import {
   Swords,
   Users,
@@ -57,11 +58,12 @@ export default function HomePage() {
             <br />
             <span className="gold-text">The Right Family</span>
           </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-nmcn-muted">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-nmcn-muted">
             Nexus Mafia Creator Network LLC - Professional creator management,
             battle coordination, and personalized coaching for TikTok LIVE
             creators and agencies across the US &amp; Canada.
           </p>
+          <TodaySchedule />
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/academy" className="btn-outline px-8 py-3 text-base">
               Creator Academy

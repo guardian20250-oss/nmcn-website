@@ -3,7 +3,6 @@ import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import TodayBattleBanner from "@/components/TodayBattleBanner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -46,10 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <body className="min-h-screen font-body antialiased">
-        <div className="sticky top-0 z-50">
-          <Navbar />
-          <TodayBattleBanner />
-        </div>
+        <Navbar />
         <main className="relative z-10">{children}</main>
         <Footer />
       </body>
