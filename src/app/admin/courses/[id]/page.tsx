@@ -11,6 +11,7 @@ import {
   Save,
   Trash2,
   X,
+  Video,
 } from "lucide-react";
 import type { LessonSection } from "@/lib/academy";
 
@@ -54,6 +55,7 @@ export default function AdminCourseEditorPage() {
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [newTitle, setNewTitle] = useState("");
+  const [newVideoUrl, setNewVideoUrl] = useState("");
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -122,13 +124,21 @@ export default function AdminCourseEditorPage() {
     if (!newTitle.trim()) return;
     setSaving(true);
     try {
+      const sections: LessonSection[] = newVideoUrl.trim()
+        ? [{ type: "youtube", videoUrl: newVideoUrl.trim() }]
+        : [];
       const res = await fetch("/api/admin/lessons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, title: newTitle.trim() }),
+        body: JSON.stringify({
+          courseId,
+          title: newTitle.trim(),
+          sections,
+        }),
       });
       if (res.ok) {
         setNewTitle("");
+        setNewVideoUrl("");
         await load();
       } else {
         const data = await res.json();
@@ -320,22 +330,38 @@ export default function AdminCourseEditorPage() {
           </p>
         )}
 
-        <div className="card mb-8 flex gap-3 p-4">
-          <input
-            className="input"
-            placeholder="New lesson title"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addLesson()}
-          />
-          <button
-            type="button"
-            onClick={addLesson}
-            disabled={saving}
-            className="btn-gold disabled:opacity-50"
-          >
-            <Plus className="mr-1 h-4 w-4" /> Add
-          </button>
+        <div className="card mb-8 flex flex-col gap-3 p-4">
+          <div className="flex gap-3">
+            <input
+              className="input flex-1"
+              placeholder="New lesson title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addLesson()}
+            />
+            <button
+              type="button"
+              onClick={addLesson}
+              disabled={saving}
+              className="btn-gold disabled:opacity-50"
+            >
+              <Plus className="mr-1 h-4 w-4" /> Add
+            </button>
+          </div>
+          <div className="flex gap-3">
+            <input
+              className="input flex-1"
+              placeholder="YouTube URL (optional)"
+              value={newVideoUrl}
+              onChange={(e) => setNewVideoUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addLesson()}
+            />
+            {newVideoUrl && (
+              <span className="flex items-center text-nmcn-muted text-sm">
+                <Video className="mr-1 h-4 w-4" /> Video section
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
