@@ -4,7 +4,10 @@ import {
   getStaffFromRequest,
   canViewCreatorDashboard,
   canCreateAcademyAccount,
+  canManageStaff,
   hashPassword,
+  updateCreatorAccount,
+  deleteCreatorAccount,
 } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -79,6 +82,9 @@ export async function GET(request: NextRequest) {
         name: creator.name,
         email: creator.email,
         tiktokHandle: creator.tiktokHandle,
+        status: creator.status,
+        assignedRole: creator.assignedRole,
+        independentCreator: creator.independentCreator,
         createdAt: creator.createdAt,
         createdBy: creator.createdBy,
         lessonCount: creator.progress.length,
@@ -180,12 +186,47 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  const staff = await getStaffFromRequest(request);
+  if (!staff) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!canManageStaff(staff.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const id = Number(body.id);
+    if (!id) {
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+
+    const updated = await updateCreatorAccount(id, {
+      name: body.name,
+      email: body.email,
+      tiktokHandle: body.tiktokHandle,
+      assignedRole: body.assignedRole,
+      status: body.status,
+      independentCreator: body.independentCreator,
+      password: body.password,
+    });
+    return NextResponse.json({ creator: updated });
+  } catch (error) {
+    console.error("Update creator error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   const staff = await getStaffFromRequest(request);
   if (!staff) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (staff.role !== "admin") {
+  if (!canManageStaff(staff.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -196,18 +237,13 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
-    const existing = await prisma.creatorAccount.findUnique({
-      where: { id },
-      select: { id: true },
-    });
-    if (!existing) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
-    }
-
-    await prisma.creatorAccount.delete({ where: { id } });
+    await deleteCreatorAccount(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Delete creator error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

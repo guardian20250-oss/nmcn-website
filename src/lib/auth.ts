@@ -239,6 +239,112 @@ export async function changeAdminPassword(adminId: number, newPassword: string) 
   });
 }
 
+export async function updateStaffAccount(
+  id: number,
+  data: { name?: string; email?: string; role?: string }
+) {
+  const existing = await prisma.admin.findUnique({ where: { id }, select: { id: true, email: true } });
+  if (!existing) throw new Error("Staff account not found");
+
+  const email = data.email?.toLowerCase().trim();
+  if (email && email !== existing.email) {
+    const dup = await prisma.admin.findUnique({ where: { email }, select: { id: true } });
+    if (dup) throw new Error("An account with this email already exists");
+  }
+
+  if (data.role && !VALID_ROLES.includes(data.role as StaffRole)) {
+    throw new Error("Invalid role");
+  }
+
+  return prisma.admin.update({
+    where: { id },
+    data: {
+      ...(data.name?.trim() ? { name: data.name.trim() } : {}),
+      ...(email ? { email } : {}),
+      ...(data.role ? { role: data.role } : {}),
+    },
+    select: { id: true, email: true, name: true, role: true, createdAt: true },
+  });
+}
+
+export async function deleteStaffAccount(id: number) {
+  const existing = await prisma.admin.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) throw new Error("Staff account not found");
+  await prisma.admin.delete({ where: { id } });
+  return { ok: true };
+}
+
+export async function updateCreatorAccount(
+  id: number,
+  data: {
+    name?: string;
+    email?: string;
+    tiktokHandle?: string | null;
+    assignedRole?: string;
+    status?: string;
+    independentCreator?: boolean;
+    password?: string;
+  }
+) {
+  const existing = await prisma.creatorAccount.findUnique({
+    where: { id },
+    select: { id: true, email: true },
+  });
+  if (!existing) throw new Error("Account not found");
+
+  const email = data.email?.toLowerCase().trim();
+  if (email && email !== existing.email) {
+    const dup = await prisma.creatorAccount.findUnique({ where: { email }, select: { id: true } });
+    if (dup) throw new Error("An account with this email already exists");
+  }
+
+  const assignedRole = data.assignedRole;
+  const status = data.status;
+  if (status && !["pending", "active", "rejected"].includes(status)) {
+    throw new Error("Invalid status");
+  }
+
+  const independentCreator =
+    data.independentCreator !== undefined
+      ? data.independentCreator
+      : assignedRole
+        ? assignedRole === "independent_creator"
+        : undefined;
+
+  return prisma.creatorAccount.update({
+    where: { id },
+    data: {
+      ...(data.name?.trim() ? { name: data.name.trim() } : {}),
+      ...(email ? { email } : {}),
+      ...(data.tiktokHandle !== undefined ? { tiktokHandle: data.tiktokHandle || null } : {}),
+      ...(assignedRole ? { assignedRole } : {}),
+      ...(status ? { status } : {}),
+      ...(independentCreator !== undefined ? { independentCreator } : {}),
+      ...(data.password ? { password: await hashPassword(data.password), mustChangePassword: true } : {}),
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      tiktokHandle: true,
+      status: true,
+      assignedRole: true,
+      independentCreator: true,
+      createdAt: true,
+    },
+  });
+}
+
+export async function deleteCreatorAccount(id: number) {
+  const existing = await prisma.creatorAccount.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!existing) throw new Error("Account not found");
+  await prisma.creatorAccount.delete({ where: { id } });
+  return { ok: true };
+}
+
 export async function changeCreatorPassword(creatorId: number, newPassword: string) {
   if (!newPassword || newPassword.length < 8) {
     throw new Error("Password must be at least 8 characters");
@@ -280,19 +386,32 @@ export async function rejectAccount(id: number) {
 }
 
 export async function getAllAccounts() {
+  const accountSelect = {
+    id: true,
+    email: true,
+    name: true,
+    tiktokHandle: true,
+    assignedRole: true,
+    independentCreator: true,
+    status: true,
+    mustChangePassword: true,
+    createdAt: true,
+    createdBy: { select: { name: true } },
+  } as const;
+
   const pending = await prisma.creatorAccount.findMany({
     where: { status: "pending" },
-    select: { id: true, email: true, name: true, tiktokHandle: true, assignedRole: true, independentCreator: true, status: true, createdAt: true, createdBy: { select: { name: true } } },
+    select: accountSelect,
     orderBy: { createdAt: "desc" },
   });
   const active = await prisma.creatorAccount.findMany({
     where: { status: "active" },
-    select: { id: true, email: true, name: true, tiktokHandle: true, assignedRole: true, independentCreator: true, status: true, createdAt: true, createdBy: { select: { name: true } } },
+    select: accountSelect,
     orderBy: { createdAt: "desc" },
   });
   const rejected = await prisma.creatorAccount.findMany({
     where: { status: "rejected" },
-    select: { id: true, email: true, name: true, tiktokHandle: true, assignedRole: true, independentCreator: true, status: true, createdAt: true, createdBy: { select: { name: true } } },
+    select: accountSelect,
     orderBy: { createdAt: "desc" },
   });
   const staff = await prisma.admin.findMany({

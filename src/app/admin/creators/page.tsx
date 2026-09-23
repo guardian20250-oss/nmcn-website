@@ -3,7 +3,7 @@
 import { useLayoutEffect, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Award, BarChart3, Loader2, Plus, UserPlus, Users } from "lucide-react";
+import { Award, BarChart3, Loader2, Plus, UserPlus, Users, Pencil, Trash2 } from "lucide-react";
 
 interface CourseProgress {
   courseId: number;
@@ -19,6 +19,9 @@ interface CreatorRow {
   name: string;
   email: string;
   tiktokHandle: string | null;
+  status: string;
+  assignedRole: string;
+  independentCreator: boolean;
   createdAt: string;
   createdBy: { id: number; name: string; role: string } | null;
   lessonCount: number;
@@ -53,6 +56,18 @@ export default function AdminCreatorsPage() {
     password: "",
     tiktokHandle: "",
   });
+  const [editing, setEditing] = useState<CreatorRow | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    tiktokHandle: "",
+    assignedRole: "creator",
+    status: "active",
+    password: "",
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [busyId, setBusyId] = useState<number | null>(null);
   const router = useRouter();
 
   const load = async () => {
@@ -124,6 +139,80 @@ export default function AdminCreatorsPage() {
     }
   };
 
+  const openEdit = (c: CreatorRow) => {
+    setMessage("");
+    setEditError("");
+    setEditing(c);
+    setEditForm({
+      name: c.name || "",
+      email: c.email || "",
+      tiktokHandle: c.tiktokHandle || "",
+      assignedRole: c.assignedRole || "creator",
+      status: c.status || "active",
+      password: "",
+    });
+  };
+
+  const closeEdit = () => {
+    setEditing(null);
+    setEditError("");
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    setEditSaving(true);
+    setEditError("");
+    try {
+      const res = await fetch("/api/admin/creators", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editing.id,
+          name: editForm.name,
+          email: editForm.email,
+          tiktokHandle: editForm.tiktokHandle || null,
+          assignedRole: editForm.assignedRole,
+          status: editForm.status,
+          independentCreator: editForm.assignedRole === "independent_creator",
+          password: editForm.password || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setEditError(data.error || "Update failed");
+        return;
+      }
+      closeEdit();
+      setMessage("Account updated.");
+      await load();
+    } catch {
+      setEditError("Network error");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const deleteCreator = async (id: number) => {
+    if (!window.confirm("Delete this creator account? This cannot be undone.")) return;
+    setBusyId(id);
+    setMessage("");
+    try {
+      const res = await fetch(`/api/admin/creators?id=${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage(data.error || "Delete failed");
+        return;
+      }
+      setMessage("Account deleted.");
+      await load();
+    } catch {
+      setMessage("Delete failed");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -170,13 +259,86 @@ export default function AdminCreatorsPage() {
         {message && (
           <div
             className={`card mb-6 border p-4 text-sm ${
-              message === "Account created."
+              message.includes("created") || message.includes("updated") || message.includes("deleted")
                 ? "border-green-500/40 text-green-400"
                 : "border-red-500/40 text-red-400"
             }`}
           >
             {message}
           </div>
+        )}
+
+        {editing && (
+          <form onSubmit={saveEdit} className="card mb-8 space-y-4 p-6">
+            <h2 className="font-heading text-lg font-semibold text-white">
+              Edit Account — {editing.name}
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <input
+                className="input"
+                placeholder="Name"
+                required
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+              <input
+                className="input"
+                type="email"
+                placeholder="Email"
+                required
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              />
+              <input
+                className="input"
+                placeholder="TikTok handle"
+                value={editForm.tiktokHandle}
+                onChange={(e) => setEditForm({ ...editForm, tiktokHandle: e.target.value })}
+              />
+              <select
+                className="input"
+                value={editForm.assignedRole}
+                onChange={(e) => setEditForm({ ...editForm, assignedRole: e.target.value })}
+              >
+                <option value="creator">Creator</option>
+                <option value="independent_creator">Independent Creator</option>
+                <option value="team_lead">Team Lead</option>
+                <option value="manager">Manager</option>
+                <option value="scout">Scout</option>
+                <option value="battle_coordinator">Battle Coordinator</option>
+                <option value="admin">Admin</option>
+              </select>
+              <select
+                className="input"
+                value={editForm.status}
+                onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+              >
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <input
+                className="input"
+                type="password"
+                placeholder="New password (optional, 8+ chars)"
+                minLength={8}
+                value={editForm.password}
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+              />
+            </div>
+            {editError && <p className="text-sm text-red-400">{editError}</p>}
+            <div className="flex gap-2">
+              <button type="submit" disabled={editSaving} className="btn-gold disabled:opacity-50">
+                {editSaving ? (
+                  <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />
+                ) : null}
+                Save
+              </button>
+              <button type="button" onClick={closeEdit} className="btn-outline">
+                Cancel
+              </button>
+            </div>
+          </form>
         )}
 
         {showCreate && canCreate && (
@@ -273,12 +435,30 @@ export default function AdminCreatorsPage() {
             )}
             {creators.map((c) => (
               <div key={c.id} className="card p-6">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-heading text-lg font-semibold text-white">
+                    {c.name}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEdit(c)}
+                      disabled={busyId !== null}
+                      className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                    >
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                    <button
+                      onClick={() => deleteCreator(c.id)}
+                      disabled={busyId === c.id}
+                      className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3 w-3" /> Delete
+                    </button>
+                  </div>
+                </div>
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="flex-1">
                     <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <span className="font-heading text-lg font-semibold text-white">
-                        {c.name}
-                      </span>
                       <span
                         className={`badge ${
                           c.active
@@ -288,6 +468,14 @@ export default function AdminCreatorsPage() {
                       >
                         {c.active ? "active" : "inactive"}
                       </span>
+                      <span className="badge border-nmcn-blue/40 text-nmcn-blue capitalize">
+                        {c.assignedRole || "creator"}
+                      </span>
+                      {c.status && c.status !== "active" && (
+                        <span className="badge border-nmcn-gold/40 text-nmcn-gold capitalize">
+                          {c.status}
+                        </span>
+                      )}
                       {c.certificates > 0 && (
                         <span className="badge border-nmcn-gold/40 text-nmcn-gold">
                           <Award className="mr-1 h-3 w-3" /> {c.certificates}

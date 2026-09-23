@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Users, Plus, CheckCircle, XCircle, Mail, Shield, GraduationCap, Crown, Search, Star, Swords, Eye } from "lucide-react";
+import { Loader2, Users, Plus, CheckCircle, XCircle, Mail, Shield, GraduationCap, Crown, Search, Star, Swords, Eye, Pencil, Trash2 } from "lucide-react";
 
 const roleIcons: Record<string, React.ReactNode> = {
   admin: <Shield className="h-5 w-5 text-nmcn-blue" />,
@@ -39,6 +39,19 @@ export default function StaffAccountsPage() {
   const [accountRoles, setAccountRoles] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<number | null>(null);
   const [actionError, setActionError] = useState("");
+  const [editingCreator, setEditingCreator] = useState<any | null>(null);
+  const [editingStaff, setEditingStaff] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    tiktokHandle: "",
+    assignedRole: "creator",
+    status: "active",
+    role: "admin",
+    password: "",
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
   const router = useRouter();
 
   const fetchAccounts = async () => {
@@ -136,6 +149,135 @@ export default function StaffAccountsPage() {
       }
     } catch {
       setActionError("Reject failed — network error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const openEditCreator = (account: any) => {
+    setEditingStaff(null);
+    setEditError("");
+    setEditingCreator(account);
+    setEditForm({
+      name: account.name || "",
+      email: account.email || "",
+      tiktokHandle: account.tiktokHandle || "",
+      assignedRole: account.assignedRole || "creator",
+      status: account.status || "active",
+      role: "admin",
+      password: "",
+    });
+  };
+
+  const openEditStaff = (s: any) => {
+    setEditingCreator(null);
+    setEditError("");
+    setEditingStaff(s);
+    setEditForm({
+      name: s.name || "",
+      email: s.email || "",
+      tiktokHandle: "",
+      assignedRole: "creator",
+      status: "active",
+      role: s.role || "admin",
+      password: "",
+    });
+  };
+
+  const closeEdit = () => {
+    setEditingCreator(null);
+    setEditingStaff(null);
+    setEditError("");
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditSaving(true);
+    setEditError("");
+    try {
+      if (editingCreator) {
+        const res = await fetch("/api/admin/staff/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "updateAccount",
+            id: editingCreator.id,
+            name: editForm.name,
+            email: editForm.email,
+            tiktokHandle: editForm.tiktokHandle || null,
+            assignedRole: editForm.assignedRole,
+            status: editForm.status,
+            independentCreator: editForm.assignedRole === "independent_creator",
+            password: editForm.password || undefined,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setEditError(data.error || "Update failed");
+          return;
+        }
+      } else if (editingStaff) {
+        const res = await fetch("/api/admin/staff/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "updateStaff",
+            id: editingStaff.id,
+            name: editForm.name,
+            email: editForm.email,
+            role: editForm.role,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setEditError(data.error || "Update failed");
+          return;
+        }
+      }
+      closeEdit();
+      await fetchAccounts();
+    } catch {
+      setEditError("Network error");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const deleteCreator = async (id: number) => {
+    if (!window.confirm("Delete this creator account? This cannot be undone.")) return;
+    setActionError("");
+    setBusyId(id);
+    try {
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteAccount", id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) setActionError(data.error || "Delete failed");
+      else await fetchAccounts();
+    } catch {
+      setActionError("Delete failed — network error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const deleteStaffMember = async (id: number) => {
+    if (!window.confirm("Delete this staff account? This cannot be undone.")) return;
+    setActionError("");
+    setBusyId(id);
+    try {
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteStaff", id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) setActionError(data.error || "Delete failed");
+      else await fetchAccounts();
+    } catch {
+      setActionError("Delete failed — network error");
     } finally {
       setBusyId(null);
     }
@@ -261,6 +403,101 @@ export default function StaffAccountsPage() {
           ))}
         </div>
 
+        {actionError && (
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {actionError}
+          </div>
+        )}
+
+        {(editingCreator || editingStaff) && (
+          <form onSubmit={saveEdit} className="card mb-6 p-6">
+            <h2 className="mb-4 font-heading text-lg font-semibold text-white">
+              {editingCreator ? "Edit Creator Account" : "Edit Staff Account"}
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <input
+                className="input"
+                placeholder="Full name"
+                required
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+              <input
+                className="input"
+                type="email"
+                placeholder="Email"
+                required
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              />
+              {editingCreator && (
+                <>
+                  <input
+                    className="input"
+                    placeholder="TikTok handle"
+                    value={editForm.tiktokHandle}
+                    onChange={(e) => setEditForm({ ...editForm, tiktokHandle: e.target.value })}
+                  />
+                  <select
+                    className="input"
+                    value={editForm.assignedRole}
+                    onChange={(e) => setEditForm({ ...editForm, assignedRole: e.target.value })}
+                  >
+                    <option value="creator">Creator</option>
+                    <option value="independent_creator">Independent Creator</option>
+                    <option value="team_lead">Team Lead</option>
+                    <option value="manager">Manager</option>
+                    <option value="scout">Scout</option>
+                    <option value="battle_coordinator">Battle Coordinator</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <select
+                    className="input"
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  >
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <input
+                    className="input"
+                    type="password"
+                    placeholder="New password (optional, 8+ chars)"
+                    minLength={8}
+                    value={editForm.password}
+                    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  />
+                </>
+              )}
+              {editingStaff && (
+                <select
+                  className="input"
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="team_lead">Team Lead</option>
+                  <option value="scout">Scout</option>
+                  <option value="battle_coordinator">Battle Coordinator</option>
+                </select>
+              )}
+            </div>
+            {editError && (
+              <p className="mt-3 text-sm text-red-400">{editError}</p>
+            )}
+            <div className="mt-4 flex gap-2">
+              <button type="submit" disabled={editSaving} className="btn-gold disabled:opacity-50">
+                {editSaving ? "Saving..." : "Save changes"}
+              </button>
+              <button type="button" onClick={closeEdit} className="btn-outline">
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
         {/* Pending */}
         {activeTab === "pending" && (
           <div>
@@ -277,11 +514,6 @@ export default function StaffAccountsPage() {
               </div>
             ) : (
               <div className="grid gap-4">
-                {actionError && (
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                    {actionError}
-                  </div>
-                )}
                 {pending.map((account: any) => (
                   <div key={account.id} className="card p-4">
                     <div className="flex items-start justify-between">
@@ -360,26 +592,46 @@ export default function StaffAccountsPage() {
             ) : (
               <div className="grid gap-3">
                 {active.map((account: any) => (
-                  <div key={account.id} className="card p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-nmcn-border bg-nmcn-blue/10">
-                        {roleIcons[account.assignedRole] || <Users className="h-5 w-5 text-nmcn-blue" />}
+                  <div key={account.id} className="card p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-nmcn-border bg-nmcn-blue/10">
+                          {roleIcons[account.assignedRole] || <Users className="h-5 w-5 text-nmcn-blue" />}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white">{account.name}</p>
+                          <p className="text-sm text-nmcn-muted">{account.email}</p>
+                          {account.tiktokHandle && (
+                            <p className="text-xs text-nmcn-muted">@{account.tiktokHandle}</p>
+                          )}
+                          <p className="text-xs text-nmcn-blue capitalize mt-1">
+                            {roleLabels[account.assignedRole] || account.assignedRole}
+                            {account.independentCreator && " • Independent"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-white">{account.name}</p>
-                        <p className="text-sm text-nmcn-muted">{account.email}</p>
-                        {account.tiktokHandle && (
-                          <p className="text-xs text-nmcn-muted">@{account.tiktokHandle}</p>
-                        )}
-                        <p className="text-xs text-nmcn-blue capitalize mt-1">
-                          {roleLabels[account.assignedRole] || account.assignedRole}
-                          {account.independentCreator && " • Independent"}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-nmcn-muted">
+                          Created {new Date(account.createdAt).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => openEditCreator(account)}
+                          disabled={busyId !== null}
+                          className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                          title="Edit"
+                        >
+                          <Pencil className="h-3 w-3" /> Edit
+                        </button>
+                        <button
+                          onClick={() => deleteCreator(account.id)}
+                          disabled={busyId !== null}
+                          className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </button>
                       </div>
                     </div>
-                    <span className="text-xs text-nmcn-muted">
-                      Created {new Date(account.createdAt).toLocaleDateString()}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -400,19 +652,37 @@ export default function StaffAccountsPage() {
             ) : (
               <div className="grid gap-3">
                 {rejected.map((account: any) => (
-                  <div key={account.id} className="card p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
-                        <XCircle className="h-5 w-5 text-red-400" />
+                  <div key={account.id} className="card p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
+                          <XCircle className="h-5 w-5 text-red-400" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white">{account.name}</p>
+                          <p className="text-sm text-nmcn-muted">{account.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-white">{account.name}</p>
-                        <p className="text-sm text-nmcn-muted">{account.email}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-nmcn-muted">
+                          {new Date(account.createdAt).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => openEditCreator(account)}
+                          disabled={busyId !== null}
+                          className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                        >
+                          <Pencil className="h-3 w-3" /> Edit
+                        </button>
+                        <button
+                          onClick={() => deleteCreator(account.id)}
+                          disabled={busyId !== null}
+                          className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </button>
                       </div>
                     </div>
-                    <span className="text-xs text-nmcn-muted">
-                      {new Date(account.createdAt).toLocaleDateString()}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -433,22 +703,42 @@ export default function StaffAccountsPage() {
             ) : (
               <div className="grid gap-3">
                 {staff.map((s: any) => (
-                  <div key={s.id} className="card p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-nmcn-border bg-nmcn-blue/10">
-                        {roleIcons[s.role] || <Shield className="h-5 w-5 text-nmcn-blue" />}
+                  <div key={s.id} className="card p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-nmcn-border bg-nmcn-blue/10">
+                          {roleIcons[s.role] || <Shield className="h-5 w-5 text-nmcn-blue" />}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white">{s.name}</p>
+                          <p className="text-sm text-nmcn-muted">{s.email}</p>
+                          <p className="text-xs text-nmcn-blue capitalize mt-1">
+                            {roleLabels[s.role] || s.role}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-white">{s.name}</p>
-                        <p className="text-sm text-nmcn-muted">{s.email}</p>
-                        <p className="text-xs text-nmcn-blue capitalize mt-1">
-                          {roleLabels[s.role] || s.role}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-nmcn-muted">
+                          Created {new Date(s.createdAt).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => openEditStaff(s)}
+                          disabled={busyId !== null}
+                          className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                          title="Edit"
+                        >
+                          <Pencil className="h-3 w-3" /> Edit
+                        </button>
+                        <button
+                          onClick={() => deleteStaffMember(s.id)}
+                          disabled={busyId !== null}
+                          className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </button>
                       </div>
                     </div>
-                    <span className="text-xs text-nmcn-muted">
-                      Created {new Date(s.createdAt).toLocaleDateString()}
-                    </span>
                   </div>
                 ))}
               </div>

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStaffFromRequest, canManageStaff } from "@/lib/auth";
-import { createStaffAccount, getAllAccounts, approveAccount, rejectAccount } from "@/lib/auth";
+import {
+  createStaffAccount,
+  getAllAccounts,
+  approveAccount,
+  rejectAccount,
+  updateStaffAccount,
+  deleteStaffAccount,
+  updateCreatorAccount,
+  deleteCreatorAccount,
+} from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   const staff = await getStaffFromRequest(request);
@@ -38,6 +47,52 @@ export async function POST(request: NextRequest) {
       }
       const account = await rejectAccount(id);
       return NextResponse.json({ account });
+    }
+
+    if (action === "updateStaff") {
+      const id = Number(body.id);
+      if (!id) return NextResponse.json({ error: "Staff ID is required" }, { status: 400 });
+      if (id === staff.id && body.role && body.role !== staff.role) {
+        return NextResponse.json({ error: "You cannot change your own role" }, { status: 400 });
+      }
+      const updated = await updateStaffAccount(id, {
+        name: body.name,
+        email: body.email,
+        role: body.role,
+      });
+      return NextResponse.json({ staff: updated });
+    }
+
+    if (action === "deleteStaff") {
+      const id = Number(body.id);
+      if (!id) return NextResponse.json({ error: "Staff ID is required" }, { status: 400 });
+      if (id === staff.id) {
+        return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 });
+      }
+      await deleteStaffAccount(id);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "updateAccount") {
+      const id = Number(body.id);
+      if (!id) return NextResponse.json({ error: "Account ID is required" }, { status: 400 });
+      const updated = await updateCreatorAccount(id, {
+        name: body.name,
+        email: body.email,
+        tiktokHandle: body.tiktokHandle,
+        assignedRole: body.assignedRole,
+        status: body.status,
+        independentCreator: body.independentCreator,
+        password: body.password,
+      });
+      return NextResponse.json({ account: updated });
+    }
+
+    if (action === "deleteAccount") {
+      const id = Number(body.id);
+      if (!id) return NextResponse.json({ error: "Account ID is required" }, { status: 400 });
+      await deleteCreatorAccount(id);
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
