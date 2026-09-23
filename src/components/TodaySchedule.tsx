@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarClock, Loader2, Swords } from "lucide-react";
 
+const BATTLE_EXCHANGE_URL =
+  process.env.NEXT_PUBLIC_BATTLE_EXCHANGE_URL ||
+  "https://nmcnbattleexchange.com";
+
 interface PublicBattle {
   id: string;
   battleNumber: string;
@@ -21,6 +25,63 @@ interface TodayBattlesResponse {
   battles: PublicBattle[];
   upcoming?: PublicBattle[];
   error?: string;
+}
+
+const TIME_ZONE = "America/New_York";
+
+function todayKey(date = new Date()) {
+  return date.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
+}
+
+function battleDayKey(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
+}
+
+function battleClock(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-US", {
+    timeZone: TIME_ZONE,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function toPublicBattle(raw: any): PublicBattle {
+  const participants: any[] = Array.isArray(raw?.participants)
+    ? raw.participants
+    : [];
+  const creators = participants
+    .map(
+      (p) =>
+        p?.creator?.tiktokUsername ||
+        p?.creator?.user?.creator?.tiktokUsername ||
+        p?.creator?.user?.name
+    )
+    .filter(Boolean)
+    .slice(0, 8) as string[];
+
+  if (!creators.length) {
+    const handle = raw?.creatorUser?.creator?.tiktokUsername;
+    if (handle) creators.push(handle);
+  }
+
+  return {
+    id: String(raw?.id || raw?.uuid || ""),
+    battleNumber: String(raw?.battleNumber || ""),
+    title: String(raw?.title || "Confirmed battle"),
+    battleType: String(raw?.battleType || ""),
+    status: String(raw?.status || ""),
+    dayKey: battleDayKey(raw?.battleDate),
+    timeLabel: battleClock(raw?.battleTime),
+    durationMinutes: Number(raw?.durationMinutes) || 15,
+    agency: raw?.agency?.name || null,
+    creators,
+  };
 }
 
 function msUntilNextLocalMidnight() {
@@ -45,10 +106,28 @@ export default function TodaySchedule() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/battles/today", { cache: "no-store" });
-      if (!res.ok) throw new Error("failed");
-      const json = (await res.json()) as TodayBattlesResponse;
-      setData(json);
+      // Fetch directly from the browser so Cloudflare sees a real user request
+      // (Vercel serverless → CF was returning 403).
+      const res = await fetch(
+        `${BATTLE_EXCHANGE_URL}/api/battles/public?status=CONFIRMED&limit=200`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = (await res.json()) as { battles?: any[] };
+      const today = todayKey();
+      const all = (json.battles || []).map(toPublicBattle);
+      const battles = all
+        .filter((b) => b.dayKey === today)
+        .sort((a, b) => a.timeLabel.localeCompare(b.timeLabel));
+      const upcoming = all
+        .filter((b) => b.dayKey > today)
+        .sort((a, b) =>
+          a.dayKey === b.dayKey
+            ? a.timeLabel.localeCompare(b.timeLabel)
+            : a.dayKey.localeCompare(b.dayKey)
+        )
+        .slice(0, 3);
+      setData({ date: today, battles, upcoming });
     } catch {
       setData((prev) =>
         prev || {

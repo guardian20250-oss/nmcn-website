@@ -79,12 +79,19 @@ function toPublicBattle(raw: any): PublicBattle {
 }
 
 async function fetchConfirmedBattles(): Promise<any[]> {
-  // Prefer public endpoint (no JWT) with JWT fallback for older Battle Exchange builds
+  // Prefer public endpoint (no JWT). Browser homepage also calls this directly.
   let res: Response;
   try {
     res = await fetch(
       `${BATTLE_EXCHANGE_URL}/api/battles/public?status=CONFIRMED&limit=200`,
-      { cache: "no-store" }
+      {
+        cache: "no-store",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; NMCN-Site/1.0; +https://nexusmafiaagency.com)",
+          Accept: "application/json",
+        },
+      }
     );
     if (res.ok) {
       const data = await res.json();
@@ -115,7 +122,11 @@ async function fetchConfirmedBattles(): Promise<any[]> {
     res = await fetch(
       `${BATTLE_EXCHANGE_URL}/api/battles?status=CONFIRMED&limit=200`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent":
+            "Mozilla/5.0 (compatible; NMCN-Site/1.0; +https://nexusmafiaagency.com)",
+        },
         cache: "no-store",
       }
     );
