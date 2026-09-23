@@ -3,8 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy } from "lucide-react";
+import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy, BadgeCheck, Search, XCircle, Download } from "lucide-react";
 import GetHelpButton from "@/components/GetHelpButton";
+
+interface CertResult {
+  code: string;
+  learnerName: string;
+  completedAt: string;
+  course: { title: string; slug: string };
+  creator: { id: number; name: string; email: string } | null;
+}
 
 interface Stats {
   totalApplications: number;
@@ -32,6 +40,10 @@ export default function AdminDashboard() {
   const [adminName, setAdminName] = useState("");
   const [role, setRole] = useState("");
   const [pendingAccounts, setPendingAccounts] = useState<any[]>([]);
+  const [certCode, setCertCode] = useState("");
+  const [certResult, setCertResult] = useState<CertResult | null>(null);
+  const [certError, setCertError] = useState("");
+  const [certSearching, setCertSearching] = useState(false);
   const router = useRouter();
 
   const fetchStats = async () => {
@@ -69,6 +81,30 @@ export default function AdminDashboard() {
       // still redirect
     }
     router.push("/admin/login");
+  };
+
+  const verifyCert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = certCode.trim();
+    if (!code) return;
+    setCertSearching(true);
+    setCertResult(null);
+    setCertError("");
+    try {
+      const res = await fetch(
+        `/api/admin/certificates?code=${encodeURIComponent(code)}`
+      );
+      const data = await res.json();
+      if (res.ok && data.certificate) {
+        setCertResult(data.certificate);
+      } else {
+        setCertError(data.error || "No certificate matches this code");
+      }
+    } catch {
+      setCertError("Lookup failed — try again.");
+    } finally {
+      setCertSearching(false);
+    }
   };
 
   const isAdmin = role === "admin";
@@ -143,6 +179,92 @@ export default function AdminDashboard() {
           <Link href="/admin/creators" className="btn-gold text-sm">
             Creator Progress
           </Link>
+        </div>
+
+        <div className="mb-8 rounded-xl border border-nmcn-blue/30 bg-nmcn-blue/5 px-4 py-4 sm:px-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+                <BadgeCheck className="h-5 w-5 text-nmcn-blue" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Verify Certificate</p>
+                <p className="text-xs text-nmcn-muted">
+                  Confirm a certificate code is valid · staff only
+                </p>
+              </div>
+            </div>
+            <Link href="/admin/certificates" className="btn-outline text-sm">
+              All Certificates
+            </Link>
+          </div>
+
+          <form onSubmit={verifyCert} className="flex flex-col gap-3 md:flex-row">
+            <input
+              className="input flex-1"
+              placeholder="e.g. NMCN-TIKTOK-7F3A"
+              value={certCode}
+              onChange={(e) => setCertCode(e.target.value)}
+            />
+            <button
+              type="submit"
+              disabled={certSearching}
+              className="btn-gold disabled:opacity-50"
+            >
+              {certSearching ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="mr-2 h-4 w-4" />
+              )}
+              Verify
+            </button>
+          </form>
+
+          {certResult && (
+            <div className="mt-4 rounded-lg border border-green-500/40 bg-green-500/10 p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <BadgeCheck className="h-5 w-5 text-green-400" />
+                <span className="font-semibold text-green-400">Valid certificate</span>
+              </div>
+              <div className="grid gap-2 text-sm text-white md:grid-cols-2">
+                <p>
+                  <span className="text-nmcn-muted">Code:</span>{" "}
+                  <span className="font-mono text-nmcn-gold">{certResult.code}</span>
+                </p>
+                <p>
+                  <span className="text-nmcn-muted">Learner:</span>{" "}
+                  {certResult.learnerName}
+                </p>
+                <p>
+                  <span className="text-nmcn-muted">Course:</span>{" "}
+                  {certResult.course.title}
+                </p>
+                <p>
+                  <span className="text-nmcn-muted">Issued:</span>{" "}
+                  {new Date(certResult.completedAt).toLocaleDateString()}
+                </p>
+                <p>
+                  <span className="text-nmcn-muted">Account:</span>{" "}
+                  {certResult.creator
+                    ? `${certResult.creator.name} (${certResult.creator.email})`
+                    : "Guest"}
+                </p>
+              </div>
+              <a
+                href={`/api/admin/certificates/download?code=${encodeURIComponent(certResult.code)}`}
+                download={`certificate-${certResult.code}.pdf`}
+                className="btn-blue mt-3 inline-flex items-center gap-1 text-sm"
+              >
+                <Download className="h-3 w-3" /> Download PDF
+              </a>
+            </div>
+          )}
+
+          {certError && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-400">
+              <XCircle className="h-4 w-4" /> {certError}
+            </div>
+          )}
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
