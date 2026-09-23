@@ -56,6 +56,7 @@ export default function AdminCourseEditorPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [newContentType, setNewContentType] = useState<LessonSection["type"]>("paragraph");
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -124,9 +125,16 @@ export default function AdminCourseEditorPage() {
     if (!newTitle.trim()) return;
     setSaving(true);
     try {
-      const sections: LessonSection[] = newVideoUrl.trim()
-        ? [{ type: "youtube", videoUrl: newVideoUrl.trim() }]
-        : [];
+      const section: LessonSection | null = (() => {
+        if (newContentType === "youtube" && newVideoUrl.trim()) {
+          return { type: "youtube", videoUrl: newVideoUrl.trim() };
+        }
+        if (newContentType === "heading" || newContentType === "callout") {
+          return { type: newContentType as "heading" | "callout", text: "" };
+        }
+        return null;
+      })();
+      const sections: LessonSection[] = section ? [section] : [];
       const res = await fetch("/api/admin/lessons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -139,6 +147,7 @@ export default function AdminCourseEditorPage() {
       if (res.ok) {
         setNewTitle("");
         setNewVideoUrl("");
+        setNewContentType("paragraph");
         await load();
       } else {
         const data = await res.json();
@@ -330,38 +339,44 @@ export default function AdminCourseEditorPage() {
           </p>
         )}
 
-        <div className="card mb-8 flex flex-col gap-3 p-4">
-          <div className="flex gap-3">
+        <div className="card mb-8 flex flex-wrap items-center gap-3 p-4">
+          <input
+            className="input flex-1"
+            placeholder="New lesson title"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addLesson()}
+          />
+          <select
+            className="input w-auto"
+            value={newContentType}
+            onChange={(e) =>
+              setNewContentType(e.target.value as LessonSection["type"])
+            }
+          >
+            <option value="heading">+ Heading</option>
+            <option value="paragraph">+ Paragraph</option>
+            <option value="youtube">+ YouTube</option>
+            <option value="callout">+ Callout</option>
+            <option value="list">+ List</option>
+          </select>
+          {newContentType === "youtube" && (
             <input
               className="input flex-1"
-              placeholder="New lesson title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addLesson()}
-            />
-            <button
-              type="button"
-              onClick={addLesson}
-              disabled={saving}
-              className="btn-gold disabled:opacity-50"
-            >
-              <Plus className="mr-1 h-4 w-4" /> Add
-            </button>
-          </div>
-          <div className="flex gap-3">
-            <input
-              className="input flex-1"
-              placeholder="YouTube URL (optional)"
+              placeholder="YouTube URL"
               value={newVideoUrl}
               onChange={(e) => setNewVideoUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addLesson()}
             />
-            {newVideoUrl && (
-              <span className="flex items-center text-nmcn-muted text-sm">
-                <Video className="mr-1 h-4 w-4" /> Video section
-              </span>
-            )}
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={addLesson}
+            disabled={saving}
+            className="btn-gold disabled:opacity-50"
+          >
+            <Plus className="mr-1 h-4 w-4" /> Add
+          </button>
         </div>
 
         <div className="space-y-4">
