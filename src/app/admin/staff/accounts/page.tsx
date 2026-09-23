@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Users, Plus, CheckCircle, XCircle, Mail, Shield, GraduationCap, Crown, Search, Star, Swords, Eye, Pencil, Trash2 } from "lucide-react";
@@ -52,7 +52,17 @@ export default function StaffAccountsPage() {
   });
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  const editFormRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (editingCreator || editingStaff) {
+      const id = window.setTimeout(() => {
+        editFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
+      return () => window.clearTimeout(id);
+    }
+  }, [editingCreator, editingStaff]);
 
   const fetchAccounts = async () => {
     try {
@@ -395,6 +405,7 @@ export default function StaffAccountsPage() {
           {(["pending", "active", "rejected", "staff"] as const).map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 text-sm font-medium capitalize transition ${activeTab === tab ? "border-b-2 border-nmcn-blue text-nmcn-blue" : "text-nmcn-muted hover:text-white"}`}
             >
@@ -410,7 +421,7 @@ export default function StaffAccountsPage() {
         )}
 
         {(editingCreator || editingStaff) && (
-          <form onSubmit={saveEdit} className="card mb-6 p-6">
+          <form ref={editFormRef} onSubmit={saveEdit} className="card mb-6 border border-nmcn-blue/50 p-6 shadow-lg shadow-nmcn-blue/10">
             <h2 className="mb-4 font-heading text-lg font-semibold text-white">
               {editingCreator ? "Edit Creator Account" : "Edit Staff Account"}
             </h2>
@@ -557,6 +568,7 @@ export default function StaffAccountsPage() {
                       </div>
                       <div className="flex gap-2">
                         <button
+                          type="button"
                           onClick={() => handleReject(account.id)}
                           disabled={busyId !== null}
                           className="btn-ghost text-sm text-red-400 disabled:opacity-50"
@@ -564,6 +576,7 @@ export default function StaffAccountsPage() {
                           Reject
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleApprove(account.id)}
                           disabled={busyId !== null}
                           className="btn-gold text-sm disabled:opacity-50"
@@ -615,6 +628,7 @@ export default function StaffAccountsPage() {
                           Created {new Date(account.createdAt).toLocaleDateString()}
                         </span>
                         <button
+                          type="button"
                           onClick={() => openEditCreator(account)}
                           disabled={busyId !== null}
                           className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
@@ -623,6 +637,7 @@ export default function StaffAccountsPage() {
                           <Pencil className="h-3 w-3" /> Edit
                         </button>
                         <button
+                          type="button"
                           onClick={() => deleteCreator(account.id)}
                           disabled={busyId !== null}
                           className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
@@ -668,6 +683,7 @@ export default function StaffAccountsPage() {
                           {new Date(account.createdAt).toLocaleDateString()}
                         </span>
                         <button
+                          type="button"
                           onClick={() => openEditCreator(account)}
                           disabled={busyId !== null}
                           className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
@@ -675,6 +691,7 @@ export default function StaffAccountsPage() {
                           <Pencil className="h-3 w-3" /> Edit
                         </button>
                         <button
+                          type="button"
                           onClick={() => deleteCreator(account.id)}
                           disabled={busyId !== null}
                           className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
@@ -722,6 +739,7 @@ export default function StaffAccountsPage() {
                           Created {new Date(s.createdAt).toLocaleDateString()}
                         </span>
                         <button
+                          type="button"
                           onClick={() => openEditStaff(s)}
                           disabled={busyId !== null}
                           className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
@@ -730,6 +748,7 @@ export default function StaffAccountsPage() {
                           <Pencil className="h-3 w-3" /> Edit
                         </button>
                         <button
+                          type="button"
                           onClick={() => deleteStaffMember(s.id)}
                           disabled={busyId !== null}
                           className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"

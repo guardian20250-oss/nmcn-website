@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useEffect, useState } from "react";
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Award, BarChart3, Loader2, Plus, UserPlus, Users, Pencil, Trash2 } from "lucide-react";
@@ -68,6 +68,7 @@ export default function AdminCreatorsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
+  const editFormRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
   const load = async () => {
@@ -107,6 +108,15 @@ export default function AdminCreatorsPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (editing) {
+      const id = window.setTimeout(() => {
+        editFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
+      return () => window.clearTimeout(id);
+    }
+  }, [editing]);
 
   const createAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,6 +251,7 @@ export default function AdminCreatorsPage() {
           <div className="flex gap-3">
             {canCreate && (
               <button
+                type="button"
                 onClick={() => setShowCreate((v) => !v)}
                 className="btn-gold text-sm"
               >
@@ -269,7 +280,7 @@ export default function AdminCreatorsPage() {
         )}
 
         {editing && (
-          <form onSubmit={saveEdit} className="card mb-8 space-y-4 p-6">
+          <form ref={editFormRef} onSubmit={saveEdit} className="card mb-8 space-y-4 border border-nmcn-blue/50 p-6 shadow-lg shadow-nmcn-blue/10">
             <h2 className="font-heading text-lg font-semibold text-white">
               Edit Account — {editing.name}
             </h2>
@@ -441,6 +452,7 @@ export default function AdminCreatorsPage() {
                   </span>
                   <div className="flex gap-2">
                     <button
+                      type="button"
                       onClick={() => openEdit(c)}
                       disabled={busyId !== null}
                       className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
@@ -448,6 +460,7 @@ export default function AdminCreatorsPage() {
                       <Pencil className="h-3 w-3" /> Edit
                     </button>
                     <button
+                      type="button"
                       onClick={() => deleteCreator(c.id)}
                       disabled={busyId === c.id}
                       className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
