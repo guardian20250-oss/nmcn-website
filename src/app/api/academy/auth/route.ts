@@ -138,6 +138,7 @@ export async function GET(request: NextRequest) {
         independentCreator: account.independentCreator,
         mustChangePassword: account.mustChangePassword ?? false,
       },
+      courses: getCoursesForRole(account.role, account.independentCreator),
     });
   } catch (error) {
     return NextResponse.json({ user: null });

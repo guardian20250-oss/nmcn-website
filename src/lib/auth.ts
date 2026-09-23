@@ -171,13 +171,34 @@ export async function getCreatorAccountFromRequest(request: NextRequest): Promis
   };
 }
 
+export async function getCreatorAccountByToken(token: string | undefined): Promise<CreatorAccountPayload | null> {
+  if (!token) return null;
+  const payload = verifyCreatorToken(token);
+  if (!payload) return null;
+  const account = await prisma.creatorAccount.findUnique({
+    where: { id: payload.id },
+    select: { id: true, email: true, name: true, assignedRole: true, status: true, independentCreator: true, mustChangePassword: true },
+  });
+  if (!account) return null;
+  return {
+    id: account.id,
+    email: account.email,
+    name: account.name,
+    role: account.assignedRole,
+    status: account.status,
+    independentCreator: account.independentCreator,
+    mustChangePassword: account.mustChangePassword,
+  };
+}
+
 export function getCoursesForRole(role: string, independentCreator: boolean): string[] {
-  if (independentCreator) return ["creator"];
+  if (independentCreator || role === "independent_creator") return ["creator"];
   if (role === "creator") return ["creator"];
   if (role === "team_lead") return ["team_lead"];
   if (role === "manager") return ["manager"];
   if (role === "scout") return ["scout"];
   if (role === "battle_coordinator") return ["battle_coordinator"];
+  if (role === "admin") return ["creator", "team_lead", "manager", "scout", "battle_coordinator"];
   return ["creator"];
 }
 

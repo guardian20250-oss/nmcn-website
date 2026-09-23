@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getCreatorAccountByToken, getCoursesForRole } from "@/lib/auth";
 import CourseCard from "@/components/academy/CourseCard";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +17,6 @@ export default async function AcademyPage() {
     lessonIds: number[];
     role: string;
   }[] = [];
-  let dbError = false;
   let user: { id: number; role: string; status: string; independentCreator: boolean } | null = null;
 
   try {
@@ -41,42 +42,50 @@ export default async function AcademyPage() {
     }));
   } catch (error) {
     console.error("Academy catalog error:", error);
-    dbError = true;
   }
 
   try {
-    const res = await fetch("/api/academy/auth");
-    const data = await res.json();
-    if (data.user && data.user.id) {
-      user = data.user;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("creator-token")?.value;
+    const account = await getCreatorAccountByToken(token);
+    if (account && account.id) {
+      user = {
+        id: account.id,
+        role: account.role,
+        status: account.status,
+        independentCreator: account.independentCreator,
+      };
     }
   } catch {
-    // auth fetch failed, user stays null
+    user = null;
   }
 
-  const isLoggedIn = user && user.id;
-  const isPending = user && user.status === "pending";
+  const isLoggedIn = Boolean(user && user.id);
+  const isPending = Boolean(user && user.status === "pending");
   const userRole = user?.role || "";
   const userIndependent = user?.independentCreator || false;
 
   let visibleCourses = courses;
   if (isLoggedIn && !isPending) {
-    if (userIndependent) {
-      visibleCourses = courses.filter((c) => c.role === "creator");
-    } else if (userRole === "creator") {
-      visibleCourses = courses.filter((c) => c.role === "creator");
-    } else if (userRole === "team_lead") {
-      visibleCourses = courses.filter((c) => c.role === "team_lead");
-    } else if (userRole === "manager") {
-      visibleCourses = courses.filter((c) => c.role === "manager");
-    } else if (userRole === "scout") {
-      visibleCourses = courses.filter((c) => c.role === "scout");
-    } else if (userRole === "battle_coordinator") {
-      visibleCourses = courses.filter((c) => c.role === "battle_coordinator");
-    } else {
-      visibleCourses = courses.filter((c) => c.role === "creator");
-    }
+    const allowedRoles = getCoursesForRole(userRole, userIndependent);
+    visibleCourses = courses.filter((c) => allowedRoles.includes(c.role));
   }
+
+  const roleLabel = userIndependent
+    ? "Independent Creator"
+    : userRole === "creator"
+      ? "Creator"
+      : userRole === "team_lead"
+        ? "Team Lead"
+        : userRole === "manager"
+          ? "Manager"
+          : userRole === "scout"
+            ? "Scout"
+            : userRole === "battle_coordinator"
+              ? "Battle Coordinator"
+              : userRole === "admin"
+                ? "Admin"
+                : "Academy";
 
   return (
     <div className="min-h-screen pt-16">
@@ -113,6 +122,12 @@ export default async function AcademyPage() {
               </p>
             </div>
           )}
+
+          {isLoggedIn && !isPending && (
+            <div className="mt-4 text-sm text-nmcn-muted">
+              Signed in — showing courses for <span className="text-nmcn-blue">{roleLabel}</span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -121,19 +136,7 @@ export default async function AcademyPage() {
           <div className="mx-auto max-w-5xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="font-heading text-2xl font-bold text-white">
-                {userRole === "creator" && userIndependent
-                  ? "Independent Creator Courses"
-                  : `${userRole === "creator"
-                      ? "Creator"
-                      : userRole === "team_lead"
-                      ? "Team Lead"
-                      : userRole === "manager"
-                      ? "Manager"
-                      : userRole === "scout"
-                      ? "Scout"
-                      : userRole === "battle_coordinator"
-                      ? "Battle Coordinator"
-                      : "Academy"} Courses`}
+                {roleLabel} Courses
               </h2>
               <span className="text-sm text-nmcn-muted">
                 {visibleCourses.length} course{visibleCourses.length !== 1 ? "s" : ""}
