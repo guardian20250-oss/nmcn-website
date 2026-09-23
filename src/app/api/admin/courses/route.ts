@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
         certificates: c._count.certificates,
         _count: undefined,
         role: c.role || "creator",
+        allowedRoles: c.allowedRoles || [],
       })),
     });
   } catch (error) {
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
         order: Number(body.order) || 0,
         status: String(body.status || "draft"),
         role: String(body.role || "creator"),
+        allowedRoles: Array.isArray(body.allowedRoles) ? body.allowedRoles : [],
       },
     });
 
@@ -92,7 +94,18 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { id, ...rest } = await request.json();
+    const body = await request.json();
+    const { id, action, ...rest } = body;
+
+    if (action === "assignRoles" && id) {
+      const assignToRoles = rest.assignToRoles;
+      const course = await prisma.course.update({
+        where: { id: Number(id) },
+        data: { allowedRoles: Array.isArray(assignToRoles) ? assignToRoles : [] },
+      });
+      return NextResponse.json({ course });
+    }
+
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
@@ -110,6 +123,7 @@ export async function PATCH(request: NextRequest) {
     if (rest.order !== undefined) data.order = Number(rest.order) || 0;
     if (rest.status !== undefined) data.status = String(rest.status);
     if (rest.role !== undefined) data.role = String(rest.role);
+    if (rest.allowedRoles !== undefined) data.allowedRoles = Array.isArray(rest.allowedRoles) ? rest.allowedRoles : [];
 
     const course = await prisma.course.update({ where: { id: Number(id) }, data });
     return NextResponse.json({ course });

@@ -30,6 +30,7 @@ type SeedCourse = {
   icon: string;
   order: number;
   role: string;
+  allowedRoles?: string[];
   lessons: SeedLesson[];
 };
 
@@ -1268,6 +1269,7 @@ const courses: SeedCourse[] = [
     icon: "UserCog",
     order: 4,
     role: "team_lead",
+    allowedRoles: ["manager"],
     lessons: [
       {
         title: "Creator Feedback Loops",
@@ -2699,6 +2701,7 @@ const courses: SeedCourse[] = [
     icon: "Users",
     order: 9,
     role: "team_lead",
+    allowedRoles: ["manager", "battle_coordinator", "scout"],
     lessons: [
       {
         title: "Leadership Mindset Across Roles",

@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         title: true,
         slug: true,
         role: true,
+        allowedRoles: true,
         lessons: {
           where: { status: "published" },
           select: { id: true },
@@ -55,7 +56,9 @@ export async function GET(request: NextRequest) {
         creator.assignedRole,
         creator.independentCreator
       );
-      const roleCourses = courses.filter((c) => allowedCourseRoles.includes(c.role));
+      const roleCourses = courses.filter(
+        (c) => allowedCourseRoles.includes(c.role) || (c.allowedRoles && c.allowedRoles.includes(creator.assignedRole))
+      );
 
       const allowedLessonIds = new Set<number>();
       const allowedCourseIds = new Set<number>();

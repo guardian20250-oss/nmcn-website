@@ -86,6 +86,7 @@ model Course {
   order        Int       @default(0)
   status       String    @default("draft")
   role         String    @default("creator")
+  allowedRoles String[]  @default([])
   lessons      Lesson[]
   certificates Certificate[]
   createdAt    DateTime  @default(now())

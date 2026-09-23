@@ -10,7 +10,10 @@ import {
   Loader2,
   PenLine,
   Plus,
+  Shield,
   Trash2,
+  Check,
+  X,
 } from "lucide-react";
 
 interface AdminCourse {
@@ -25,6 +28,7 @@ interface AdminCourse {
   lessonCount: number;
   certificates: number;
   role: string;
+  allowedRoles: string[];
 }
 
 export default function AdminCoursesPage() {
@@ -37,6 +41,7 @@ export default function AdminCoursesPage() {
     icon: "GraduationCap",
     passingScore: 70,
     role: "creator",
+    allowedRoles: [] as string[],
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
@@ -47,7 +52,11 @@ export default function AdminCoursesPage() {
     status: "draft",
     order: 0,
     role: "creator",
+    allowedRoles: [] as string[],
   });
+  const [assignModal, setAssignModal] = useState<number | null>(null);
+  const [assignRoles, setAssignRoles] = useState<string[]>([]);
+  const [pendingRoles, setPendingRoles] = useState<string[]>([]);
   const router = useRouter();
 
   const load = async () => {
@@ -88,6 +97,7 @@ export default function AdminCoursesPage() {
           icon: "GraduationCap",
           passingScore: 70,
           role: "creator",
+          allowedRoles: [],
         });
         await load();
       }
@@ -106,6 +116,7 @@ export default function AdminCoursesPage() {
       status: c.status,
       order: c.order,
       role: c.role,
+      allowedRoles: c.allowedRoles || [],
     });
   };
 
@@ -124,6 +135,33 @@ export default function AdminCoursesPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const startAssign = (c: AdminCourse) => {
+    setAssignModal(c.id);
+    setAssignRoles(c.allowedRoles || []);
+  };
+
+  const saveAssign = async (id: number) => {
+    try {
+      const res = await fetch("/api/admin/courses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "assignRoles", assignToRoles: assignRoles }),
+      });
+      if (res.ok) {
+        setAssignModal(null);
+        await load();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleAssignRole = (role: string) => {
+    setAssignRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
   };
 
   const removeCourse = async (id: number) => {
@@ -217,28 +255,25 @@ export default function AdminCoursesPage() {
             </select>
             <div />
           </div>
-          <textarea
-            className="textarea"
-            rows={2}
-            placeholder="Short description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
-                Pass %
+                Allowed Roles (extra access)
               </label>
-              <input
+              <select
                 className="input"
-                type="number"
-                min={0}
-                max={100}
-                value={form.passingScore}
-                onChange={(e) =>
-                  setForm({ ...form, passingScore: Number(e.target.value) })
-                }
-              />
+                multiple
+                value={form.allowedRoles}
+                onChange={(e) => {
+                  const selected = Array.from(e.target.selectedOptions, (o) => o.value);
+                  setForm({ ...form, allowedRoles: selected });
+                }}
+              >
+                <option value="manager">Manager</option>
+                <option value="team_lead">Team Lead</option>
+                <option value="scout">Scout</option>
+                <option value="battle_coordinator">Battle Coordinator</option>
+              </select>
             </div>
             <div className="flex items-end">
               <button
@@ -354,6 +389,12 @@ export default function AdminCoursesPage() {
                     <p className="mt-1 line-clamp-2 text-sm text-nmcn-muted">
                       {c.description}
                     </p>
+                    {(c.allowedRoles && c.allowedRoles.length > 0) && (
+                      <p className="mt-1 text-xs text-nmcn-muted">
+                        <Shield className="mr-1 inline h-3 w-3" />
+                        Accessible to: {c.allowedRoles.join(", ")}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link
@@ -362,6 +403,12 @@ export default function AdminCoursesPage() {
                     >
                       <PenLine className="mr-1 inline h-3 w-3" /> Lessons
                     </Link>
+                    <button
+                      onClick={() => startAssign(c)}
+                      className="btn-blue text-xs px-3 py-1.5"
+                    >
+                      <Shield className="mr-1 inline h-3 w-3" /> Assign Roles
+                    </button>
                     <button
                       onClick={() => toggleStatus(c)}
                       className="btn-blue text-xs px-3 py-1.5"
@@ -386,6 +433,46 @@ export default function AdminCoursesPage() {
             </div>
           ))}
         </div>
+        {assignModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="card max-w-md w-full mx-4 p-6">
+              <h3 className="font-heading text-lg font-semibold text-white mb-4">
+                <Shield className="mr-1 inline h-5 w-5 text-nmcn-blue" /> Assign Roles to Course
+              </h3>
+              <p className="mb-4 text-sm text-nmcn-muted">
+                Select additional roles that can access this course (besides its primary role).
+              </p>
+              <div className="space-y-2">
+                {["manager", "team_lead", "scout", "battle_coordinator"].map((role) => (
+                  <label key={role} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={assignRoles.includes(role)}
+                      onChange={() => toggleAssignRole(role)}
+                      className="accent-nmcn-blue"
+                    />
+                    <span className="text-sm text-white capitalize">{role.replace("_", " ")}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="mt-6 flex gap-2">
+                <button
+                  className="btn-gold text-sm flex-1"
+                  onClick={() => saveAssign(assignModal)}
+                  disabled={saving}
+                >
+                  <Check className="mr-1 inline h-4 w-4" /> Save
+                </button>
+                <button
+                  className="btn-outline text-sm"
+                  onClick={() => setAssignModal(null)}
+                >
+                  <X className="mr-1 inline h-4 w-4" /> Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ export default async function AcademyPage() {
     lessonCount: number;
     lessonIds: number[];
     role: string;
+    allowedRoles: string[];
   }[] = [];
   let user: { id: number; role: string; status: string; independentCreator: boolean } | null = null;
 
@@ -40,6 +41,7 @@ export default async function AcademyPage() {
       lessonCount: c.lessons.length,
       lessonIds: c.lessons.map((l) => l.id),
       role: c.role,
+      allowedRoles: c.allowedRoles || [],
     }));
   } catch (error) {
     console.error("Academy catalog error:", error);
@@ -69,7 +71,9 @@ export default async function AcademyPage() {
   let visibleCourses = courses;
   if (isLoggedIn && !isPending) {
     const allowedRoles = getCoursesForRole(userRole, userIndependent);
-    visibleCourses = courses.filter((c) => allowedRoles.includes(c.role));
+    visibleCourses = courses.filter(
+      (c) => allowedRoles.includes(c.role) || (c.allowedRoles && c.allowedRoles.includes(userRole))
+    );
   }
 
   const roleLabel = userIndependent

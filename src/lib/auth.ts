@@ -202,6 +202,16 @@ export function getCoursesForRole(role: string, independentCreator: boolean): st
   return ["creator"];
 }
 
+export function getCourseRolesForUser(role: string): string[] {
+  const base = getCoursesForRole(role, false);
+  return base;
+}
+
+export function isCourseAccessibleBy(courseRole: string, courseAllowedRoles: string[], userRole: string): boolean {
+  if (courseAllowedRoles.includes(userRole)) return true;
+  return courseRole === userRole;
+}
+
 // ── Admin staff management helpers ────────────────────────────────────────────
 
 export async function createStaffAccount(data: {
