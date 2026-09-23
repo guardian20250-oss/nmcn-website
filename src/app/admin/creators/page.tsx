@@ -9,6 +9,7 @@ interface CourseProgress {
   courseId: number;
   title: string;
   slug: string;
+  role: string;
   lessonCount: number;
   completed: number;
   percent: number;

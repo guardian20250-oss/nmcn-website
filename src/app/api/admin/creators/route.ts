@@ -8,6 +8,7 @@ import {
   hashPassword,
   updateCreatorAccount,
   deleteCreatorAccount,
+  getCoursesForRole,
 } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
         id: true,
         title: true,
         slug: true,
+        role: true,
         lessons: {
           where: { status: "published" },
           select: { id: true },
@@ -38,10 +40,6 @@ export async function GET(request: NextRequest) {
     for (const c of courses) {
       courseLessonIds.set(c.id, c.lessons.map((l) => l.id));
     }
-    const allLessonIds = new Set<number>();
-    for (const ids of courseLessonIds.values()) {
-      for (const id of ids) allLessonIds.add(id);
-    }
 
     const creators = await prisma.creatorAccount.findMany({
       orderBy: { createdAt: "desc" },
@@ -53,19 +51,38 @@ export async function GET(request: NextRequest) {
     });
 
     const rows = creators.map((creator) => {
-      const passed = new Set(
+      const allowedCourseRoles = getCoursesForRole(
+        creator.assignedRole,
+        creator.independentCreator
+      );
+      const roleCourses = courses.filter((c) => allowedCourseRoles.includes(c.role));
+
+      const allowedLessonIds = new Set<number>();
+      const allowedCourseIds = new Set<number>();
+      for (const course of roleCourses) {
+        allowedCourseIds.add(course.id);
+        for (const id of courseLessonIds.get(course.id) || []) {
+          allowedLessonIds.add(id);
+        }
+      }
+
+      const passedAll = new Set(
         creator.progress.filter((p) => p.passed).map((p) => p.lessonId)
       );
-      const totalLessons = allLessonIds.size || 1;
+      const passed = new Set(
+        [...passedAll].filter((id) => allowedLessonIds.has(id))
+      );
+      const totalLessons = allowedLessonIds.size || 1;
       const overall = Math.round((passed.size / totalLessons) * 100);
 
-      const byCourse = courses.map((course) => {
+      const byCourse = roleCourses.map((course) => {
         const ids = courseLessonIds.get(course.id) || [];
-        const done = ids.filter((id) => passed.has(id)).length;
+        const done = ids.filter((id) => passedAll.has(id)).length;
         return {
           courseId: course.id,
           title: course.title,
           slug: course.slug,
+          role: course.role,
           lessonCount: ids.length,
           completed: done,
           percent: ids.length ? Math.round((done / ids.length) * 100) : 0,
@@ -77,6 +94,10 @@ export async function GET(request: NextRequest) {
         return Math.max(max, t);
       }, 0);
 
+      const roleCertificates = creator.certificates.filter(
+        (cert) => !cert.courseId || allowedCourseIds.has(cert.courseId)
+      );
+
       return {
         id: creator.id,
         name: creator.name,
@@ -87,10 +108,10 @@ export async function GET(request: NextRequest) {
         independentCreator: creator.independentCreator,
         createdAt: creator.createdAt,
         createdBy: creator.createdBy,
-        lessonCount: creator.progress.length,
+        lessonCount: allowedLessonIds.size,
         passedLessons: passed.size,
         overallPercent: overall,
-        certificates: creator.certificates.length,
+        certificates: roleCertificates.length,
         courses: byCourse,
         lastActiveAt: lastTs ? new Date(lastTs).toISOString() : null,
         active: creator.progress.length > 0 || creator.certificates.length > 0,
