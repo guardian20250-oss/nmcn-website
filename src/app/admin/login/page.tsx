@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, Loader2 } from "lucide-react";
+import { Lock, Mail, Loader2, KeyRound } from "lucide-react";
+import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mustChange, setMustChange] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +29,12 @@ export default function AdminLogin() {
       });
 
       if (res.ok) {
-        router.push("/admin");
+        const data = await res.json();
+        if (data.mustChangePassword) {
+          setMustChange(true);
+        } else {
+          router.push("/admin");
+        }
       } else {
         const data = await res.json();
         setError(data.error || "Login failed");
@@ -89,6 +98,15 @@ export default function AdminLogin() {
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
             {loading ? "Signing in..." : "Sign In"}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowForgot(true)}
+            className="flex w-full items-center justify-center gap-1.5 text-xs text-nmcn-muted transition hover:text-nmcn-blue"
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+            Forgot password?
+          </button>
         </form>
 
         <div className="mt-6 text-center">
@@ -97,6 +115,18 @@ export default function AdminLogin() {
           </Link>
         </div>
       </div>
+
+      <ForcePasswordChangeModal
+        open={mustChange}
+        email={email}
+        onDone={() => router.push("/admin")}
+      />
+      <ForgotPasswordModal
+        open={showForgot}
+        onClose={() => setShowForgot(false)}
+        kind="staff"
+        defaultEmail={email}
+      />
     </div>
   );
 }

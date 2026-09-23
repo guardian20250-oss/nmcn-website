@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Users, Plus, CheckCircle, XCircle, Mail, Shield, GraduationCap, Crown, Search, Star, Swords, Eye, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Users, Plus, CheckCircle, XCircle, Mail, Shield, GraduationCap, Crown, Search, Star, Swords, Eye, Pencil, Trash2, KeyRound, Copy, X } from "lucide-react";
 
 const roleIcons: Record<string, React.ReactNode> = {
   admin: <Shield className="h-5 w-5 text-nmcn-blue" />,
@@ -34,6 +34,8 @@ export default function StaffAccountsPage() {
   const [createForm, setCreateForm] = useState({ name: "", email: "", password: "", role: "admin" });
   const [createStatus, setCreateStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [createMsg, setCreateMsg] = useState("");
+  const [createdStaff, setCreatedStaff] = useState<{ name: string; email: string; role: string; tempPassword: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   const [approveForm, setApproveForm] = useState({ accountId: "", assignedRole: "creator" });
   const [approveLoading, setApproveLoading] = useState(false);
   const [accountRoles, setAccountRoles] = useState<Record<string, string>>({});
@@ -106,6 +108,13 @@ export default function StaffAccountsPage() {
       }
       setCreateStatus("success");
       setCreateMsg(`Staff account created for ${data.staff.email}`);
+      setCreatedStaff({
+        name: data.staff.name || createForm.name,
+        email: data.staff.email || createForm.email,
+        role: data.staff.role || createForm.role,
+        tempPassword: createForm.password,
+      });
+      setCopied(false);
       setCreateForm({ name: "", email: "", password: "", role: "admin" });
       fetchAccounts();
     } catch {
@@ -348,6 +357,16 @@ export default function StaffAccountsPage() {
             <div className="card p-6 text-center border-green-500/30">
               <CheckCircle className="mx-auto mb-2 h-6 w-6 text-green-400" />
               <p className="text-sm text-white">{createMsg}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateStatus("idle");
+                  setCreateMsg("");
+                }}
+                className="btn-outline mt-4 text-sm"
+              >
+                Create Another
+              </button>
             </div>
           ) : createStatus === "error" ? (
             <div className="card p-6 text-center border-red-500/30">
@@ -399,6 +418,92 @@ export default function StaffAccountsPage() {
             </form>
           )}
         </div>
+
+        {createdStaff && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setCreatedStaff(null)}
+            />
+            <div className="card relative w-full max-w-md p-6 sm:p-8">
+              <button
+                type="button"
+                onClick={() => setCreatedStaff(null)}
+                className="absolute top-4 right-4 text-nmcn-muted transition hover:text-nmcn-blue"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-green-500/40 bg-green-500/10">
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-white">
+                    Staff Account Created
+                  </h3>
+                  <p className="text-xs text-nmcn-muted">
+                    Share these credentials securely with the new staff member.
+                  </p>
+                </div>
+              </div>
+              <dl className="mb-4 space-y-3 text-sm">
+                <div className="flex justify-between gap-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40 px-3 py-2">
+                  <dt className="text-nmcn-muted">Name</dt>
+                  <dd className="text-right text-white">{createdStaff.name}</dd>
+                </div>
+                <div className="flex justify-between gap-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40 px-3 py-2">
+                  <dt className="text-nmcn-muted">Email</dt>
+                  <dd className="break-all text-right text-white">{createdStaff.email}</dd>
+                </div>
+                <div className="flex justify-between gap-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40 px-3 py-2">
+                  <dt className="text-nmcn-muted">Role</dt>
+                  <dd className="text-right capitalize text-nmcn-blue">
+                    {roleLabels[createdStaff.role] || createdStaff.role}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3 rounded-lg border border-nmcn-gold/40 bg-nmcn-gold/10 px-3 py-2">
+                  <dt className="flex items-center gap-1.5 text-nmcn-gold">
+                    <KeyRound className="h-3.5 w-3.5" /> Temp password
+                  </dt>
+                  <dd className="flex items-center gap-2 break-all text-right font-mono text-white">
+                    {createdStaff.tempPassword}
+                    <button
+                      type="button"
+                      title="Copy password"
+                      onClick={() => {
+                        navigator.clipboard
+                          .writeText(createdStaff.tempPassword)
+                          .then(() => {
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          })
+                          .catch(() => {});
+                      }}
+                      className="text-nmcn-muted transition hover:text-nmcn-blue"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    {copied && <span className="text-xs text-green-400">Copied</span>}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mb-5 rounded-lg border border-nmcn-blue/30 bg-nmcn-blue/10 px-3 py-2.5 text-xs text-nmcn-muted">
+                <strong className="text-nmcn-blue">Must change password:</strong>{" "}
+                When {createdStaff.email} signs in for the first time, a popup
+                will force them to set a new password before accessing the
+                dashboard.
+              </p>
+              <button
+                type="button"
+                onClick={() => setCreatedStaff(null)}
+                className="btn-gold w-full"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="mb-6 flex gap-2 border-b border-nmcn-border">

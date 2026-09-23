@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, KeyRound, ShieldCheck } from "lucide-react";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 type Mode = "login" | "register";
 
@@ -17,6 +18,12 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
     "idle"
   );
   const [message, setMessage] = useState("");
+  const [mustChange, setMustChange] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changeError, setChangeError] = useState("");
+  const [changeLoading, setChangeLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +79,13 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
         }
       }
 
+      if (mode === "login" && data.user?.mustChangePassword) {
+        setMustChange(true);
+        setStatus("idle");
+        setMessage("");
+        return;
+      }
+
       setStatus("success");
       setMessage(
         mode === "login"
@@ -87,6 +101,42 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
     }
   };
 
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangeError("");
+    if (newPassword.length < 8) {
+      setChangeError("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setChangeError("Passwords do not match");
+      return;
+    }
+    setChangeLoading(true);
+    try {
+      const res = await fetch("/api/academy/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "changePassword", newPassword }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setChangeError(data.error || "Failed to update password");
+        return;
+      }
+      setMustChange(false);
+      setStatus("success");
+      setMessage("Password updated. Redirecting…");
+      setTimeout(() => {
+        window.location.href = "/academy";
+      }, 600);
+    } catch {
+      setChangeError("Network error");
+    } finally {
+      setChangeLoading(false);
+    }
+  };
+
   const logout = async () => {
     await fetch("/api/academy/auth", {
       method: "POST",
@@ -95,6 +145,64 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
     });
     window.location.reload();
   };
+
+  if (mustChange) {
+    return (
+      <div className="card p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-nmcn-gold/40 bg-nmcn-gold/10">
+            <ShieldCheck className="h-5 w-5 text-nmcn-gold" />
+          </div>
+          <div>
+            <h3 className="font-heading text-lg font-bold text-white">
+              Change Your Password
+            </h3>
+            <p className="text-xs text-nmcn-muted">
+              You must set a new password before continuing to the academy.
+            </p>
+          </div>
+        </div>
+        <form onSubmit={changePassword} className="space-y-3">
+          <input
+            className="input"
+            type="password"
+            placeholder="New password * (8+ characters)"
+            required
+            minLength={8}
+            autoFocus
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <input
+            className="input"
+            type="password"
+            placeholder="Confirm new password *"
+            required
+            minLength={8}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          {changeError && (
+            <p className="flex items-center gap-1 text-sm text-red-400">
+              <XCircle className="h-4 w-4" /> {changeError}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={changeLoading}
+            className="btn-gold w-full disabled:opacity-50"
+          >
+            {changeLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="mr-2 h-4 w-4 inline" />
+            )}
+            Set Password & Continue
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   if (status === "success") {
     return (
@@ -180,6 +288,19 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
           onChange={(e) => setForm({ ...form, password: e.target.value })}
         />
 
+        {mode === "login" && (
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => setShowForgot(true)}
+              className="inline-flex items-center gap-1 text-xs text-nmcn-muted transition hover:text-nmcn-blue"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Forgot password?
+            </button>
+          </div>
+        )}
+
         {status === "error" && message && (
           <p className="flex items-center gap-1 text-sm text-red-400">
             <XCircle className="h-4 w-4" /> {message}
@@ -211,6 +332,13 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
       >
         Sign out
       </button>
+
+      <ForgotPasswordModal
+        open={showForgot}
+        onClose={() => setShowForgot(false)}
+        kind="academy"
+        defaultEmail={form.email}
+      />
     </div>
   );
 }
