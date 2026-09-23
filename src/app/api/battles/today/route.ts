@@ -10,7 +10,7 @@ const BATTLE_EXCHANGE_JWT_SECRET =
   "nmcn-battle-exchange-secret-2024";
 const TIME_ZONE = process.env.BATTLE_TIME_ZONE || "America/New_York";
 
-const CACHE_SECONDS = 300;
+const CACHE_SECONDS = 30;
 
 function todayKey(date = new Date()) {
   return date.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
@@ -79,6 +79,27 @@ function toPublicBattle(raw: any): PublicBattle {
 }
 
 async function fetchConfirmedBattles(): Promise<any[]> {
+  // Prefer public endpoint (no JWT) with JWT fallback for older Battle Exchange builds
+  let res: Response;
+  try {
+    res = await fetch(
+      `${BATTLE_EXCHANGE_URL}/api/battles/public?status=CONFIRMED&limit=200`,
+      { cache: "no-store" }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data?.battles)) return data.battles;
+    }
+    console.error(
+      `Public battles endpoint status=${res.status}, falling back to JWT`
+    );
+  } catch (networkErr: any) {
+    console.error(
+      "Public battles unreachable:",
+      networkErr?.message || networkErr
+    );
+  }
+
   const token = jwt.sign(
     {
       id: "main-site",
@@ -90,15 +111,30 @@ async function fetchConfirmedBattles(): Promise<any[]> {
     { expiresIn: "15m" }
   );
 
-  const res = await fetch(
-    `${BATTLE_EXCHANGE_URL}/api/battles?status=CONFIRMED&limit=200`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    }
-  );
+  try {
+    res = await fetch(
+      `${BATTLE_EXCHANGE_URL}/api/battles?status=CONFIRMED&limit=200`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      }
+    );
+  } catch (networkErr: any) {
+    console.error("Battle Exchange unreachable:", networkErr?.message || networkErr);
+    throw new Error(`Battle Exchange unreachable: ${networkErr?.message || "network"}`);
+  }
 
   if (!res.ok) {
+    let body = "";
+    try {
+      body = await res.text();
+    } catch {
+      /* ignore */
+    }
+    console.error(
+      `Battle Exchange responded ${res.status}:`,
+      body.slice(0, 300)
+    );
     throw new Error(`Battle Exchange responded ${res.status}`);
   }
 
@@ -141,8 +177,8 @@ export async function GET() {
         },
       }
     );
-  } catch (error) {
-    console.error("Today battle lookup failed:", error);
+  } catch (error: any) {
+    console.error("Today battle lookup failed:", error?.message || error);
     return NextResponse.json(
       {
         date: todayKey(),
@@ -152,11 +188,12 @@ export async function GET() {
         calendarUrl: `${BATTLE_EXCHANGE_URL}/calendar`,
         platformUrl: BATTLE_EXCHANGE_URL,
         error: "Battle schedule unavailable",
+        detail: String(error?.message || error),
         updatedAt: new Date().toISOString(),
       },
       {
         status: 200,
-        headers: { "Cache-Control": "public, s-maxage=60" },
+        headers: { "Cache-Control": "public, s-maxage=30" },
       }
     );
   }
