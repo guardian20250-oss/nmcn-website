@@ -17,7 +17,6 @@ model Admin {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   createdCreators    CreatorAccount[]
-  creators           Creator[]
   handledTickets     SupportTicket[]
 
   @@map("admins")
@@ -30,7 +29,6 @@ model Creator {
   name         String
   tiktokHandle String?  @db.VarChar(100)
   createdById  Int?
-  createdBy    Admin?   @relation(fields: [createdById], references: [id])
   creatorAccounts CreatorAccount[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt

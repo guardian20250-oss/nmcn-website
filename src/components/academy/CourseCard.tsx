@@ -6,6 +6,7 @@ import {
   BookOpen,
   ChevronRight,
   GraduationCap,
+  KeyRound,
   MessagesSquare,
   Swords,
   Video,
@@ -18,6 +19,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Swords,
   MessagesSquare,
   BookOpen,
+  KeyRound,
 };
 
 interface CourseSummary {

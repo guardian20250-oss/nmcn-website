@@ -1111,6 +1111,153 @@ const courses: SeedCourse[] = [
           },
         ],
       },
+      {
+        title: "Check-Ins & Assignments",
+        slug: "check-ins-and-assignments",
+        summary: "How to run lightweight check-ins and hand out clear work.",
+        sections: [
+          { type: "heading", text: "Keep check-ins short" },
+          {
+            type: "paragraph",
+            text: "A good check-in answers three things: what shipped, what is blocked, and what is next. Long status meetings waste creator stream time.",
+          },
+          {
+            type: "list",
+            items: [
+              "Ask for schedule, one win, and one blocker",
+              "Write assignments with an owner and a due date",
+              "Cancel or shorten check-ins when nothing is blocked",
+              "Escalate blockers the creator cannot clear alone",
+            ],
+          },
+          {
+            type: "callout",
+            text: "If an assignment has no owner and due date, it is not an assignment yet.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What should a check-in cover?",
+            options: [
+              "What shipped, what is blocked, what is next",
+              "Only gift totals",
+              "Only personal life updates",
+              "Nothing — skip check-ins always",
+            ],
+            correctIndex: 0,
+            explanation: "Those three answers keep check-ins useful and short.",
+          },
+          {
+            prompt: "What makes an assignment real?",
+            options: [
+              "An owner and a due date",
+              "A vague idea in chat",
+              "A hope for later",
+              "No follow-up needed",
+            ],
+            correctIndex: 0,
+            explanation: "Ownership and timing turn intent into execution.",
+          },
+        ],
+      },
+      {
+        title: "Tracking Creator Progress",
+        slug: "tracking-creator-progress",
+        summary: "Simple signals that show who is improving and who needs help.",
+        sections: [
+          { type: "heading", text: "Track trends, not one-offs" },
+          {
+            type: "paragraph",
+            text: "Look at multi-week trends in schedule consistency, chat engagement, and growth — not one lucky stream or one bad night.",
+          },
+          {
+            type: "list",
+            items: [
+              "Review the same three metrics every week",
+              "Compare each creator to their own baseline",
+              "Note patterns before making role changes",
+              "Share a one-line status with managers when needed",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Your own baseline is a fairer score than someone else's highlight reel.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the fairest way to compare a creator?",
+            options: [
+              "Against their own baseline over time",
+              "Against one viral competitor clip",
+              "Against last year's drama",
+              "Against random chat opinions",
+            ],
+            correctIndex: 0,
+            explanation: "Self-comparison over time is the reliable signal.",
+          },
+          {
+            prompt: "How often should leads review core metrics?",
+            options: [
+              "Every week, same three metrics",
+              "Only when there is a crisis",
+              "Once a year",
+              "Never",
+            ],
+            correctIndex: 0,
+            explanation: "Consistent weekly review catches drift early.",
+          },
+        ],
+      },
+      {
+        title: "Team Lead Wrap-Up",
+        slug: "team-lead-wrap-up",
+        summary: "Your five-lesson loop for leading a creator group.",
+        sections: [
+          { type: "heading", text: "Run the week" },
+          {
+            type: "paragraph",
+            text: "Own the daily lane, lead people with clear feedback, run short check-ins, and track progress against baselines. That is the full team lead loop.",
+          },
+          {
+            type: "list",
+            items: [
+              "Schedule and consistency first",
+              "One clear goal per creator per week",
+              "Assignments with owner and due date",
+              "Escalate bigger decisions to managers",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Pass this knowledge check to earn your Team Lead Operations certificate.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the team lead loop?",
+            options: [
+              "Daily lane, feedback, check-ins, progress",
+              "Only posting memes",
+              "Only arguing in chat",
+              "Only changing stream titles",
+            ],
+            correctIndex: 0,
+            explanation: "That loop keeps a creator group healthy.",
+          },
+          {
+            prompt: "Who do you escalate bigger decisions to?",
+            options: [
+              "Managers",
+              "Random viewers",
+              "No one ever",
+              "Competitors",
+            ],
+            correctIndex: 0,
+            explanation: "Managers own decisions outside the lead's lane.",
+          },
+        ],
+      },
     ],
   },
   {
@@ -1313,6 +1460,153 @@ const courses: SeedCourse[] = [
           },
         ],
       },
+      {
+        title: "Setting Standards Across Teams",
+        slug: "setting-standards-across-teams",
+        summary: "Define what good looks like and keep every team aligned.",
+        sections: [
+          { type: "heading", text: "Standards beat heroics" },
+          {
+            type: "paragraph",
+            text: "When every team invents its own rules, creators get mixed messages. Managers write clear shared standards so leads coach from the same playbook.",
+          },
+          {
+            type: "list",
+            items: [
+              "Publish one shared expectation sheet for leads and creators",
+              "Review standards weekly in lead check-ins",
+              "Update standards when a pattern of mistakes appears",
+              "Recognize teams that follow the standard cleanly",
+            ],
+          },
+          {
+            type: "callout",
+            text: "If it is not written down, it is not a standard — it is a rumor.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "Why write standards down?",
+            options: [
+              "So every team follows the same playbook",
+              "To create extra paperwork",
+              "To confuse new leads",
+              "Standards are optional",
+            ],
+            correctIndex: 0,
+            explanation: "Written standards remove mixed messages.",
+          },
+          {
+            prompt: "When should standards be reviewed?",
+            options: [
+              "Weekly with team leads",
+              "Once a year only",
+              "Never after launch",
+              "Only after a public complaint",
+            ],
+            correctIndex: 0,
+            explanation: "Weekly review keeps standards current and used.",
+          },
+        ],
+      },
+      {
+        title: "Reporting & Decision Making",
+        slug: "reporting-and-decision-making",
+        summary: "Use clear numbers and calm decisions under pressure.",
+        sections: [
+          { type: "heading", text: "Decide from signal, not noise" },
+          {
+            type: "paragraph",
+            text: "Managers review schedule consistency, engagement trends, and blockers — then decide one priority. Avoid reacting to every spike or rumor.",
+          },
+          {
+            type: "list",
+            items: [
+              "Track consistency and engagement, not just gift totals",
+              "Separate urgent issues from important ones",
+              "Write the decision and the owner in one line",
+              "Revisit the decision at the next check-in",
+            ],
+          },
+          {
+            type: "callout",
+            text: "One clear priority per week beats five vague urgencies.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What should managers track first?",
+            options: [
+              "Consistency and engagement trends",
+              "Only gift totals",
+              "Competitor gossip",
+              "Office snack inventory",
+            ],
+            correctIndex: 0,
+            explanation: "Consistency and engagement are leading signals.",
+          },
+          {
+            prompt: "How should a decision be recorded?",
+            options: [
+              "With the decision and the owner",
+              "Only in someone's memory",
+              "As a long ambiguous essay",
+              "Not at all",
+            ],
+            correctIndex: 0,
+            explanation: "Clear ownership makes execution reliable.",
+          },
+        ],
+      },
+      {
+        title: "Manager Wrap-Up",
+        slug: "manager-wrap-up",
+        summary: "Pull ops, oversight, standards, and decisions together.",
+        sections: [
+          { type: "heading", text: "Run the system" },
+          {
+            type: "paragraph",
+            text: "Your job is to make work easier for the people doing it: clear priorities, removed blockers, consistent standards, and calm decisions from real signal.",
+          },
+          {
+            type: "list",
+            items: [
+              "Set one weekly priority for each team",
+              "Check leads before micromanaging creators",
+              "Keep standards written and reviewed",
+              "Document decisions with a named owner",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Pass this knowledge check to earn your Manager course certificate.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the manager's core loop?",
+            options: [
+              "Priorities, blockers, standards, decisions",
+              "Only attending meetings",
+              "Micromanaging every stream",
+              "Avoiding all choices",
+            ],
+            correctIndex: 0,
+            explanation: "That loop keeps the agency moving.",
+          },
+          {
+            prompt: "Who should managers check first?",
+            options: [
+              "Team leads",
+              "Random comment sections",
+              "Only the founder",
+              "No one",
+            ],
+            correctIndex: 0,
+            explanation: "Leads are the first layer managers support.",
+          },
+        ],
+      },
     ],
   },
   {
@@ -1441,6 +1735,153 @@ const courses: SeedCourse[] = [
             ],
             correctIndex: 0,
             explanation: "Recent growth trends are more relevant than old data.",
+          },
+        ],
+      },
+      {
+        title: "First Contact & Outreach",
+        slug: "first-contact-and-outreach",
+        summary: "How to open a conversation with a creator without sounding spammy.",
+        sections: [
+          { type: "heading", text: "Personalize the first message" },
+          {
+            type: "paragraph",
+            text: "A specific note about their stream gets replies. A copy-paste pitch gets ignored or blocked.",
+          },
+          {
+            type: "list",
+            items: [
+              "Reference one specific stream or moment",
+              "Say who you are and what the agency offers",
+              "Ask for a short call, not a long commitment",
+              "Follow up once, then move on politely",
+            ],
+          },
+          {
+            type: "callout",
+            text: "One thoughtful message beats fifty identical ones.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What makes a first message likely to get a reply?",
+            options: [
+              "A specific note about their stream",
+              "A generic bulk pitch",
+              "No introduction at all",
+              "Only an emoji",
+            ],
+            correctIndex: 0,
+            explanation: "Personalization shows you actually watched.",
+          },
+          {
+            prompt: "What should the first ask be?",
+            options: [
+              "A short call",
+              "An immediate contract signing",
+              "Their account password",
+              "A public endorsement",
+            ],
+            correctIndex: 0,
+            explanation: "A low-friction next step keeps the door open.",
+          },
+        ],
+      },
+      {
+        title: "Tracking the Scout Pipeline",
+        slug: "tracking-the-scout-pipeline",
+        summary: "Keep prospects moving or close them out cleanly.",
+        sections: [
+          { type: "heading", text: "No silent stalls" },
+          {
+            type: "paragraph",
+            text: "Every prospect should sit in a clear stage: new, contacted, call booked, signed, or closed. Silence is a process bug, not a strategy.",
+          },
+          {
+            type: "list",
+            items: [
+              "Update stage after every touch",
+              "Set a next-action date on open prospects",
+              "Close stale leads with a short note",
+              "Share weekly pipeline numbers with your lead",
+            ],
+          },
+          {
+            type: "callout",
+            text: "A pipeline with dates and stages beats a pile of unread DMs.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What should every open prospect have?",
+            options: [
+              "A stage and a next-action date",
+              "Only a username",
+              "No notes at all",
+              "A permanent maybe",
+            ],
+            correctIndex: 0,
+            explanation: "Stages and dates prevent silent stalls.",
+          },
+          {
+            prompt: "What is a process bug?",
+            options: [
+              "Prospects sitting with no next step",
+              "Signing too many creators",
+              "Weekly pipeline reviews",
+              "Closing stale leads",
+            ],
+            correctIndex: 0,
+            explanation: "Silence without a next action means the process broke.",
+          },
+        ],
+      },
+      {
+        title: "Scout Wrap-Up",
+        slug: "scout-wrap-up",
+        summary: "Your five-lesson loop from spotting talent to a full pipeline.",
+        sections: [
+          { type: "heading", text: "Find, evaluate, reach, track" },
+          {
+            type: "paragraph",
+            text: "Spot talent past vanity metrics, score it with a simple framework, open personal conversations, and keep the pipeline dated and honest.",
+          },
+          {
+            type: "list",
+            items: [
+              "Watch several recent streams before scoring",
+              "Personalize every first contact",
+              "Stage and date every open prospect",
+              "Close stale leads cleanly",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Pass this knowledge check to earn your Creator Discovery & Scouting certificate.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the scout loop?",
+            options: [
+              "Spot, evaluate, reach out, track",
+              "Only mass DM",
+              "Only watch one clip",
+              "Only change your own stream",
+            ],
+            correctIndex: 0,
+            explanation: "That sequence fills the agency pipeline.",
+          },
+          {
+            prompt: "How should stale leads be handled?",
+            options: [
+              "Close them with a short note",
+              "Leave them forever",
+              "Delete all history",
+              "Ignore them silently",
+            ],
+            correctIndex: 0,
+            explanation: "Clean closeout keeps pipeline data trustworthy.",
           },
         ],
       },
@@ -1703,6 +2144,202 @@ const courses: SeedCourse[] = [
             ],
             correctIndex: 0,
             explanation: "A single contact per side keeps communication clean.",
+          },
+        ],
+      },
+      {
+        title: "Pre-Battle Run of Show",
+        slug: "pre-battle-run-of-show",
+        summary: "A timed checklist so nothing is forgotten before GO LIVE.",
+        sections: [
+          { type: "heading", text: "Run of show" },
+          {
+            type: "paragraph",
+            text: "A run of show is a simple timeline: who confirms what, and when. Coordinators who use one avoid last-minute scrambles.",
+          },
+          {
+            type: "list",
+            items: [
+              "T-24h: confirm creators, format, and slot in writing",
+              "T-1h: reconfirm both sides and announce to chat",
+              "T-10m: both creators ready, points of contact online",
+              "T-0: start on time; log the official result after",
+            ],
+          },
+          {
+            type: "callout",
+            text: "If it is not on the run of show, it will be forgotten under pressure.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is a run of show?",
+            options: [
+              "A timed checklist of who confirms what",
+              "A gift leaderboard",
+              "A font style guide",
+              "A follower ranking",
+            ],
+            correctIndex: 0,
+            explanation: "It is a timeline that prevents last-minute chaos.",
+          },
+          {
+            prompt: "When should both sides reconfirm?",
+            options: [
+              "About one hour before start",
+              "Only after the battle",
+              "Never",
+              "Only if someone complains",
+            ],
+            correctIndex: 0,
+            explanation: "A T-1h reconfirm catches no-shows early.",
+          },
+        ],
+      },
+      {
+        title: "Live Event Communication",
+        slug: "live-event-communication",
+        summary: "Keep creators, leads, and chat informed without noise.",
+        sections: [
+          { type: "heading", text: "One channel, clear updates" },
+          {
+            type: "paragraph",
+            text: "During the battle, over-communication creates confusion. Use one private channel for staff and keep public chat updates short and factual.",
+          },
+          {
+            type: "list",
+            items: [
+              "One staff channel for internal decisions",
+              "Short public updates: start time, format, result",
+              "Do not leak private contact info in public chat",
+              "Have a backup contact if the main one drops",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Public chat gets facts; staff channel gets problems.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "Where should internal problems be discussed?",
+            options: [
+              "A private staff channel",
+              "Public battle chat only",
+              "Random DMs with fans",
+              "Nowhere",
+            ],
+            correctIndex: 0,
+            explanation: "Internal issues stay private to the team.",
+          },
+          {
+            prompt: "What should public updates include?",
+            options: [
+              "Start time, format, and result",
+              "Every private disagreement",
+              "Personal phone numbers",
+              "Unconfirmed rumors",
+            ],
+            correctIndex: 0,
+            explanation: "Short factual updates keep chat informed.",
+          },
+        ],
+      },
+      {
+        title: "Scoring Disputes & Closeout",
+        slug: "scoring-disputes-and-closeout",
+        summary: "Resolve score questions cleanly and file the result.",
+        sections: [
+          { type: "heading", text: "Close clean" },
+          {
+            type: "paragraph",
+            text: "If scores are disputed, pause, restate the written rules, and resolve through points of contact — not public arguments. Then file the official result.",
+          },
+          {
+            type: "list",
+            items: [
+              "Return to the original written agreement",
+              "Keep public posts factual",
+              "Record winner, format, and date",
+              "Share the result with both agencies",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Clean closeout is how you get invited back for bigger matchups.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "First step in a scoring dispute?",
+            options: [
+              "Restate the original written rules",
+              "Start a public argument",
+              "Delete the stream",
+              "Ignore both sides",
+            ],
+            correctIndex: 0,
+            explanation: "The written agreement is the source of truth.",
+          },
+          {
+            prompt: "What belongs in the official result?",
+            options: [
+              "Winner, format, and date",
+              "Only emojis",
+              "Fan private messages",
+              "Nothing",
+            ],
+            correctIndex: 0,
+            explanation: "A complete result prevents later confusion.",
+          },
+        ],
+      },
+      {
+        title: "Coordinator Wrap-Up",
+        slug: "coordinator-wrap-up",
+        summary: "Full battle flow from setup to recorded result.",
+        sections: [
+          { type: "heading", text: "Own the full flow" },
+          {
+            type: "paragraph",
+            text: "You now know setup, run of show, live communication, disputes, and closeout. A coordinator who follows the full flow makes battles easy to run and hard to dispute.",
+          },
+          {
+            type: "list",
+            items: [
+              "Confirm early and reconfirm at T-1h",
+              "Use one staff channel and short public updates",
+              "Resolve disputes from the written agreement",
+              "File and share the official result",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Pass this knowledge check to earn your Battle Coordinator certificate.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the full coordinator flow?",
+            options: [
+              "Setup → run of show → live comms → closeout",
+              "Only picking a stream title",
+              "Only gift totals",
+              "Only posting after the battle",
+            ],
+            correctIndex: 0,
+            explanation: "That sequence covers the whole battle lifecycle.",
+          },
+          {
+            prompt: "What makes battles easy to trust?",
+            options: [
+              "Clean closeout and shared results",
+              "Public arguments",
+              "No written rules",
+              "Last-minute changes only",
+            ],
+            correctIndex: 0,
+            explanation: "Trust comes from clear process and records.",
           },
         ],
       },
@@ -2226,8 +2863,282 @@ const courses: SeedCourse[] = [
   },
 ];
 
+const backstageLessons: SeedLesson[] = [
+  {
+    title: "What Backstage Means",
+    slug: "what-backstage-means",
+    summary: "Staff spaces, LIVE multi-guest, and when each one is used.",
+    sections: [
+      { type: "heading", text: "Backstage is where work happens before the public sees it" },
+      {
+        type: "paragraph",
+        text: "Backstage covers two things staff use daily: the agency's private operational spaces (Discord channels, dashboards, planning threads) and TikTok LIVE's multi-guest / backstage flow when creators go on stream together. Knowing which backstage you are in keeps communication clean.",
+      },
+      {
+        type: "list",
+        items: [
+          "Operational backstage: Discord, dashboards, internal planning",
+          "LIVE backstage: multi-guest panels and pre-show coordination",
+          "Public stage: the stream chat and posts everyone sees",
+          "Never mix private decisions into public chat",
+        ],
+      },
+      {
+        type: "callout",
+        text: "If the audience can see it, treat it as public — even if it feels informal.",
+      },
+    ],
+    questions: [
+      {
+        prompt: "Which of these is operational backstage?",
+        options: [
+          "Private Discord staff channels and dashboards",
+          "Public LIVE chat only",
+          "Competitor comment sections",
+          "Everyone's FYP feed",
+        ],
+        correctIndex: 0,
+        explanation: "Operational backstage is private staff infrastructure.",
+      },
+      {
+        prompt: "When should private decisions stay off public chat?",
+        options: [
+          "Always",
+          "Only on weekends",
+          "Only if someone is offline",
+          "Never",
+        ],
+        correctIndex: 0,
+        explanation: "Private decisions never belong in public channels.",
+      },
+    ],
+  },
+  {
+    title: "Finding Your Way Around",
+    slug: "finding-your-way-around",
+    summary: "Channels, roles, dashboards, and where to start each day.",
+    sections: [
+      { type: "heading", text: "Start in one place" },
+      {
+        type: "paragraph",
+        text: "New staff get lost when they open every channel at once. Pick a daily entry point: your role channel, your open tasks, then your creators' or event threads.",
+      },
+      {
+        type: "list",
+        items: [
+          "Open your role channel first for announcements",
+          "Check dashboard tasks before deep-scrolling chat",
+          "Pin or bookmark the threads you use weekly",
+          "Ask for a channel map when something looks empty",
+        ],
+      },
+      {
+        type: "callout",
+        text: "A short daily route beats reacting to every ping.",
+      },
+    ],
+    questions: [
+      {
+        prompt: "Where should staff start each day?",
+        options: [
+          "Role channel, then tasks, then threads",
+          "Random viral videos",
+          "Unrelated group DMs",
+          "Nowhere specific",
+        ],
+        correctIndex: 0,
+        explanation: "A fixed route keeps attention on real work.",
+      },
+      {
+        prompt: "What should you bookmark?",
+        options: [
+          "Threads you use weekly",
+          "Every channel ever created",
+          "Only memes",
+          "Nothing",
+        ],
+        correctIndex: 0,
+        explanation: "Weekly-use threads deserve quick access.",
+      },
+    ],
+  },
+  {
+    title: "Roles & Access",
+    slug: "roles-and-access",
+    summary: "Who can see what, and how to get access without workarounds.",
+    sections: [
+      { type: "heading", text: "Access follows role" },
+      {
+        type: "paragraph",
+        text: "Team leads, managers, scouts, and battle coordinators see different tools on purpose. If you cannot open something, the fix is a role request — not a shared password.",
+      },
+      {
+        type: "list",
+        items: [
+          "Use your own account only",
+          "Request access through admin or manager",
+          "Do not forward screenshots of private dashboards",
+          "Remove access when someone changes roles",
+        ],
+      },
+      {
+        type: "callout",
+        text: "Shared logins break audit trails and get people removed.",
+      },
+    ],
+    questions: [
+      {
+        prompt: "What is the correct way to get missing access?",
+        options: [
+          "Request a role change from admin/manager",
+          "Share someone else's password",
+          "Post credentials in public chat",
+          "Create a shadow account",
+        ],
+        correctIndex: 0,
+        explanation: "Role-based requests keep access clean and traceable.",
+      },
+      {
+        prompt: "Who should use your login?",
+        options: [
+          "Only you",
+          "Your whole team",
+          "Anyone who asks",
+          "No one ever including you",
+        ],
+        correctIndex: 0,
+        explanation: "Accounts are personal for security and audit.",
+      },
+    ],
+  },
+  {
+    title: "Working Backstage Live",
+    slug: "working-backstage-live",
+    summary: "Coordination habits during multi-guest LIVEs and events.",
+    sections: [
+      { type: "heading", text: "Quiet coordination while the show runs" },
+      {
+        type: "paragraph",
+        text: "During a LIVE or battle, backstage work should be short and factual: confirm ready state, time, and blockers in the staff channel — not in public chat.",
+      },
+      {
+        type: "list",
+        items: [
+          "Confirm ready / not ready in one line",
+          "Use time boxes: T-60, T-10, T-0",
+          "Keep public updates factual only",
+          "Hold debates for after the stream",
+        ],
+      },
+      {
+        type: "callout",
+        text: "During the show, backstage chats should be shorter, not louder.",
+      },
+    ],
+    questions: [
+      {
+        prompt: "Where do live coordination updates go?",
+        options: [
+          "Private staff channel",
+          "Public battle chat only",
+          "Unrelated group DMs",
+          "Nowhere",
+        ],
+        correctIndex: 0,
+        explanation: "Staff channel keeps live ops private and fast.",
+      },
+      {
+        prompt: "What is a good ready check format?",
+        options: [
+          "One-line ready / not ready with time",
+          "A long essay",
+          "Only emojis with no meaning",
+          "No check at all",
+        ],
+        correctIndex: 0,
+        explanation: "Short standardized checks reduce confusion.",
+      },
+    ],
+  },
+  {
+    title: "Backstage Wrap-Up",
+    slug: "backstage-wrap-up",
+    summary: "A five-lesson path for navigating backstage as staff.",
+    sections: [
+      { type: "heading", text: "Move cleanly between private and public" },
+      {
+        type: "paragraph",
+        text: "You now know what backstage is, how to navigate it daily, how access works, and how to coordinate live without leaking private details. Apply that every shift.",
+      },
+      {
+        type: "list",
+        items: [
+          "Start each day on your role route",
+          "Request access — never share logins",
+          "Keep private decisions private",
+          "Confirm live status in one line",
+        ],
+      },
+      {
+        type: "callout",
+        text: "Pass this knowledge check to earn your Navigating Backstage certificate.",
+      },
+    ],
+    questions: [
+      {
+        prompt: "What is the backstage golden rule?",
+        options: [
+          "Private stays private; public stays factual",
+          "Post everything publicly",
+          "Share passwords freely",
+          "Skip all coordination",
+        ],
+        correctIndex: 0,
+        explanation: "That rule protects both staff and creators.",
+      },
+      {
+        prompt: "How do you get missing tools?",
+        options: [
+          "Request the right role access",
+          "Borrow someone's login",
+          "Screenshot private dashboards into public chat",
+          "Give up",
+        ],
+        correctIndex: 0,
+        explanation: "Role requests are the only clean path.",
+      },
+    ],
+  },
+];
+
+function backstageCourse(
+  role: string,
+  order: number,
+  slugSuffix: string
+): SeedCourse {
+  return {
+    title: "Navigating Backstage",
+    slug: `navigating-backstage-${slugSuffix}`,
+    description:
+      "Staff path for moving through private operational spaces, access rules, and LIVE backstage coordination without mixing public and private.",
+    icon: "KeyRound",
+    order,
+    role,
+    lessons: backstageLessons,
+  };
+}
+
+const roleCourses: SeedCourse[] = [
+  backstageCourse("team_lead", 11, "team-lead"),
+  backstageCourse("manager", 12, "manager"),
+  backstageCourse("scout", 13, "scout"),
+  backstageCourse("battle_coordinator", 14, "battle-coordinator"),
+];
+
+const allCourses: SeedCourse[] = [...courses, ...roleCourses];
+
 async function main() {
-  for (const courseData of courses) {
+  for (const courseData of allCourses) {
     const course = await prisma.course.upsert({
       where: { slug: courseData.slug },
       update: {
