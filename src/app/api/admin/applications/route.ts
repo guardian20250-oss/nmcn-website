@@ -21,12 +21,26 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, status } = await request.json();
+  try {
+    const body = await request.json();
+    const id = Number(body.id);
+    const status = String(body.status || "").trim();
 
-  const updated = await prisma.joinApplication.update({
-    where: { id },
-    data: { status },
-  });
+    if (!id) {
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
 
-  return NextResponse.json({ application: updated });
+    const updated = await prisma.joinApplication.update({
+      where: { id },
+      data: { status },
+    });
+
+    return NextResponse.json({ application: updated });
+  } catch (error) {
+    console.error("Application update error:", error);
+    return NextResponse.json({ error: "Failed to update application" }, { status: 500 });
+  }
 }

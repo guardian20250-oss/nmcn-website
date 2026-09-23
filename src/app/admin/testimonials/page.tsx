@@ -30,6 +30,8 @@ export default function AdminTestimonialsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ name: "", role: "", quote: "", rating: 5 });
   const [saving, setSaving] = useState(false);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const fetchTestimonials = async () => {
@@ -55,19 +57,27 @@ export default function AdminTestimonialsPage() {
   }, []);
 
   const updateStatus = async (id: number, status: string) => {
+    setUpdatingId(id);
+    setError("");
     try {
       const res = await fetch("/api/admin/testimonials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id: Number(id), status }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setTestimonials(items =>
           items.map(t => (t.id === id ? { ...t, status } : t))
         );
+      } else {
+        setError(data.error || "Failed to update testimonial");
       }
     } catch (error) {
       console.error("Update failed:", error);
+      setError("Failed to update testimonial");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -176,6 +186,12 @@ export default function AdminTestimonialsPage() {
             </button>
           ))}
         </div>
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="card p-12 text-center">
@@ -325,23 +341,26 @@ export default function AdminTestimonialsPage() {
                         {t.status !== "approved" && (
                           <button
                             onClick={() => updateStatus(t.id, "approved")}
-                            className="btn-gold text-xs px-3 py-1.5"
+                            disabled={updatingId !== null}
+                            className="btn-gold text-xs px-3 py-1.5 disabled:opacity-50"
                           >
-                            Approve
+                            {updatingId === t.id ? "..." : "Approve"}
                           </button>
                         )}
                         {t.status !== "rejected" && (
                           <button
                             onClick={() => updateStatus(t.id, "rejected")}
-                            className="btn-danger text-xs px-3 py-1.5"
+                            disabled={updatingId !== null}
+                            className="btn-danger text-xs px-3 py-1.5 disabled:opacity-50"
                           >
-                            Deny
+                            {updatingId === t.id ? "..." : "Deny"}
                           </button>
                         )}
                         {t.status !== "pending" && (
                           <button
                             onClick={() => updateStatus(t.id, "pending")}
-                            className="btn-ghost text-xs px-3 py-1.5"
+                            disabled={updatingId !== null}
+                            className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-50"
                           >
                             Reset
                           </button>

@@ -21,6 +21,8 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -44,19 +46,27 @@ export default function ApplicationsPage() {
   };
 
   const updateStatus = async (id: number, status: string) => {
+    setUpdatingId(id);
+    setError("");
     try {
       const res = await fetch("/api/admin/applications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id: Number(id), status }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setApplications(apps =>
           apps.map(app => (app.id === id ? { ...app, status } : app))
         );
+      } else {
+        setError(data.error || "Failed to update application");
       }
     } catch (error) {
       console.error("Update failed:", error);
+      setError("Failed to update application");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -103,6 +113,12 @@ export default function ApplicationsPage() {
           ))}
         </div>
 
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
         {filtered.length === 0 ? (
           <div className="card p-12 text-center">
             <p className="text-nmcn-muted">No applications found.</p>
@@ -137,17 +153,29 @@ export default function ApplicationsPage() {
                   </div>
                   <div className="flex gap-2">
                     {app.status !== "approved" && (
-                      <button onClick={() => updateStatus(app.id, "approved")} className="btn-gold text-xs px-3 py-1.5">
-                        Approve
+                      <button
+                        onClick={() => updateStatus(app.id, "approved")}
+                        disabled={updatingId !== null}
+                        className="btn-gold text-xs px-3 py-1.5 disabled:opacity-50"
+                      >
+                        {updatingId === app.id ? "..." : "Approve"}
                       </button>
                     )}
                     {app.status !== "rejected" && (
-                      <button onClick={() => updateStatus(app.id, "rejected")} className="btn-danger text-xs px-3 py-1.5">
-                        Reject
+                      <button
+                        onClick={() => updateStatus(app.id, "rejected")}
+                        disabled={updatingId !== null}
+                        className="btn-danger text-xs px-3 py-1.5 disabled:opacity-50"
+                      >
+                        {updatingId === app.id ? "..." : "Reject"}
                       </button>
                     )}
                     {app.status !== "pending" && (
-                      <button onClick={() => updateStatus(app.id, "pending")} className="btn-ghost text-xs px-3 py-1.5">
+                      <button
+                        onClick={() => updateStatus(app.id, "pending")}
+                        disabled={updatingId !== null}
+                        className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-50"
+                      >
                         Reset
                       </button>
                     )}

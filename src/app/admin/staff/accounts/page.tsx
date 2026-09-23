@@ -36,6 +36,9 @@ export default function StaffAccountsPage() {
   const [createMsg, setCreateMsg] = useState("");
   const [approveForm, setApproveForm] = useState({ accountId: "", assignedRole: "creator" });
   const [approveLoading, setApproveLoading] = useState(false);
+  const [accountRoles, setAccountRoles] = useState<Record<string, string>>({});
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState("");
   const router = useRouter();
 
   const fetchAccounts = async () => {
@@ -88,36 +91,53 @@ export default function StaffAccountsPage() {
     }
   };
 
-  const handleApprove = async () => {
-    if (!approveForm.accountId) return;
+  const handleApprove = async (accountId: number) => {
+    if (!accountId || busyId !== null) return;
+    setActionError("");
+    setBusyId(accountId);
     setApproveLoading(true);
     try {
+      const assignedRole = accountRoles[String(accountId)] || approveForm.assignedRole || "creator";
       const res = await fetch("/api/admin/staff/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approveAccount", accountId: approveForm.accountId, assignedRole: approveForm.assignedRole }),
+        body: JSON.stringify({ action: "approveAccount", accountId: Number(accountId), assignedRole }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        fetchAccounts();
         setApproveForm({ accountId: "", assignedRole: "creator" });
+        await fetchAccounts();
+      } else {
+        setActionError(data.error || "Approve failed");
       }
     } catch {
-      // retry
+      setActionError("Approve failed — network error");
     } finally {
       setApproveLoading(false);
+      setBusyId(null);
     }
   };
 
   const handleReject = async (accountId: number) => {
+    if (busyId !== null) return;
+    setActionError("");
+    setBusyId(accountId);
     try {
       const res = await fetch("/api/admin/staff/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "rejectAccount", accountId }),
+        body: JSON.stringify({ action: "rejectAccount", accountId: Number(accountId) }),
       });
-      if (res.ok) fetchAccounts();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        await fetchAccounts();
+      } else {
+        setActionError(data.error || "Reject failed");
+      }
     } catch {
-      // retry
+      setActionError("Reject failed — network error");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -257,6 +277,11 @@ export default function StaffAccountsPage() {
               </div>
             ) : (
               <div className="grid gap-4">
+                {actionError && (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                    {actionError}
+                  </div>
+                )}
                 {pending.map((account: any) => (
                   <div key={account.id} className="card p-4">
                     <div className="flex items-start justify-between">
@@ -280,12 +305,13 @@ export default function StaffAccountsPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-nmcn-muted">Assign role:</span>
                         <select
-                          value={approveForm.accountId === account.id ? approveForm.assignedRole : "creator"}
+                          value={accountRoles[String(account.id)] || "creator"}
+                          disabled={busyId === account.id}
                           onChange={(e) =>
-                            setApproveForm({
-                              accountId: account.id.toString(),
-                              assignedRole: e.target.value,
-                            })
+                            setAccountRoles((prev) => ({
+                              ...prev,
+                              [String(account.id)]: e.target.value,
+                            }))
                           }
                           className="input py-1 px-2 text-xs"
                         >
@@ -299,17 +325,18 @@ export default function StaffAccountsPage() {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={handleReject.bind(null, account.id)}
-                          className="btn-ghost text-sm text-red-400"
+                          onClick={() => handleReject(account.id)}
+                          disabled={busyId !== null}
+                          className="btn-ghost text-sm text-red-400 disabled:opacity-50"
                         >
                           Reject
                         </button>
                         <button
-                          onClick={handleApprove}
-                          disabled={approveLoading || approveForm.accountId !== account.id.toString()}
-                          className="btn-gold text-sm"
+                          onClick={() => handleApprove(account.id)}
+                          disabled={busyId !== null}
+                          className="btn-gold text-sm disabled:opacity-50"
                         >
-                          {approveLoading ? "..." : "Approve"}
+                          {busyId === account.id && approveLoading ? "..." : "Approve"}
                         </button>
                       </div>
                     </div>

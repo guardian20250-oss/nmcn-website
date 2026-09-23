@@ -23,18 +23,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "approveAccount") {
-      if (!accountId || !assignedRole) {
+      const id = Number(accountId);
+      if (!id || !assignedRole) {
         return NextResponse.json({ error: "Account ID and role are required" }, { status: 400 });
       }
-      const account = await approveAccount(accountId, assignedRole);
+      const account = await approveAccount(id, String(assignedRole));
       return NextResponse.json({ account });
     }
 
     if (action === "rejectAccount") {
-      if (!accountId) {
+      const id = Number(accountId);
+      if (!id) {
         return NextResponse.json({ error: "Account ID is required" }, { status: 400 });
       }
-      const account = await rejectAccount(accountId);
+      const account = await rejectAccount(id);
       return NextResponse.json({ account });
     }
 

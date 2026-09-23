@@ -22,14 +22,22 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { id, status, name, role, quote, rating } = await request.json();
+    const body = await request.json();
+    const id = Number(body.id);
 
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
+    const { status, name, role, quote, rating } = body;
     const data: Record<string, unknown> = {};
-    if (status !== undefined) data.status = status;
+    if (status !== undefined) {
+      const nextStatus = String(status);
+      if (!["pending", "approved", "rejected"].includes(nextStatus)) {
+        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+      }
+      data.status = nextStatus;
+    }
     if (name !== undefined) data.name = name;
     if (role !== undefined) data.role = role || null;
     if (quote !== undefined) data.quote = quote;
