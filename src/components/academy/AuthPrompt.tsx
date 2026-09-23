@@ -78,7 +78,9 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
           ? "Signed in. Your progress will now sync across devices."
           : "Account created! Check your email for role assignment or sign in to continue."
       );
-      setTimeout(() => window.location.reload(), 1200);
+      setTimeout(() => {
+        window.location.href = "/academy";
+      }, 800);
     } catch {
       setStatus("error");
       setMessage("Network error. Please try again.");
