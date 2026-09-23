@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy, BadgeCheck, Search, XCircle, Download } from "lucide-react";
+import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy, BadgeCheck, Search, XCircle, Download, Shield } from "lucide-react";
 import GetHelpButton from "@/components/GetHelpButton";
 
 interface CertResult {
@@ -176,9 +176,14 @@ export default function AdminDashboard() {
               </p>
             </div>
           </div>
-          <Link href="/admin/creators" className="btn-gold text-sm">
-            Creator Progress
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin/creators" className="btn-gold text-sm">
+              Creators
+            </Link>
+            <Link href="/admin/creators?category=independent" className="btn-outline text-sm">
+              Independent
+            </Link>
+          </div>
         </div>
 
         <div className="mb-8 rounded-xl border border-nmcn-blue/30 bg-nmcn-blue/5 px-4 py-4 sm:px-6">
@@ -284,15 +289,11 @@ export default function AdminDashboard() {
               </div>
               <div className="stat-card">
                 <div className="stat-num">{stats?.totalCreators || 0}</div>
-                <div className="stat-label">Total Creators</div>
+                <div className="stat-label">Creators</div>
               </div>
               <div className="stat-card">
                 <div className="stat-num">{stats?.totalIndependent || 0}</div>
                 <div className="stat-label">Independent Creators</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-num">{stats?.totalAccounts || 0}</div>
-                <div className="stat-label">Total Accounts</div>
               </div>
               <div className="stat-card">
                 <div className="stat-num">{stats?.totalStaff || 0}</div>
@@ -344,7 +345,71 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <section>
+          <h2 className="mb-4 font-heading text-xl font-semibold text-white">
+            Creators
+          </h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            {canViewCreators && (
+              <Link href="/admin/creators" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+                  <Users className="h-6 w-6 text-nmcn-blue" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-semibold text-white">Creators</h3>
+                  <p className="text-sm text-nmcn-muted">{stats?.totalCreators || 0} total · {stats?.totalIndependent || 0} independent</p>
+                </div>
+              </Link>
+            )}
+            {isAdmin && (
+              <Link href="/admin/staff/accounts" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-gold/10">
+                  <Shield className="h-6 w-6 text-nmcn-gold" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-semibold text-white">Staff & Accounts</h3>
+                  <p className="text-sm text-nmcn-muted">{stats?.totalStaff || 0} staff · {stats?.totalAccounts || 0} accounts</p>
+                </div>
+              </Link>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="mb-4 font-heading text-xl font-semibold text-white">
+            Staff
+          </h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            {isAdmin && (
+              <>
+                <Link href="/admin/staff" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+                    <Shield className="h-6 w-6 text-nmcn-blue" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg font-semibold text-white">Staff Roles</h3>
+                    <p className="text-sm text-nmcn-muted">Manage admin, manager, team lead, scout & battle coordinator roles</p>
+                  </div>
+                </Link>
+                <Link href="/admin/staff/accounts" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-gold/10">
+                    <Users className="h-6 w-6 text-nmcn-gold" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg font-semibold text-white">Staff & Accounts</h3>
+                    <p className="text-sm text-nmcn-muted">{stats?.totalStaff || 0} staff · {stats?.totalAccounts || 0} accounts</p>
+                  </div>
+                </Link>
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="mb-4 font-heading text-xl font-semibold text-white">
+            Academy & Support
+          </h2>
+          <div className="grid gap-6 md:grid-cols-2">
           {canViewApps && (
             <Link href="/admin/applications" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
@@ -377,30 +442,6 @@ export default function AdminDashboard() {
               <div>
                 <h3 className="font-heading text-lg font-semibold text-white">Testimonials</h3>
                 <p className="text-sm text-nmcn-muted">{stats?.pendingTestimonials || 0} pending review</p>
-              </div>
-            </Link>
-          )}
-
-          {isAdmin && (
-            <Link href="/admin/staff/accounts" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
-                <Users className="h-6 w-6 text-nmcn-blue" />
-              </div>
-              <div>
-                <h3 className="font-heading text-lg font-semibold text-white">Staff & Accounts</h3>
-                <p className="text-sm text-nmcn-muted">{stats?.totalStaff || 0} staff · {stats?.totalAccounts || 0} accounts</p>
-              </div>
-            </Link>
-          )}
-
-          {canViewCreators && (
-            <Link href="/admin/creators" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
-                <Users className="h-6 w-6 text-nmcn-blue" />
-              </div>
-              <div>
-                <h3 className="font-heading text-lg font-semibold text-white">Creators</h3>
-                <p className="text-sm text-nmcn-muted">{stats?.totalCreators || 0} total</p>
               </div>
             </Link>
           )}
@@ -447,8 +488,9 @@ export default function AdminDashboard() {
                 {stats?.openTickets || 0} open · {stats?.inProgressTickets || 0} in progress
               </p>
             </div>
-          </Link>
-        </div>
+           </Link>
+         </div>
+        </section>
 
         <div className="mt-8">
           <Link href="/" className="text-sm text-nmcn-muted hover:text-nmcn-blue transition">

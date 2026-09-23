@@ -69,8 +69,21 @@ export default function AdminCreatorsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [category, setCategory] = useState<"all" | "creators" | "independent">("all");
   const editFormRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
+
+  const isIndependent = (c: CreatorRow) =>
+    c.independentCreator || c.assignedRole === "independent_creator";
+
+  const categoryCreators = creators.filter((c) => !isIndependent(c));
+  const categoryIndependent = creators.filter(isIndependent);
+  const visibleCreators =
+    category === "creators"
+      ? categoryCreators
+      : category === "independent"
+        ? categoryIndependent
+        : creators;
 
   const load = async () => {
     try {
@@ -246,7 +259,7 @@ export default function AdminCreatorsPage() {
             <p className="text-nmcn-muted">
               {createOnly
                 ? "Create academy accounts for new creators"
-                : `${summary?.active || 0} active · ${summary?.total || 0} total creators`}
+                : `${summary?.active || 0} active · ${categoryCreators.length} creators · ${categoryIndependent.length} independent`}
             </p>
           </div>
           <div className="flex gap-3">
@@ -312,14 +325,18 @@ export default function AdminCreatorsPage() {
                 value={editForm.assignedRole}
                 onChange={(e) => setEditForm({ ...editForm, assignedRole: e.target.value })}
               >
-                <option value="creator">Creator</option>
-                <option value="independent_creator">Independent Creator</option>
-                <option value="team_lead">Team Lead</option>
-                <option value="manager">Manager</option>
-                <option value="scout">Scout</option>
-                <option value="battle_coordinator">Battle Coordinator</option>
-                <option value="admin">Admin</option>
-              </select>
+                  <optgroup label="Creators">
+                    <option value="creator">Creator</option>
+                    <option value="independent_creator">Independent Creator</option>
+                  </optgroup>
+                  <optgroup label="Staff">
+                    <option value="team_lead">Team Lead</option>
+                    <option value="manager">Manager</option>
+                    <option value="scout">Scout</option>
+                    <option value="battle_coordinator">Battle Coordinator</option>
+                    <option value="admin">Admin</option>
+                  </optgroup>
+                </select>
               <select
                 className="input"
                 value={editForm.status}
@@ -419,8 +436,12 @@ export default function AdminCreatorsPage() {
         {!createOnly && (
           <div className="mb-8 grid gap-6 md:grid-cols-4">
             <div className="stat-card">
-              <div className="stat-num">{summary?.total || 0}</div>
-              <div className="stat-label">Total Creators</div>
+              <div className="stat-num">{categoryCreators.length}</div>
+              <div className="stat-label">Creators</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-num">{categoryIndependent.length}</div>
+              <div className="stat-label">Independent</div>
             </div>
             <div className="stat-card">
               <div className="stat-num">{summary?.active || 0}</div>
@@ -430,22 +451,44 @@ export default function AdminCreatorsPage() {
               <div className="stat-num">{summary?.avgPercent || 0}%</div>
               <div className="stat-label">Avg Completion</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-num">{summary?.certificates || 0}</div>
-              <div className="stat-label">Certificates</div>
-            </div>
+          </div>
+        )}
+
+        {!createOnly && (
+          <div className="mb-6 flex flex-wrap gap-2 border-b border-nmcn-border">
+            {(
+              [
+                { id: "all", label: "All", count: creators.length },
+                { id: "creators", label: "Creators", count: categoryCreators.length },
+                { id: "independent", label: "Independent Creators", count: categoryIndependent.length },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setCategory(tab.id)}
+                className={`px-4 py-2 text-sm font-medium transition ${category === tab.id ? "border-b-2 border-nmcn-blue text-nmcn-blue" : "text-nmcn-muted hover:text-white"}`}
+              >
+                {tab.label}
+                <span className="ml-1.5 text-xs text-nmcn-muted">({tab.count})</span>
+              </button>
+            ))}
           </div>
         )}
 
         {!createOnly && (
           <div className="space-y-4">
-            {creators.length === 0 && (
+            {visibleCreators.length === 0 && (
               <div className="card p-10 text-center text-nmcn-muted">
                 <Users className="mx-auto mb-3 h-8 w-8 text-nmcn-muted" />
-                No academy creators yet.
+                {category === "independent"
+                  ? "No independent creators yet."
+                  : category === "creators"
+                    ? "No agency creators yet."
+                    : "No academy creators yet."}
               </div>
             )}
-            {creators.map((c) => (
+            {visibleCreators.map((c) => (
               <div key={c.id} className="card p-6">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <span className="font-heading text-lg font-semibold text-white">

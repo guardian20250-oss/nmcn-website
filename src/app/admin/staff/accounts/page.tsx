@@ -29,7 +29,9 @@ export default function StaffAccountsPage() {
   const [accounts, setAccounts] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
-  const [activeTab, setActiveTab] = useState<"pending" | "active" | "rejected" | "staff">("pending");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "creators" | "independent" | "staff" | "rejected"
+  >("pending");
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ name: "", email: "", password: "", role: "admin" });
   const [createStatus, setCreateStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -330,9 +332,20 @@ export default function StaffAccountsPage() {
   }
 
   const pending = accounts?.pending || [];
-  const active = accounts?.active || [];
   const rejected = accounts?.rejected || [];
   const staff = accounts?.staff || [];
+  const activeAccounts = accounts?.active || [];
+  const isIndependent = (a: any) =>
+    Boolean(a.independentCreator) || a.assignedRole === "independent_creator";
+  const creators = accounts?.creators || activeAccounts.filter((a: any) => !isIndependent(a));
+  const independent = accounts?.independent || activeAccounts.filter(isIndependent);
+  const tabDefs = [
+    { id: "pending", label: "Pending", count: pending.length },
+    { id: "creators", label: "Creators", count: creators.length },
+    { id: "independent", label: "Independent", count: independent.length },
+    { id: "staff", label: "Staff", count: staff.length },
+    { id: "rejected", label: "Rejected", count: rejected.length },
+  ] as const;
 
   return (
     <div className="min-h-screen pt-24 px-6">
@@ -340,7 +353,7 @@ export default function StaffAccountsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-heading text-3xl font-bold text-white">Staff & Accounts</h1>
-            <p className="text-nmcn-muted">Manage staff accounts, creator accounts, and pending approvals.</p>
+            <p className="text-nmcn-muted">            Creators, independent creators, and staff are managed as separate categories.</p>
           </div>
           <Link href="/admin" className="btn-ghost text-sm">← Back to Dashboard</Link>
         </div>
@@ -506,15 +519,16 @@ export default function StaffAccountsPage() {
         )}
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-2 border-b border-nmcn-border">
-          {(["pending", "active", "rejected", "staff"] as const).map((tab) => (
+        <div className="mb-6 flex flex-wrap gap-2 border-b border-nmcn-border">
+          {tabDefs.map((tab) => (
             <button
-              key={tab}
+              key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium capitalize transition ${activeTab === tab ? "border-b-2 border-nmcn-blue text-nmcn-blue" : "text-nmcn-muted hover:text-white"}`}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 text-sm font-medium transition ${activeTab === tab.id ? "border-b-2 border-nmcn-blue text-nmcn-blue" : "text-nmcn-muted hover:text-white"}`}
             >
-              {tab}
+              {tab.label}
+              <span className="ml-1.5 text-xs text-nmcn-muted">({tab.count})</span>
             </button>
           ))}
         </div>
@@ -559,13 +573,17 @@ export default function StaffAccountsPage() {
                     value={editForm.assignedRole}
                     onChange={(e) => setEditForm({ ...editForm, assignedRole: e.target.value })}
                   >
-                    <option value="creator">Creator</option>
-                    <option value="independent_creator">Independent Creator</option>
-                    <option value="team_lead">Team Lead</option>
-                    <option value="manager">Manager</option>
-                    <option value="scout">Scout</option>
-                    <option value="battle_coordinator">Battle Coordinator</option>
-                    <option value="admin">Admin</option>
+                    <optgroup label="Creators">
+                      <option value="creator">Creator</option>
+                      <option value="independent_creator">Independent Creator</option>
+                    </optgroup>
+                    <optgroup label="Staff">
+                      <option value="team_lead">Team Lead</option>
+                      <option value="manager">Manager</option>
+                      <option value="scout">Scout</option>
+                      <option value="battle_coordinator">Battle Coordinator</option>
+                      <option value="admin">Admin</option>
+                    </optgroup>
                   </select>
                   <select
                     className="input"
@@ -663,12 +681,16 @@ export default function StaffAccountsPage() {
                           }
                           className="input py-1 px-2 text-xs"
                         >
-                          <option value="creator">Creator</option>
-                          <option value="independent_creator">Independent Creator</option>
-                          <option value="team_lead">Team Lead</option>
-                          <option value="manager">Manager</option>
-                          <option value="scout">Scout</option>
-                          <option value="battle_coordinator">Battle Coordinator</option>
+                          <optgroup label="Creators">
+                            <option value="creator">Creator</option>
+                            <option value="independent_creator">Independent Creator</option>
+                          </optgroup>
+                          <optgroup label="Staff">
+                            <option value="team_lead">Team Lead</option>
+                            <option value="manager">Manager</option>
+                            <option value="scout">Scout</option>
+                            <option value="battle_coordinator">Battle Coordinator</option>
+                          </optgroup>
                         </select>
                       </div>
                       <div className="flex gap-2">
@@ -697,19 +719,22 @@ export default function StaffAccountsPage() {
           </div>
         )}
 
-        {/* Active */}
-        {activeTab === "active" && (
+        {/* Creators */}
+        {activeTab === "creators" && (
           <div>
-            <h2 className="mb-4 font-heading text-lg font-semibold text-white">
-              Active Accounts ({active.length})
-            </h2>
-            {active.length === 0 ? (
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-heading text-lg font-semibold text-white">
+                Creators ({creators.length})
+              </h2>
+              <span className="text-sm text-nmcn-muted">Agency creators</span>
+            </div>
+            {creators.length === 0 ? (
               <div className="card p-8 text-center">
-                <p className="text-nmcn-muted">No active accounts yet.</p>
+                <p className="text-nmcn-muted">No active creator accounts yet.</p>
               </div>
             ) : (
               <div className="grid gap-3">
-                {active.map((account: any) => (
+                {creators.map((account: any) => (
                   <div key={account.id} className="card p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -724,7 +749,70 @@ export default function StaffAccountsPage() {
                           )}
                           <p className="text-xs text-nmcn-blue capitalize mt-1">
                             {roleLabels[account.assignedRole] || account.assignedRole}
-                            {account.independentCreator && " • Independent"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-nmcn-muted">
+                          Created {new Date(account.createdAt).toLocaleDateString()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => openEditCreator(account)}
+                          disabled={busyId !== null}
+                          className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                          title="Edit"
+                        >
+                          <Pencil className="h-3 w-3" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteCreator(account.id)}
+                          disabled={busyId !== null}
+                          className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Independent Creators */}
+        {activeTab === "independent" && (
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-heading text-lg font-semibold text-white">
+                Independent Creators ({independent.length})
+              </h2>
+              <span className="text-sm text-nmcn-muted">Separate from agency creators</span>
+            </div>
+            {independent.length === 0 ? (
+              <div className="card p-8 text-center">
+                <p className="text-nmcn-muted">No active independent creator accounts yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {independent.map((account: any) => (
+                  <div key={account.id} className="card p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-nmcn-border bg-nmcn-gold/10">
+                          {roleIcons[account.assignedRole] || <Star className="h-5 w-5 text-nmcn-gold" />}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white">{account.name}</p>
+                          <p className="text-sm text-nmcn-muted">{account.email}</p>
+                          {account.tiktokHandle && (
+                            <p className="text-xs text-nmcn-muted">@{account.tiktokHandle}</p>
+                          )}
+                          <p className="text-xs text-nmcn-gold capitalize mt-1">
+                            {roleLabels[account.assignedRole] || account.assignedRole}
                           </p>
                         </div>
                       </div>
@@ -818,6 +906,9 @@ export default function StaffAccountsPage() {
             <h2 className="mb-4 font-heading text-lg font-semibold text-white">
               Staff Accounts ({staff.length})
             </h2>
+            <p className="mb-4 text-sm text-nmcn-muted">
+              Staff roles live only here — separate from creator accounts.
+            </p>
             {staff.length === 0 ? (
               <div className="card p-8 text-center">
                 <p className="text-nmcn-muted">No staff accounts yet.</p>

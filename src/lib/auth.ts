@@ -418,7 +418,18 @@ export async function getAllAccounts() {
     select: { id: true, email: true, name: true, role: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });
-  return { pending, active, rejected, staff };
+
+  const isIndependent = (a: { independentCreator: boolean; assignedRole: string }) =>
+    a.independentCreator || a.assignedRole === "independent_creator";
+
+  return {
+    pending,
+    active,
+    creators: active.filter((a) => !isIndependent(a)),
+    independent: active.filter(isIndependent),
+    rejected,
+    staff,
+  };
 }
 
 // ── Staff request helpers ───────────────────────────────────────────────────
