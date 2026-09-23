@@ -38,18 +38,19 @@ type SeedCourse = {
 
 const courses: SeedCourse[] = [
   {
-    title: "TikTok LIVE Fundamentals",
-    slug: "tiktok-live",
+    title: "Tikfinity",
+    slug: "tikfinity",
     description:
-      "Master the essentials of going live on TikTok — setup, engagement, battles mindset, and growth habits.",
-    icon: "Video",
+      "Learn the full cycle of TikTok LIVE content creation — from going live for the first time to building a community, running battles, and growing as a creator. This course covers everything you need to know to start and sustain a successful TikTok LIVE channel.",
+icon: "Video",
     order: 0,
     role: "creator",
     lessons: [
       {
         title: "Before You Go LIVE",
         slug: "before-you-go-live",
-        summary: "Gear, settings, and mindset for a strong first stream.",
+        summary:
+          "A comprehensive guide to preparing for your first TikTok LIVE — gear, settings, mindset, and a pre-show checklist to ensure a smooth broadcast.",
         sections: [
           {
             type: "heading",
@@ -373,7 +374,7 @@ const courses: SeedCourse[] = [
               "Clips extend reach beyond the LIVE window and funnel new viewers.",
           },
         ],
-      },
+},
     ],
   },
   {
@@ -679,7 +680,7 @@ const courses: SeedCourse[] = [
             explanation: "Professional tone protects reputation.",
           },
         ],
-      },
+},
     ],
   },
   {
@@ -982,7 +983,7 @@ const courses: SeedCourse[] = [
               "Shared learning keeps your crew consistent and growing together.",
           },
         ],
-      },
+},
     ],
   },
   {
@@ -3210,6 +3211,603 @@ const courses: SeedCourse[] = [
       },
     ],
   },
+  {
+    title: "YouTube Content Mastery",
+    slug: "youtube-content-mastery",
+    description:
+      "Learn how to create, grow, and monetize YouTube content — from filming your first video to building a loyal audience.",
+    icon: "Video",
+    order: 11,
+    role: "creator",
+    lessons: [
+      {
+        title: "Creating Your First YouTube Video",
+        slug: "creating-your-first-youtube-video",
+        summary:
+          "Plan, film, edit, and publish your first YouTube video with confidence.",
+        sections: [
+          {
+            type: "heading",
+            text: "Plan Your Video",
+          },
+          {
+            type: "paragraph",
+            text: "Before you touch the camera, define your video's purpose, target audience, and key message. A well-planned video gets 3x more views than a spontaneous one.",
+          },
+          {
+            type: "list",
+            items: [
+              "Choose a topic your audience actually searches for",
+              "Write a simple script or bullet-point outline",
+              "Set up lighting and clear audio before filming",
+              "Keep the first 10 seconds compelling to reduce drop-off",
+            ],
+          },
+          {
+            type: "youtube",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          },
+          {
+            type: "paragraph",
+            text: "After filming, edit for pacing — cut dead air, add transitions, and end with a clear call to action. Upload with an optimized title, description, and tags.",
+          },
+          {
+            type: "callout",
+            text: "Consistency beats perfection. Upload regularly and improve with each video.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What should you do before filming a YouTube video?",
+            
+            options: [
+              "Define the purpose and audience",
+              "Film immediately for authenticity",
+              "Only worry about lighting",
+              "Skip the script entirely",
+            ],
+            correctIndex: 0,
+            explanation: "Planning your video's purpose and audience ensures you deliver value and keep viewers engaged.",
+          },
+          {
+            prompt: "What is the most important part of the first 10 seconds?",
+            
+            options: [
+              "Show your face clearly",
+              "Hook the viewer with a compelling message",
+              "Play background music",
+              "List all your social media handles",
+            ],
+            correctIndex: 1,
+            explanation: "The first 10 seconds determine whether viewers stay or click away. A strong hook reduces drop-off.",
+          },
+          {
+            prompt: "What should you do after filming?",
+            
+            options: [
+              "Upload immediately without editing",
+              "Edit for pacing and add a call to action",
+              "Delete the video and start over",
+              "Only change the thumbnail",
+            ],
+            correctIndex: 1,
+            explanation: "Editing for pacing and ending with a clear call to action significantly boosts engagement and retention.",
+          },
+        ],
+      },
+      {
+        title: "Growing Your YouTube Channel",
+        slug: "growing-your-youtube-channel",
+        summary:
+          "Strategies for building a loyal audience and increasing watch time on YouTube.",
+        sections: [
+          {
+            type: "heading",
+            text: "Know Your Audience",
+          },
+          {
+            type: "paragraph",
+            text: "Use YouTube Analytics to understand who watches your videos, when they watch, and what they search for. Tailor your content to match their interests.",
+          },
+          {
+            type: "youtube",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          },
+          {
+            type: "list",
+            items: [
+              "Post consistently on a schedule your audience expects",
+              "Use searchable titles, descriptions, and tags",
+              "Collaborate with other creators in your niche",
+              "Respond to comments to build community",
+              "Analyze your top videos and create more like them",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Growth is a marathon, not a sprint. Focus on value and consistency over chasing viral moments.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "How can you understand your YouTube audience better?",
+            
+            options: [
+              "Guess based on your gut feeling",
+              "Use YouTube Analytics to see viewer demographics and behavior",
+              "Ask friends who you think might watch",
+              "Only look at subscriber count",
+            ],
+            correctIndex: 1,
+            explanation: "YouTube Analytics provides detailed insights into viewer demographics, watch time, and traffic sources.",
+          },
+          {
+            prompt: "Which strategy is most effective for growing a YouTube channel?",
+            
+            options: [
+              "Post as many videos as possible every day",
+              "Buy subscribers and views",
+              "Post consistently on a schedule and analyze top-performing content",
+              "Only use clickbait thumbnails",
+            ],
+            correctIndex: 2,
+            explanation: "Consistent posting on a schedule combined with analyzing what works creates sustainable growth.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Tikfinity",
+    slug: "tikfinity",
+    description:
+      "Master TikTok LIVE growth with proven strategies — from first stream to sustainable creator business. Covers setup, engagement, battles, monetization, and long-term growth systems.",
+icon: "Video",
+    order: 11,
+    role: "creator",
+    lessons: [
+      {
+        title: "First Stream Setup",
+        slug: "first-stream-setup",
+        summary:
+          "Complete pre-flight checklist — lighting, audio, internet, and mindset for a confident first LIVE.",
+        sections: [
+          {
+            type: "heading",
+            text: "Your First Stream Checklist",
+          },
+          {
+            type: "paragraph",
+            text: "Preparation separates smooth first streams from technical disasters. Run this checklist 30 minutes before every broadcast.",
+          },
+          {
+            type: "youtube",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          },
+          {
+            type: "list",
+            items: [
+              "Soft key light at 45° — no backlighting from windows",
+              "External mic or wired earbuds; test audio levels",
+              "Wi-Fi 5GHz or strong cellular; close background apps",
+              "Pin welcome message + 3 conversation starters",
+              "Hydration, charger, and \"do not disturb\" sign on door",
+            ],
+          },
+          {
+            type: "callout",
+            text: "A consistent weekly schedule trains your audience more than any single viral stream.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the ideal key-light position for a first stream?",
+            
+            options: [
+              "Directly overhead",
+              "45° angle, slightly above eye level",
+              "Behind you facing the wall",
+              "On the floor pointing up",
+            ],
+            correctIndex: 1,
+            explanation: "45° key light gives dimensional, flattering illumination without harsh shadows.",
+            
+          },
+          {
+            prompt: "Why close background apps before going LIVE?",
+            
+            options: [
+              "To save battery",
+              "To free bandwidth and CPU for stable streaming",
+              "To hide notifications",
+              "To make the phone faster for games",
+            ],
+            correctIndex: 1,
+            explanation: "Background apps consume bandwidth and CPU, causing dropped frames and lag.",
+            
+          },
+          {
+            prompt: "What should you pin before going live?",
+            
+            options: [
+              "Your bio",
+              "Welcome message with schedule and CTA",
+              "A random emoji",
+              "The current time",
+            ],
+            correctIndex: 1,
+            explanation: "A pinned welcome message orients new viewers and drives follows.",
+            
+          },
+          {
+            prompt: "How far should your key light be from your face for soft illumination?",
+            
+            options: [
+              "Right against the skin",
+              "About 3–4 feet",
+              "As far as the room allows",
+              "Behind the camera only",
+            ],
+            correctIndex: 1,
+            explanation: "3–4 feet creates soft, wrap-around light without hot spots.",
+            
+          },
+        ],
+      },
+      {
+        title: "Engagement & Retention",
+        slug: "engagement-retention",
+        summary:
+          "Turn passive viewers into active community — greetings, questions, polls, and shoutout systems that keep chat moving.",
+        sections: [
+          {
+            type: "heading",
+            text: "Two-Way Energy",
+          },
+          {
+            type: "paragraph",
+            text: "LIVE is a conversation, not a broadcast. The algorithm and viewers both reward streams where people feel heard.",
+          },
+          {
+            type: "youtube",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          },
+          {
+            type: "list",
+            items: [
+              "Greet every new name out loud within 5 seconds",
+              "Ask low-friction questions: yes/no, this-or-that, number polls",
+              "Repeat good questions so lurkers can follow",
+              "Shout out every gift by name + gift name",
+              "Pin a \"topic of the day\" and reference it repeatedly",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Dead air loses viewers faster than bad content. Narrate what you are doing if you need a beat.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "Which question type generates the most replies on LIVE?",
+            
+            options: [
+              "Open essays",
+              "Yes/no and this-or-that",
+              "Questions requiring a login",
+              "No questions at all",
+            ],
+            correctIndex: 1,
+            explanation: "Low-friction binary choices maximize reply rate and keep chat scrolling.",
+            
+          },
+          {
+            prompt: "How should you acknowledge a gift?",
+            
+            options: [
+              "Generic \"thanks everyone\"",
+              "Name the person + gift name",
+              "Wait until stream end",
+              "Only thank top 3 gifters",
+            ],
+            correctIndex: 1,
+            explanation: "Specific shoutouts make supporters feel seen and encourage others.",
+            
+          },
+          {
+            prompt: "What is a good \"topic of the day\" technique?",
+            
+            options: [
+              "Change it every 2 minutes",
+              "Pin one theme and reference it throughout the stream",
+              "Let chat vote on 5 topics at once",
+              "Never use topics",
+            ],
+            correctIndex: 1,
+            explanation: "A single pinned theme gives new viewers instant context.",
+            
+          },
+          {
+            prompt: "How should you handle a controversial comment?",
+            
+            options: [
+              "Argue publicly to show dominance",
+              "Ignore / mute / ban if needed, then refocus",
+              "Ban instantly without warning",
+              "End the stream immediately",
+            ],
+            correctIndex: 1,
+            explanation: "De-escalate fast; moderate if needed, then steer back to positive energy.",
+            
+          },
+        ],
+      },
+      {
+        title: "Battles & Monetization",
+        slug: "battles-monetization",
+        summary:
+          "Win battles ethically, maximize gift revenue, and convert battle viewers into long-term supporters.",
+        sections: [
+          {
+            type: "heading",
+            text: "Battle Mechanics & Ethics",
+          },
+          {
+            type: "paragraph",
+            text: "Battles convert viewer energy into points and revenue. Understand the invite flow, round timer, and battle-eligible gifts before you accept a match.",
+          },
+          {
+            type: "youtube",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          },
+          {
+            type: "list",
+            items: [
+              "Learn the invite flow and round timer in your app version",
+              "Explain to chat how they can support during the battle",
+              "Celebrate effort in wins and losses — attitude is content",
+              "Never pressure or guilt viewers for gifts",
+              "Post-battle: thank opponents, clip highlights, funnel new viewers to follow",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Pressure burns trust. Gratitude without guilt builds a community that sustains you.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What determines the winner of a TikTok LIVE battle?",
+            
+            options: [
+              "Follower count",
+              "Battle points from eligible gifts",
+              "Who talks the most",
+              "Verification status",
+            ],
+            correctIndex: 1,
+            explanation: "Only battle-eligible gifts shown in the battle UI convert to points.",
+            
+          },
+          {
+            prompt: "How should you handle a loss?",
+            
+            options: [
+              "Blame chat for not gifting enough",
+              "Congratulate the winner and thank your supporters",
+              "Delete the replay and pretend it never happened",
+              "Demand a rematch immediately",
+            ],
+            correctIndex: 1,
+            explanation: "Grace in defeat builds long-term respect and community loyalty.",
+            
+          },
+          {
+            prompt: "Which gifts count toward battle points?",
+            
+            options: [
+              "All gifts",
+              "Only battle-eligible gifts shown in the battle UI",
+              "Only diamonds",
+              "Only gifts over 100 coins",
+            ],
+            correctIndex: 1,
+            explanation: "Only gifts marked as battle-eligible in the battle UI convert to points.",
+            
+          },
+          {
+            prompt: "What is the healthiest mindset toward gifting?",
+            
+            options: [
+              "Expect gifts every stream",
+              "Gratitude without pressure; gifts are bonus, not requirement",
+              "Only stream when gifts are guaranteed",
+              "Guilt viewers who do not gift",
+            ],
+            correctIndex: 1,
+            explanation: "Gratitude without obligation creates sustainable support.",
+            
+          },
+        ],
+      },
+      {
+        title: "Safety, Compliance & Brand Safety",
+        slug: "safety-compliance-brand-safety",
+        summary:
+          "Protect your account, follow TikTok guidelines, and build a brand-safe stream that attracts partnerships.",
+        sections: [
+          {
+            type: "heading",
+            text: "Protect Your Asset",
+          },
+          {
+            type: "paragraph",
+            text: "One policy strike can freeze earnings or ban LIVE access. Know the lines before you cross them.",
+          },
+          {
+            type: "youtube",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          },
+          {
+            type: "list",
+            items: [
+              "Zero tolerance: hate speech, harassment, sexual content, self-harm",
+              "No misleading medical, financial, or legal claims without credentials",
+              "Never show addresses, phone numbers, or private documents on screen",
+              "Report brigading/scam comments — do not engage",
+              "Use slow mode, keyword filters, and trusted mods for hostile chat",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Brand-safe streams attract agency deals and TikTok program invitations.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What should you never show on screen?",
+            
+            options: [
+              "Your streaming setup",
+              "Personal addresses or private documents",
+              "Chat usernames in a shoutout",
+              "On-screen timers",
+            ],
+            correctIndex: 1,
+            explanation: "Doxxing yourself or others violates safety policy and endangers you.",
+            
+          },
+          {
+            prompt: "Can you give unlicensed financial advice on LIVE?",
+            
+            options: [
+              "Yes, if you have followers",
+              "No — financial/medical/legal advice requires proper licensing",
+              "Only with a disclaimer",
+              "Only in private messages",
+            ],
+            correctIndex: 1,
+            explanation: "Unlicensed financial, medical, or legal claims violate TikTok policy and local law.",
+            
+          },
+          {
+            prompt: "How should you handle a coordinated harassment raid?",
+            
+            options: [
+              "Argue with each person",
+              "Enable slow mode, use keyword filters, empower mods, report to TikTok",
+              "Turn off chat completely",
+              "End the stream and quit",
+            ],
+            correctIndex: 1,
+            explanation: "Tools + moderation + reporting = effective defense.",
+            
+          },
+          {
+            prompt: "Why does brand safety matter for monetization?",
+            
+            options: [
+              "It does not",
+              "Brands and TikTok programs prefer policy-compliant creators",
+              "Only for verified creators",
+              "Only for battles",
+            ],
+            correctIndex: 1,
+            explanation: "Clean records unlock TikTok programs, agency deals, and brand partnerships.",
+            
+          },
+        ],
+      },
+      {
+        title: "Growth Systems & Long-Term Business",
+        slug: "growth-systems-long-term-business",
+        summary:
+          "Build a repeatable system — calendar, analytics, clips, collaborations — that turns one good stream into a sustainable creator business.",
+        sections: [
+          {
+            type: "heading",
+            text: "Build the System",
+          },
+          {
+            type: "paragraph",
+            text: "Viral moments fade. Systems compound. After every stream: note what spiked, what flopped, and one experiment for next time.",
+          },
+          {
+            type: "youtube",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          },
+          {
+            type: "list",
+            items: [
+              "Fixed weekly LIVE calendar (same days/times)",
+              "Clip 2–3 highlights per stream for Reels/TikTok/Shorts",
+              "Track: avg viewers, watch time, new follows, gift revenue",
+              "Monthly collab with a peer for cross-pollination",
+              "Quarterly review: double down on top 20% of content types",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Small consistent improvements beat chasing viral lottery tickets.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the most effective post-stream habit?",
+            
+            options: [
+              "Check only gift total",
+              "Note what spiked, what flopped, and one experiment for next time",
+              "Nothing — instinct is enough",
+              "Delete the replay",
+            ],
+            correctIndex: 1,
+            explanation: "Structured reflection with one experiment drives compounding improvement.",
+            
+          },
+          {
+            prompt: "How many short-form clips should you create per stream?",
+            
+            options: [
+              "Zero",
+              "2–3 high-quality clips",
+              "50+ clips",
+              "Only the full stream",
+            ],
+            correctIndex: 1,
+            explanation: "2–3 focused clips outperform flooding feeds with low-effort cuts.",
+            
+          },
+          {
+            prompt: "Which metric signals sustainable growth?",
+            
+            options: [
+              "One viral stream",
+              "Consistent weekly calendar + steady metric improvement",
+              "Buying followers",
+              "Changing your name monthly",
+            ],
+            correctIndex: 1,
+            explanation: "Consistency and iteration compound; viral spikes do not.",
+            
+          },
+          {
+            prompt: "What is the purpose of a quarterly content review?",
+            
+            options: [
+              "To waste time",
+              "Double down on the top 20% of content types that perform",
+              "To delete old videos",
+              "To change your niche every quarter",
+            ],
+            correctIndex: 1,
+            explanation: "Pareto analysis focuses effort on what actually works.",
+            
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 const roleCourses: SeedCourse[] = [];
@@ -3282,7 +3880,7 @@ async function main() {
           data: lessonData.questions.map((q, qi) => ({
             lessonId: lesson.id,
             prompt: q.prompt,
-            type: "multiple_choice",
+            
             options: q.options,
             correctIndex: q.correctIndex,
             explanation: q.explanation || null,
