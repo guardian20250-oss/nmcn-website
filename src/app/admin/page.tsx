@@ -23,6 +23,7 @@ interface Stats {
   openTickets?: number;
   inProgressTickets?: number;
   resolvedTickets?: number;
+  ticketScope?: string;
 }
 
 export default function AdminDashboard() {
@@ -63,6 +64,7 @@ export default function AdminDashboard() {
   };
 
   const isAdmin = role === "admin";
+  const canViewAllTickets = stats?.ticketScope === "all";
   const canViewApps = isAdmin;
   const canViewContacts = isAdmin;
   const canViewTestimonials = isAdmin;
@@ -95,13 +97,17 @@ export default function AdminDashboard() {
             </div>
             <div>
               <p className="text-sm font-semibold text-white">Support</p>
-              <p className="text-xs text-nmcn-muted">Submit a ticket or review open support requests</p>
+              <p className="text-xs text-nmcn-muted">
+                {canViewAllTickets
+                  ? "Submit a ticket or review open support requests"
+                  : "Submit a ticket or review tickets transferred to you"}
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <GetHelpButton className="btn-outline text-sm" />
             <Link href="/admin/tickets" className="btn-gold text-sm">
-              Support Tickets
+              {canViewAllTickets ? "Support Tickets" : "My Tickets"}
             </Link>
           </div>
         </div>
@@ -275,7 +281,9 @@ export default function AdminDashboard() {
               <LifeBuoy className="h-6 w-6 text-nmcn-gold" />
             </div>
             <div>
-              <h3 className="font-heading text-lg font-semibold text-white">Support Tickets</h3>
+              <h3 className="font-heading text-lg font-semibold text-white">
+                {canViewAllTickets ? "Support Tickets" : "My Tickets"}
+              </h3>
               <p className="text-sm text-nmcn-muted">
                 {stats?.openTickets || 0} open · {stats?.inProgressTickets || 0} in progress
               </p>

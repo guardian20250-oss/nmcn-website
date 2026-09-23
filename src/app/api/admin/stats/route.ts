@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/auth";
+import { verifyToken, canViewAllTickets } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("admin-token")?.value;
@@ -21,6 +21,10 @@ export async function GET(request: NextRequest) {
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const role = (admin.role || "admin") as Parameters<typeof canViewAllTickets>[0];
+  const allTickets = canViewAllTickets(role);
+  const ticketScope = allTickets ? {} : { handledById: adminId };
 
   const [
     totalApplications,
@@ -49,9 +53,9 @@ export async function GET(request: NextRequest) {
     prisma.creatorAccount.count({ where: { independentCreator: true } }),
     prisma.admin.count(),
     prisma.course.count(),
-    prisma.supportTicket.count({ where: { status: "open" } }),
-    prisma.supportTicket.count({ where: { status: "in_progress" } }),
-    prisma.supportTicket.count({ where: { status: "resolved" } }),
+    prisma.supportTicket.count({ where: { ...ticketScope, status: "open" } }),
+    prisma.supportTicket.count({ where: { ...ticketScope, status: "in_progress" } }),
+    prisma.supportTicket.count({ where: { ...ticketScope, status: "resolved" } }),
   ]);
 
   return NextResponse.json({
@@ -72,6 +76,7 @@ export async function GET(request: NextRequest) {
       openTickets,
       inProgressTickets,
       resolvedTickets,
+      ticketScope: allTickets ? "all" : "assigned",
     },
     adminName: admin.name || "Admin",
   });

@@ -314,6 +314,22 @@ export function canManageStaff(role: StaffRole): boolean {
   return role === "admin";
 }
 
+export function canViewAllTickets(role: StaffRole): boolean {
+  return role === "admin";
+}
+
+export function canViewTickets(role: StaffRole): boolean {
+  return isStaffRole(role);
+}
+
+export function canTransferTickets(role: StaffRole): boolean {
+  return role === "admin";
+}
+
+export function canDeleteTickets(role: StaffRole): boolean {
+  return role === "admin";
+}
+
 export function canViewCreatorDashboard(role: StaffRole): boolean {
   return role === "admin" || role === "manager" || role === "team_lead";
 }
