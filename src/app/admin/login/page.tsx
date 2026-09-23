@@ -58,7 +58,7 @@ export default function AdminLogin() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@nexusmafiaagency.com"
+                placeholder="nexusmafiacreatornetworkllc@outlook.com"
                 className="input pl-10"
               />
             </div>

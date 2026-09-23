@@ -29,7 +29,10 @@ export async function GET(request: NextRequest) {
     unreadContacts,
     totalTestimonials,
     pendingTestimonials,
-    totalCreators,
+    pendingAccounts,
+    totalAccounts,
+    totalIndependent,
+    totalStaff,
     totalCourses,
   ] = await Promise.all([
     prisma.joinApplication.count(),
@@ -38,8 +41,11 @@ export async function GET(request: NextRequest) {
     prisma.contactMessage.count({ where: { read: false } }),
     prisma.testimonial.count(),
     prisma.testimonial.count({ where: { status: "pending" } }),
-    prisma.creator.count(),
-    prisma.course.count({ where: { status: "published" } }),
+    prisma.creatorAccount.count({ where: { status: "pending" } }),
+    prisma.creatorAccount.count(),
+    prisma.creatorAccount.count({ where: { independentCreator: true } }),
+    prisma.admin.count(),
+    prisma.course.count(),
   ]);
 
   return NextResponse.json({
@@ -51,8 +57,12 @@ export async function GET(request: NextRequest) {
       totalTestimonials,
       pendingTestimonials,
       role: admin.role || "admin",
-      totalCreators,
+      totalCreators: totalAccounts,
       totalCourses,
+      pendingAccounts,
+      totalAccounts,
+      totalIndependent,
+      totalStaff,
     },
     adminName: admin.name || "Admin",
   });

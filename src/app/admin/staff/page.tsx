@@ -10,6 +10,7 @@ const ROLES = [
   { value: "manager", label: "Manager" },
   { value: "team_lead", label: "Team Lead" },
   { value: "scout", label: "Scout" },
+  { value: "battle_coordinator", label: "Battle Coordinator" },
 ] as const;
 
 const ROLE_LABELS: Record<string, string> = {
@@ -17,6 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
   manager: "Manager",
   team_lead: "Team Lead",
   scout: "Scout",
+  battle_coordinator: "Battle Coordinator",
 };
 
 interface StaffMember {

@@ -8,14 +8,19 @@ datasource db {
 }
 
 model Admin {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String   @default("Admin")
-  role      String   @default("admin")
-  createdAt DateTime @default(now())
-  updatedAt   DateTime   @default(now()) @updatedAt
-  creators    Creator[]
+  id                 Int      @id @default(autoincrement())
+  email              String   @unique
+  password           String
+  name               String
+  role               String   @default("admin")
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  createdCreators    CreatorAccount[]
+  creators           Creator[]
+  handledTickets     SupportTicket[]
+
+  @@map("admins")
 }
 
 model Creator {
@@ -24,13 +29,53 @@ model Creator {
   password     String
   name         String
   tiktokHandle String?  @db.VarChar(100)
-  createdById Int?
-  createdBy   Admin?   @relation(fields: [createdById], references: [id])
-  progress     CreatorProgress[]
-  certificates Certificate[]
-  quizAttempts QuizAttempt[]
+  createdById  Int?
+  createdBy    Admin?   @relation(fields: [createdById], references: [id])
+  creatorAccounts CreatorAccount[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model SupportTicket {
+  id          Int      @id @default(autoincrement())
+  subject     String
+  message     String
+  category    String   @default("account")
+  status      String   @default("open")
+  email       String
+  name        String?
+  phone       String?
+  userId      Int?
+  userRole    String?
+  handledById Int?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  updatedAt   DateTime @updatedAt
+  user        CreatorAccount? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  handledBy   Admin?          @relation(fields: [handledById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CreatorAccount {
+  id                 Int      @id @default(autoincrement())
+  email              String   @unique
+  password           String
+  name               String
+  tiktokHandle       String?  @db.VarChar(100)
+  status             String   @default("pending")
+  assignedRole       String   @default("creator")
+  independentCreator Boolean  @default(false)
+  mustChangePassword Boolean  @default(false)
+  createdById        Int?
+  createdBy          Admin?   @relation(fields: [createdById], references: [id])
+  creators           Creator[]
+  progress           CreatorProgress[]
+  certificates       Certificate[]
+  quizAttempts       QuizAttempt[]
+  supportTickets     SupportTicket[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
 }
 
 model Course {
@@ -42,7 +87,7 @@ model Course {
   passingScore Int       @default(70)
   order        Int       @default(0)
   status       String    @default("draft")
-  role          String    @default("creator")
+  role         String    @default("creator")
   lessons      Lesson[]
   certificates Certificate[]
   createdAt    DateTime  @default(now())
@@ -83,17 +128,17 @@ model Question {
 }
 
 model CreatorProgress {
-  id          Int   @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   creatorId   Int
-  creator     Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator     CreatorAccount @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   lessonId    Int
-  lesson      Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  bestScore   Int     @default(0)
-  passed      Boolean @default(false)
-  attempts    Int     @default(0)
+  lesson      Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  bestScore   Int           @default(0)
+  passed      Boolean       @default(false)
+  attempts    Int           @default(0)
   completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
 
   @@unique([creatorId, lessonId])
 }
@@ -101,9 +146,9 @@ model CreatorProgress {
 model QuizAttempt {
   id         Int      @id @default(autoincrement())
   creatorId  Int?
-  creator    Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  creator    CreatorAccount? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   lessonId   Int
-  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson     Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   score      Int
   passed     Boolean
   answers    Json     @default("[]")
@@ -116,9 +161,9 @@ model Certificate {
   code         String   @unique
   learnerName  String
   creatorId    Int?
-  creator      Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  creator      CreatorAccount? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   courseId     Int
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course       Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   completedAt  DateTime @default(now())
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt

@@ -24,6 +24,7 @@ interface AdminCourse {
   status: string;
   lessonCount: number;
   certificates: number;
+  role: string;
 }
 
 export default function AdminCoursesPage() {
@@ -35,6 +36,7 @@ export default function AdminCoursesPage() {
     description: "",
     icon: "GraduationCap",
     passingScore: 70,
+    role: "creator",
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
@@ -44,6 +46,7 @@ export default function AdminCoursesPage() {
     passingScore: 70,
     status: "draft",
     order: 0,
+    role: "creator",
   });
   const router = useRouter();
 
@@ -84,6 +87,7 @@ export default function AdminCoursesPage() {
           description: "",
           icon: "GraduationCap",
           passingScore: 70,
+          role: "creator",
         });
         await load();
       }
@@ -101,6 +105,7 @@ export default function AdminCoursesPage() {
       passingScore: c.passingScore,
       status: c.status,
       order: c.order,
+      role: c.role,
     });
   };
 
@@ -197,6 +202,20 @@ export default function AdminCoursesPage() {
               <option value="MessagesSquare">MessagesSquare (Discord)</option>
               <option value="BookOpen">BookOpen</option>
             </select>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <select
+              className="input"
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+            >
+              <option value="creator">Creator</option>
+              <option value="team_lead">Team Lead</option>
+              <option value="manager">Manager</option>
+              <option value="scout">Scout</option>
+              <option value="battle_coordinator">Battle Coordinator</option>
+            </select>
+            <div />
           </div>
           <textarea
             className="textarea"

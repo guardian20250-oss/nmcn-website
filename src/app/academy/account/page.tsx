@@ -37,7 +37,7 @@ function AcademyAccountContent() {
         <div className="mx-auto max-w-md">
           <div className="mb-8 text-center">
             <span className="mb-4 inline-block rounded-full border border-nmcn-border px-4 py-1.5 text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
-              Academy Account
+              Academy
             </span>
             <h1 className="mb-2 font-heading text-3xl font-bold text-white">
               Save Your <span className="gold-text">Progress</span>

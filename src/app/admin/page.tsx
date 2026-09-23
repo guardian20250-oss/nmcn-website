@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon } from "lucide-react";
+import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon } from "lucide-react";
 
 interface Stats {
   totalApplications: number;
@@ -15,6 +15,10 @@ interface Stats {
   role: string;
   totalCreators: number;
   totalCourses: number;
+  pendingAccounts: number;
+  totalAccounts: number;
+  totalIndependent: number;
+  totalStaff: number;
 }
 
 export default function AdminDashboard() {
@@ -22,6 +26,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("");
   const [role, setRole] = useState("");
+  const [pendingAccounts, setPendingAccounts] = useState<any[]>([]);
   const router = useRouter();
 
   const fetchStats = async () => {
@@ -91,8 +96,20 @@ export default function AdminDashboard() {
                 <div className="stat-label">Pending Review</div>
               </div>
               <div className="stat-card">
-                <div className="stat-num">{stats?.totalContacts || 0}</div>
-                <div className="stat-label">Contact Messages</div>
+                <div className="stat-num">{stats?.pendingAccounts || 0}</div>
+                <div className="stat-label">Pending Accounts</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalIndependent || 0}</div>
+                <div className="stat-label">Independent Creators</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalAccounts || 0}</div>
+                <div className="stat-label">Total Accounts</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-num">{stats?.totalStaff || 0}</div>
+                <div className="stat-label">Staff</div>
               </div>
             </>
           )}
@@ -177,17 +194,51 @@ export default function AdminDashboard() {
             </Link>
           )}
 
-          <Link href="/admin/creators" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
-              <Users className="h-6 w-6 text-nmcn-blue" />
+          {isAdmin && (
+            <Link href="/admin/staff/accounts" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+                <Users className="h-6 w-6 text-nmcn-blue" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg font-semibold text-white">Staff & Accounts</h3>
+                <p className="text-sm text-nmcn-muted">{stats?.totalStaff || 0} staff · {stats?.totalAccounts || 0} accounts</p>
+              </div>
+            </Link>
+          )}
+
+          {(role === "manager" || role === "team_lead" || role === "scout" || role === "battle_coordinator" || role === "creator") && (
+            <Link href="/admin/creators" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+                <Users className="h-6 w-6 text-nmcn-blue" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg font-semibold text-white">Creators</h3>
+                <p className="text-sm text-nmcn-muted">{stats?.totalCreators || 0} total</p>
+              </div>
+            </Link>
+          )}
+
+          <Link href="/admin/team-lead" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-gold/10">
+              <BookOpen className="h-6 w-6 text-nmcn-gold" />
             </div>
             <div>
-              <h3 className="font-heading text-lg font-semibold text-white">Creators</h3>
-              <p className="text-sm text-nmcn-muted">{stats?.totalCreators || 0} total</p>
+              <h3 className="font-heading text-lg font-semibold text-white">Team Lead Academy</h3>
+              <p className="text-sm text-nmcn-muted">Course management & certificate verification</p>
             </div>
           </Link>
 
-          <Link href="/academy" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+          <Link href="/admin/manager" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-gold/10">
+              <Award className="h-6 w-6 text-nmcn-gold" />
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-white">Manager Academy</h3>
+              <p className="text-sm text-nmcn-muted">Course management & certificate verification</p>
+            </div>
+          </Link>
+
+          <Link href="/admin/certificates" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
               <BookOpen className="h-6 w-6 text-nmcn-blue" />
             </div>

@@ -6,6 +6,36 @@ export function downloadCertificatePdf(opts: {
   code: string;
   date: string;
 }) {
+  const doc = buildCertificateDoc(opts);
+  const safe = opts.learnerName.replace(/[^a-z0-9-_ ]/gi, "").trim() || "creator";
+  doc.save(`NMCN-Certificate-${safe}-${opts.code}.pdf`);
+}
+
+export async function generateCertificatePdf(opts: {
+  code: string;
+  learnerName: string;
+  courseTitle: string;
+  issuedAt: Date | string;
+  verifyUrl?: string;
+}): Promise<Buffer> {
+  const doc = buildCertificateDoc({
+    learnerName: opts.learnerName,
+    courseTitle: opts.courseTitle,
+    code: opts.code,
+    date: opts.issuedAt instanceof Date ? opts.issuedAt.toISOString() : opts.issuedAt,
+    verifyUrl: opts.verifyUrl,
+  });
+  const output = doc.output("arraybuffer");
+  return Buffer.from(output);
+}
+
+function buildCertificateDoc(opts: {
+  learnerName: string;
+  courseTitle: string;
+  code: string;
+  date: string;
+  verifyUrl?: string;
+}) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
@@ -69,12 +99,13 @@ export function downloadCertificatePdf(opts: {
 
   doc.setFontSize(8);
   doc.text(
-    "Verify this code via the NMCN staff dashboard.",
+    opts.verifyUrl
+      ? `Verify: ${opts.verifyUrl}`
+      : "Verify this code via the NMCN staff dashboard.",
     w / 2,
     h - 18,
     { align: "center" }
   );
 
-  const safe = opts.learnerName.replace(/[^a-z0-9-_ ]/gi, "").trim() || "creator";
-  doc.save(`NMCN-Certificate-${safe}-${opts.code}.pdf`);
+  return doc;
 }

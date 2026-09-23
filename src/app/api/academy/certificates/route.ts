@@ -44,12 +44,12 @@ export async function POST(request: NextRequest) {
     const token = request.cookies.get("creator-token")?.value;
     const payload = token ? verifyCreatorToken(token) : null;
 
-    let eligible = false;
-    let creatorId: number | null = null;
-    let nameToUse = learnerName;
+  let eligible = false;
+  let nameToUse = learnerName;
+  let creatorId: number | undefined;
 
-    if (payload) {
-      creatorId = payload.id;
+  if (payload) {
+    creatorId = payload.id;
       const rows = await prisma.creatorProgress.findMany({
         where: { creatorId: payload.id, lessonId: { in: course.lessons.map((l) => l.id) } },
         select: { lessonId: true, passed: true },
@@ -57,12 +57,12 @@ export async function POST(request: NextRequest) {
       const passedSet = new Set(rows.filter((r) => r.passed).map((r) => r.lessonId));
       eligible = course.lessons.every((l) => passedSet.has(l.id));
 
-      const creator = await prisma.creator.findUnique({
+      const creatorAccount = await prisma.creatorAccount.findUnique({
         where: { id: payload.id },
         select: { name: true },
       });
-      if (creator?.name && !learnerName) nameToUse = creator.name;
-      if (!learnerName && creator?.name) nameToUse = creator.name;
+      if (creatorAccount?.name && !learnerName) nameToUse = creatorAccount.name;
+      if (!learnerName && creatorAccount?.name) nameToUse = creatorAccount.name;
     } else {
       const lessonIds = new Set(course.lessons.map((l) => l.id));
       const providedPassed = new Set(
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       data: {
         code,
         learnerName: nameToUse,
-        creatorId,
+        creatorId: creatorId ?? undefined,
         courseId: course.id,
       },
     });

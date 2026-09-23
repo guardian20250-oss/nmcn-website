@@ -110,7 +110,7 @@ export default function AdminCreatorsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setMessage("Academy account created.");
+        setMessage("Account created.");
         setForm({ name: "", email: "", password: "", tiktokHandle: "" });
         setShowCreate(false);
         await load();
@@ -170,7 +170,7 @@ export default function AdminCreatorsPage() {
         {message && (
           <div
             className={`card mb-6 border p-4 text-sm ${
-              message.startsWith("Academy")
+              message === "Account created."
                 ? "border-green-500/40 text-green-400"
                 : "border-red-500/40 text-red-400"
             }`}
@@ -182,7 +182,7 @@ export default function AdminCreatorsPage() {
         {showCreate && canCreate && (
           <form onSubmit={createAccount} className="card mb-8 space-y-4 p-6">
             <h2 className="font-heading text-lg font-semibold text-white">
-              Create Academy Account
+              Create Account
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
               <input

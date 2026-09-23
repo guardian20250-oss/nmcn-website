@@ -47,9 +47,6 @@ export default async function CoursePage({
 
           <div className="mb-8">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="badge border-nmcn-border-gold text-nmcn-gold">
-                Coming Soon
-              </span>
               <span className="badge">
                 <BookOpen className="mr-1 h-3 w-3" /> {course.lessons.length} lessons
               </span>

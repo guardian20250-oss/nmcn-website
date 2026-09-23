@@ -13,7 +13,7 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
     password: "",
     tiktokHandle: "",
   });
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error" | "pending">(
     "idle"
   );
   const [message, setMessage] = useState("");
@@ -27,8 +27,11 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: mode,
-          ...form,
+          mode,
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          tiktokHandle: form.tiktokHandle,
         }),
       });
       const data = await res.json();
@@ -39,6 +42,14 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
       }
 
       if (mode === "register") {
+        if (data.pending) {
+          setStatus("pending");
+          setMessage(
+            "Account created! It is pending approval — an admin will assign your role soon."
+          );
+          setTimeout(() => window.location.reload(), 3000);
+          return;
+        }
         try {
           const raw = window.localStorage.getItem("nmcn-academy-progress");
           if (raw) {
@@ -65,7 +76,7 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
       setMessage(
         mode === "login"
           ? "Signed in. Your progress will now sync across devices."
-          : "Account created and progress synced."
+          : "Account created! Check your email for role assignment or sign in to continue."
       );
       setTimeout(() => window.location.reload(), 1200);
     } catch {
@@ -87,6 +98,15 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
     return (
       <div className="card p-6 text-center">
         <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-400" />
+        <p className="text-sm text-nmcn-muted">{message}</p>
+      </div>
+    );
+  }
+
+  if (status === "pending") {
+    return (
+      <div className="card p-6 text-center">
+        <span className="mx-auto mb-2 inline-block h-8 w-8 animate-spin rounded-full border-2 border-nmcn-blue border-t-transparent" />
         <p className="text-sm text-nmcn-muted">{message}</p>
       </div>
     );
@@ -135,6 +155,9 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
               value={form.tiktokHandle}
               onChange={(e) => setForm({ ...form, tiktokHandle: e.target.value })}
             />
+            <p className="text-xs text-nmcn-muted">
+              An admin will assign your role after you create your account.
+            </p>
           </>
         )}
         <input

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       for (const id of ids) allLessonIds.add(id);
     }
 
-    const creators = await prisma.creator.findMany({
+    const creators = await prisma.creatorAccount.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         progress: { select: { lessonId: true, passed: true, bestScore: true, completedAt: true } },
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existing = await prisma.creator.findUnique({ where: { email } });
+    const existing = await prisma.creatorAccount.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json(
         { error: "An account with this email already exists" },
@@ -152,12 +152,16 @@ export async function POST(request: NextRequest) {
     }
 
     const hashed = await hashPassword(password);
-    const creator = await prisma.creator.create({
+    const creator = await prisma.creatorAccount.create({
       data: {
         email,
         name,
         password: hashed,
         tiktokHandle,
+        status: "active",
+        assignedRole: "creator",
+        independentCreator: false,
+        mustChangePassword: true,
         createdById: staff.id,
       },
       select: {
@@ -172,6 +176,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ creator }, { status: 201 });
   } catch (error) {
     console.error("Create academy account error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const staff = await getStaffFromRequest(request);
+  if (!staff) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (staff.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = Number(searchParams.get("id"));
+    if (!id) {
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+
+    const existing = await prisma.creatorAccount.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    }
+
+    await prisma.creatorAccount.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Delete creator error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

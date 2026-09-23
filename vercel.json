@@ -1,3 +1,4 @@
 {
-  "installCommand": "npm install --include-scripts"
+  "installCommand": "npm install --include-scripts",
+  "buildCommand": "prisma generate && prisma db push --accept-data-loss && npm run db:seed && next build"
 }

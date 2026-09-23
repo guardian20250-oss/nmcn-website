@@ -1,81 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyCreatorToken, generateCreatorToken, hashPassword } from "@/lib/auth";
-import bcrypt from "bcryptjs";
-
-export async function GET(request: NextRequest) {
-  const token = request.cookies.get("creator-token")?.value;
-  const payload = token ? verifyCreatorToken(token) : null;
-  if (!payload) {
-    return NextResponse.json({ user: null });
-  }
-
-  try {
-    const creator = await prisma.creator.findUnique({
-      where: { id: payload.id },
-      select: { id: true, email: true, name: true, tiktokHandle: true },
-    });
-    return NextResponse.json({ user: creator });
-  } catch {
-    return NextResponse.json({ user: null });
-  }
-}
+import {
+  registerCreatorAccount,
+  loginCreatorAccount,
+  getCreatorAccountFromRequest,
+  getCoursesForRole,
+  changeCreatorPassword,
+} from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const action = body.action;
+    const { mode, name, email, password, tiktokHandle } = body;
 
-    if (action === "register") {
-      const { email, password, name, tiktokHandle } = body;
-      if (!email || !password || !name) {
-        return NextResponse.json(
-          { error: "Name, email, and password are required" },
-          { status: 400 }
-        );
+    if (mode === "changePassword") {
+      const account = await getCreatorAccountFromRequest(request);
+      if (!account) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-      if (String(password).length < 8) {
+      const newPassword = String(body.newPassword || "");
+      if (!newPassword || newPassword.length < 8) {
         return NextResponse.json(
           { error: "Password must be at least 8 characters" },
           { status: 400 }
         );
       }
+      await changeCreatorPassword(account.id, newPassword);
+      return NextResponse.json({ message: "Password updated" });
+    }
 
-      const existing = await prisma.creator.findUnique({
-        where: { email: String(email).toLowerCase() },
-      });
-      if (existing) {
-        return NextResponse.json(
-          { error: "An account with this email already exists" },
-          { status: 409 }
-        );
+    if (mode === "register") {
+      if (!name || !email || !password) {
+        return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
       }
 
-      const hashed = await hashPassword(String(password));
-      const creator = await prisma.creator.create({
-        data: {
-          email: String(email).toLowerCase(),
-          password: hashed,
-          name: String(name),
-          tiktokHandle: tiktokHandle ? String(tiktokHandle) : null,
-        },
-      });
-
-      const token = generateCreatorToken({
-        id: creator.id,
-        email: creator.email,
-        name: creator.name,
+      const result = await registerCreatorAccount({
+        name,
+        email: email.toLowerCase(),
+        password,
+        tiktokHandle: tiktokHandle || "",
+        assignedRole: "creator",
+        independentCreator: false,
+        status: "pending",
       });
 
       const response = NextResponse.json({
-        message: "Account created",
         user: {
-          id: creator.id,
-          email: creator.email,
-          name: creator.name,
-          tiktokHandle: creator.tiktokHandle,
+          id: result.account.id,
+          email: result.account.email,
+          name: result.account.name,
+          role: result.account.assignedRole,
+          status: result.account.status,
+          independentCreator: result.account.independentCreator,
         },
+        token: result.token,
+        pending: result.account.status === "pending",
       });
+      const token = result.token as string;
       response.cookies.set("creator-token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -86,43 +67,45 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    if (action === "login") {
-      const { email, password } = body;
+    if (mode === "login") {
       if (!email || !password) {
-        return NextResponse.json(
-          { error: "Email and password are required" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
       }
 
-      const creator = await prisma.creator.findUnique({
-        where: { email: String(email).toLowerCase() },
-      });
-      if (!creator) {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      const result = await loginCreatorAccount(email.toLowerCase(), password);
+      if (!result) {
+        return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
       }
 
-      const valid = await bcrypt.compare(String(password), creator.password);
-      if (!valid) {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      if (result.pending) {
+        return NextResponse.json({
+          user: { id: null, email: result.email, name: result.name, role: result.role, status: "pending", independentCreator: false },
+          token: null,
+          pending: true,
+        });
       }
 
-      const token = generateCreatorToken({
-        id: creator.id,
-        email: creator.email,
-        name: creator.name,
-      });
-
+      const account = result.account;
+      if (!account) {
+        return NextResponse.json({ error: "Account not found" }, { status: 500 });
+      }
+      const courses = getCoursesForRole(result.role, result.independentCreator ?? false);
       const response = NextResponse.json({
-        message: "Login successful",
         user: {
-          id: creator.id,
-          email: creator.email,
-          name: creator.name,
-          tiktokHandle: creator.tiktokHandle,
+          id: account.id,
+          email: account.email,
+          name: account.name,
+          role: result.role,
+          status: result.status,
+          independentCreator: result.independentCreator ?? false,
+          mustChangePassword: result.mustChangePassword ?? false,
         },
+        token: result.token,
+        pending: false,
+        courses,
       });
-      response.cookies.set("creator-token", token, {
+      const token2 = result.token as string;
+      response.cookies.set("creator-token", token2, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
@@ -132,21 +115,31 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    if (action === "logout") {
-      const response = NextResponse.json({ message: "Logged out" });
-      response.cookies.set("creator-token", "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 0,
-        path: "/",
-      });
-      return response;
-    }
-
-    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
   } catch (error) {
-    console.error("Creator auth error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Academy auth error:", error);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const account = await getCreatorAccountFromRequest(request);
+    if (!account) {
+      return NextResponse.json({ user: null });
+    }
+    return NextResponse.json({
+      user: {
+        id: account.id,
+        email: account.email,
+        name: account.name,
+        role: account.role,
+        status: account.status,
+        independentCreator: account.independentCreator,
+        mustChangePassword: account.mustChangePassword ?? false,
+      },
+    });
+  } catch (error) {
+    return NextResponse.json({ user: null });
   }
 }

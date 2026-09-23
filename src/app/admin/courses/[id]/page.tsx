@@ -40,6 +40,7 @@ interface CourseDetail {
   slug: string;
   status: string;
   passingScore: number;
+  role: string;
 }
 
 export default function AdminCourseEditorPage() {
@@ -74,6 +75,7 @@ export default function AdminCourseEditorPage() {
         slug: found.slug,
         status: found.status,
         passingScore: found.passingScore,
+        role: found.role || "creator",
       });
 
       const lessonRows: AdminLesson[] = [];

@@ -53,9 +53,6 @@ export default function CourseCard({ course }: { course: CourseSummary }) {
         <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
           <Icon className="h-6 w-6 text-nmcn-blue" />
         </div>
-        <span className="badge border-nmcn-border-gold text-nmcn-gold">
-          Coming Soon
-        </span>
       </div>
       <h3 className="font-heading text-xl font-semibold text-white group-hover:text-nmcn-blue">
         {course.title}

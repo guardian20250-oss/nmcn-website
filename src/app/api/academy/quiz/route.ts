@@ -52,12 +52,12 @@ export async function POST(request: NextRequest) {
     }));
 
     const token = request.cookies.get("creator-token")?.value;
-    const creator = token ? verifyCreatorToken(token) : null;
+    const payload = token ? verifyCreatorToken(token) : null;
 
     try {
       await prisma.quizAttempt.create({
         data: {
-          creatorId: creator?.id ?? null,
+          creatorId: payload?.id ?? null,
           lessonId: lesson.id,
           score,
           passed,
@@ -65,11 +65,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (creator && passed) {
+      if (payload && passed) {
         const existing = await prisma.creatorProgress.findUnique({
           where: {
             creatorId_lessonId: {
-              creatorId: creator.id,
+              creatorId: payload.id,
               lessonId: lesson.id,
             },
           },
@@ -78,12 +78,12 @@ export async function POST(request: NextRequest) {
         await prisma.creatorProgress.upsert({
           where: {
             creatorId_lessonId: {
-              creatorId: creator.id,
+              creatorId: payload.id,
               lessonId: lesson.id,
             },
           },
           create: {
-            creatorId: creator.id,
+            creatorId: payload.id,
             lessonId: lesson.id,
             bestScore: score,
             passed: true,

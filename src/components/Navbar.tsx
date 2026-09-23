@@ -43,6 +43,9 @@ export default function Navbar() {
           <Link href="/academy" className="btn-outline text-sm">
             Academy
           </Link>
+          <Link href="/academy/account?mode=register" className="btn-outline text-sm">
+            Create Account
+          </Link>
           <Link href="/admin/login" className="btn-outline text-sm">
             Staff Login
           </Link>
@@ -83,6 +86,13 @@ export default function Navbar() {
                 className="btn-outline mt-2 text-center text-sm"
               >
                 Academy
+              </Link>
+              <Link
+                href="/academy/account?mode=register"
+                onClick={() => setMobileOpen(false)}
+                className="btn-outline mt-2 text-center text-sm"
+              >
+                Create Account
               </Link>
               <Link
                 href="/admin/login"

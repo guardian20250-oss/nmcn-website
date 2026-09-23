@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
         lessonCount: c.lessons.length,
         certificates: c._count.certificates,
         _count: undefined,
+        role: c.role || "creator",
       })),
     });
   } catch (error) {
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest) {
         passingScore: Number(body.passingScore) || 70,
         order: Number(body.order) || 0,
         status: String(body.status || "draft"),
+        role: String(body.role || "creator"),
       },
     });
 
@@ -107,6 +109,7 @@ export async function PATCH(request: NextRequest) {
       data.passingScore = Math.max(0, Math.min(100, Number(rest.passingScore) || 70));
     if (rest.order !== undefined) data.order = Number(rest.order) || 0;
     if (rest.status !== undefined) data.status = String(rest.status);
+    if (rest.role !== undefined) data.role = String(rest.role);
 
     const course = await prisma.course.update({ where: { id: Number(id) }, data });
     return NextResponse.json({ course });
