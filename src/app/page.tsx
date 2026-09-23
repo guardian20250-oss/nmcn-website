@@ -1,5 +1,6 @@
 import Link from "next/link";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import GetHelpButton from "@/components/GetHelpButton";
 import {
   Swords,
   Users,
@@ -8,6 +9,7 @@ import {
   Trophy,
   Globe,
   ChevronRight,
+  LifeBuoy,
 } from "lucide-react";
 
 const features = [
@@ -73,6 +75,7 @@ export default function HomePage() {
             >
               Battle Exchange
             </Link>
+            <GetHelpButton className="btn-outline px-8 py-3 text-base" />
           </div>
         </div>
       </section>
@@ -165,6 +168,38 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider mx-auto max-w-5xl" />
+
+      {/* Support */}
+      <section className="px-6 py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
+            Support
+          </span>
+          <h2 className="mb-4 font-heading text-3xl font-bold text-white md:text-4xl">
+            Need a <span className="gold-text">Hand</span>?
+          </h2>
+          <p className="mb-8 text-nmcn-muted">
+            Account issues, academy access, login problems, or anything else —
+            submit a support ticket and we&apos;ll get back to you by email.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <GetHelpButton className="btn-gold px-8 py-3 text-base" />
+            <Link href="/contact" className="btn-outline px-8 py-3 text-base">
+              Contact Us
+            </Link>
+          </div>
+          <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-nmcn-muted">
+            <span className="inline-flex items-center gap-2">
+              <LifeBuoy className="h-4 w-4 text-nmcn-blue" /> Ticket tracking by email
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-nmcn-blue" /> Academy & account help
+            </span>
           </div>
         </div>
       </section>

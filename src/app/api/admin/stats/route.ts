@@ -34,6 +34,9 @@ export async function GET(request: NextRequest) {
     totalIndependent,
     totalStaff,
     totalCourses,
+    openTickets,
+    inProgressTickets,
+    resolvedTickets,
   ] = await Promise.all([
     prisma.joinApplication.count(),
     prisma.joinApplication.count({ where: { status: "pending" } }),
@@ -46,6 +49,9 @@ export async function GET(request: NextRequest) {
     prisma.creatorAccount.count({ where: { independentCreator: true } }),
     prisma.admin.count(),
     prisma.course.count(),
+    prisma.supportTicket.count({ where: { status: "open" } }),
+    prisma.supportTicket.count({ where: { status: "in_progress" } }),
+    prisma.supportTicket.count({ where: { status: "resolved" } }),
   ]);
 
   return NextResponse.json({
@@ -63,6 +69,9 @@ export async function GET(request: NextRequest) {
       totalAccounts,
       totalIndependent,
       totalStaff,
+      openTickets,
+      inProgressTickets,
+      resolvedTickets,
     },
     adminName: admin.name || "Admin",
   });

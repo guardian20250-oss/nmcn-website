@@ -1,0 +1,226 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { LifeBuoy, Loader2, RefreshCw } from "lucide-react";
+import GetHelpButton from "@/components/GetHelpButton";
+
+interface Ticket {
+  id: number;
+  subject: string;
+  message: string;
+  category: string;
+  status: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  createdAt: string;
+  handledBy: { id: number; name: string } | null;
+}
+
+const STATUS_META: Record<string, { label: string; className: string }> = {
+  open: { label: "Open", className: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
+  in_progress: { label: "In Progress", className: "bg-nmcn-blue/15 text-nmcn-blue border-nmcn-blue/30" },
+  resolved: { label: "Resolved", className: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" },
+};
+
+const CATEGORIES: Record<string, string> = {
+  account: "Account",
+  academy: "Academy",
+  payment: "Payment",
+  login: "Login",
+  other: "Other",
+};
+
+export default function AdminTicketsPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [counts, setCounts] = useState({ open: 0, in_progress: 0, resolved: 0 });
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+
+  const load = useCallback(async (status = "all") => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/tickets?status=${encodeURIComponent(status)}`);
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to load tickets");
+      }
+      const data = await res.json();
+      setTickets(data.tickets || []);
+      setCounts(data.counts || { open: 0, in_progress: 0, resolved: 0 });
+    } catch (err: any) {
+      setError(err.message || "Failed to load tickets");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load(filter);
+  }, [filter, load]);
+
+  async function updateStatus(id: number, status: string) {
+    setUpdatingId(id);
+    try {
+      const res = await fetch("/api/admin/tickets", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Update failed");
+      }
+      await load(filter);
+    } catch (err: any) {
+      setError(err.message || "Update failed");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function removeTicket(id: number) {
+    if (!confirm(`Delete ticket #${id}?`)) return;
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/admin/tickets?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Delete failed");
+      }
+      await load(filter);
+    } catch (err: any) {
+      setError(err.message || "Delete failed");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  return (
+    <div className="min-h-screen pt-24 px-6">
+      <div className="mx-auto max-w-5xl">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="font-heading text-3xl font-bold text-white">Support Tickets</h1>
+            <p className="text-nmcn-muted">
+              {counts.open} open · {counts.in_progress} in progress · {counts.resolved} resolved
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => load(filter)}
+              className="btn-outline flex items-center gap-2 text-sm"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+            <GetHelpButton className="btn-gold text-sm" />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-6">
+          {[
+            { value: "all", label: "All" },
+            { value: "open", label: "Open" },
+            { value: "in_progress", label: "In Progress" },
+            { value: "resolved", label: "Resolved" },
+          ].map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={`rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${
+                filter === f.value
+                  ? "border-nmcn-blue bg-nmcn-blue/15 text-nmcn-blue"
+                  : "border-nmcn-border text-nmcn-muted hover:text-white"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-nmcn-blue" />
+          </div>
+        ) : tickets.length === 0 ? (
+          <div className="card p-10 text-center">
+            <LifeBuoy className="mx-auto mb-4 h-10 w-10 text-nmcn-muted" />
+            <p className="text-nmcn-muted">No tickets match this filter.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {tickets.map((t) => {
+              const meta = STATUS_META[t.status] || STATUS_META.open;
+              return (
+                <div key={t.id} className="card p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-nmcn-muted">#{t.id}</span>
+                        <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${meta.className}`}>
+                          {meta.label}
+                        </span>
+                        <span className="rounded-full border border-nmcn-border px-2.5 py-0.5 text-[11px] text-nmcn-muted">
+                          {CATEGORIES[t.category] || t.category}
+                        </span>
+                      </div>
+                      <h3 className="mt-2 font-heading text-lg font-semibold text-white">{t.subject}</h3>
+                      <p className="mt-1 text-sm text-nmcn-muted whitespace-pre-wrap">{t.message}</p>
+                      <p className="mt-3 text-xs text-nmcn-muted">
+                        {t.name ? `${t.name} · ` : ""}
+                        {t.email}
+                        {t.phone ? ` · ${t.phone}` : ""} ·{" "}
+                        {new Date(t.createdAt).toLocaleString()}
+                        {t.handledBy ? ` · handled by ${t.handledBy.name}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <select
+                        value={t.status}
+                        disabled={updatingId === t.id}
+                        onChange={(e) => updateStatus(t.id, e.target.value)}
+                        className="rounded-lg border border-nmcn-border bg-black/40 px-3 py-2 text-sm text-white focus:border-nmcn-blue focus:outline-none"
+                      >
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                      </select>
+                      <button
+                        onClick={() => removeTicket(t.id)}
+                        disabled={updatingId === t.id}
+                        className="rounded-lg border border-red-500/30 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-8">
+          <a href="/admin" className="text-sm text-nmcn-muted hover:text-nmcn-blue transition">
+            ← Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}

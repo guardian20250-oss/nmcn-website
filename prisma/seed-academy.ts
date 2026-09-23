@@ -1329,6 +1329,203 @@ const courses: SeedCourse[] = [
           },
         ],
       },
+      {
+        title: "Motivating Underperformers",
+        slug: "motivating-underperformers",
+        summary: "Reset momentum when a creator is stuck or drifting.",
+        sections: [
+          { type: "heading", text: "Diagnose before you push" },
+          {
+            type: "paragraph",
+            text: "Low output usually means a clear blocker: schedule conflict, burnout, unclear goals, or content fatigue. Find the blocker first, then set one small recoverable win.",
+          },
+          {
+            type: "list",
+            items: [
+              "Ask what changed in their week or schedule",
+              "Shrink the next goal until it feels easy",
+              "Celebrate the first comeback stream",
+              "Recheck in seven days, not three months",
+            ],
+          },
+          {
+            type: "callout",
+            text: "A small win restarts momentum faster than a long lecture.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What should a team lead do first with an underperformer?",
+            options: [
+              "Find the real blocker",
+              "Remove them from the group",
+              "Ignore it for a month",
+              "Only compare them to top creators",
+            ],
+            correctIndex: 0,
+            explanation: "Blockers explain most dips in performance.",
+          },
+          {
+            prompt: "How large should the recovery goal be?",
+            options: [
+              "Small and easy to win",
+              "Maximum intensity immediately",
+              "So big they prove themselves",
+              "No goal at all",
+            ],
+            correctIndex: 0,
+            explanation: "Easy wins rebuild confidence and habit.",
+          },
+        ],
+      },
+      {
+        title: "Running Weekly One-on-Ones",
+        slug: "running-weekly-one-on-ones",
+        summary: "A repeatable 15-minute structure for every creator check-in.",
+        sections: [
+          { type: "heading", text: "Same structure every time" },
+          {
+            type: "paragraph",
+            text: "Consistent one-on-ones beat random long chats. Use the same five beats so creators know what to expect and you never leave a meeting without a next step.",
+          },
+          {
+            type: "list",
+            items: [
+              "Wins since last check-in",
+              "Schedule and consistency check",
+              "One blocker you can help clear",
+              "One goal for the next seven days",
+              "Close with the owner and date",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Fifteen focused minutes weekly beats a two-hour catch-up once a quarter.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What must every one-on-one end with?",
+            options: [
+              "One goal with owner and date",
+              "A long unfollowed wishlist",
+              "Only small talk",
+              "Nothing written down",
+            ],
+            correctIndex: 0,
+            explanation: "A dated goal is what makes the meeting useful.",
+          },
+          {
+            prompt: "How often should one-on-ones run?",
+            options: [
+              "Weekly on a fixed cadence",
+              "Only during crises",
+              "Once a year",
+              "Never",
+            ],
+            correctIndex: 0,
+            explanation: "Weekly cadence keeps small issues from stacking up.",
+          },
+        ],
+      },
+      {
+        title: "Managing Creator Teams Wrap-Up",
+        slug: "managing-creator-teams-wrap-up",
+        summary: "Pull feedback, motivation, and one-on-ones into a weekly system.",
+        sections: [
+          { type: "heading", text: "Lead the system, not the mood" },
+          {
+            type: "paragraph",
+            text: "Short feedback, blocked-diagnosed motivation, and weekly one-on-ones form a complete team management loop. Run it the same way every week.",
+          },
+          {
+            type: "list",
+            items: [
+              "One win, one issue, one next step in feedback",
+              "Diagnose blockers before pushing harder",
+              "Fifteen-minute weekly one-on-ones",
+              "Always leave with owner and date",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Pass this knowledge check to earn your Managing Creator Teams certificate.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the full management loop for a group?",
+            options: [
+              "Feedback, motivation, weekly one-on-ones",
+              "Only group rants",
+              "Only gift comparisons",
+              "Only random DMs",
+            ],
+            correctIndex: 0,
+            explanation: "That loop covers performance, people, and process.",
+          },
+          {
+            prompt: "What turns talk into progress?",
+            options: [
+              "A next step with owner and date",
+              "More talking",
+              "No follow-up",
+              "Public pressure",
+            ],
+            correctIndex: 0,
+            explanation: "Ownership and timing make outcomes real.",
+          },
+        ],
+      },
+      {
+        title: "Handling Group Conflict",
+        slug: "handling-group-conflict",
+        summary: "Resolve friction between creators before it poisons the group.",
+        sections: [
+          { type: "heading", text: "Private first, public never" },
+          {
+            type: "paragraph",
+            text: "Conflict spreads fast in group chats. Move the issue private, hear each side once, agree on one behavioral fix, and restate group norms to everyone without naming people.",
+          },
+          {
+            type: "list",
+            items: [
+              "Take the thread out of the public group",
+              "Ask each person for their view once",
+              "Agree one concrete behavior change",
+              "Restate norms for the whole group afterward",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Public callouts create sides. Private fixes keep the team intact.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "Where should group conflict be handled?",
+            options: [
+              "Privately with each person",
+              "In the public group chat",
+              "On social media",
+              "By ignoring it",
+            ],
+            correctIndex: 0,
+            explanation: "Private conversations prevent public sides from forming.",
+          },
+          {
+            prompt: "What should conflict resolution produce?",
+            options: [
+              "One concrete behavior change",
+              "A longer argument",
+              "A permanent grudge",
+              "No follow-up",
+            ],
+            correctIndex: 0,
+            explanation: "A specific change is how resolution becomes real.",
+          },
+        ],
+      },
     ],
   },
   {
@@ -2013,6 +2210,153 @@ const courses: SeedCourse[] = [
             ],
             correctIndex: 0,
             explanation: "Regular review keeps the pipeline current.",
+          },
+        ],
+      },
+      {
+        title: "Follow-Up Cadence",
+        slug: "follow-up-cadence",
+        summary: "When to nudge, when to wait, and when to close the loop.",
+        sections: [
+          { type: "heading", text: "Respectful persistence" },
+          {
+            type: "paragraph",
+            text: "Most replies come on the second or third touch — if the touch is useful. Space follow-ups, add new information each time, and stop cleanly when there is no interest.",
+          },
+          {
+            type: "list",
+            items: [
+              "First follow-up 2–3 days after outreach",
+              "Second follow-up with one new useful detail",
+              "Third touch is a polite close-the-loop note",
+              "Never spam daily or guilt-trip a no",
+            ],
+          },
+          {
+            type: "callout",
+            text: "A clean close leaves the door open for later. Harassment does not.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "When is a good first follow-up window?",
+            options: [
+              "2–3 days after outreach",
+              "Two hours later",
+              "Six months later",
+              "Never follow up",
+            ],
+            correctIndex: 0,
+            explanation: "A short window stays warm without being pushy.",
+          },
+          {
+            prompt: "What should each follow-up include?",
+            options: [
+              "One new useful detail",
+              "The exact same message again",
+              "Pressure or guilt",
+              "Nothing new",
+            ],
+            correctIndex: 0,
+            explanation: "New value gives the creator a reason to reply.",
+          },
+        ],
+      },
+      {
+        title: "Recording Calls & Next Steps",
+        slug: "recording-calls-and-next-steps",
+        summary: "Turn conversations into written notes the team can trust.",
+        sections: [
+          { type: "heading", text: "If it is not written, it did not happen" },
+          {
+            type: "paragraph",
+            text: "After every call, write a short note: who, outcome, objections, agreed next step, and date. Your future self and your lead will both need it.",
+          },
+          {
+            type: "list",
+            items: [
+              "Log date, participants, and outcome",
+              "Capture objections in the creator's words",
+              "Write the exact next step and owner",
+              "Share the note in the scout channel same day",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Good notes prevent double-contact and lost deals.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "When should call notes be written?",
+            options: [
+              "Same day, while memory is fresh",
+              "Weeks later",
+              "Only if the deal closes",
+              "Never",
+            ],
+            correctIndex: 0,
+            explanation: "Same-day notes are accurate and actionable.",
+          },
+          {
+            prompt: "What must every call note include?",
+            options: [
+              "Outcome and exact next step with owner",
+              "Only weather talk",
+              "Only follower counts",
+              "Nothing actionable",
+            ],
+            correctIndex: 0,
+            explanation: "Outcome plus ownership is what the team can act on.",
+          },
+        ],
+      },
+      {
+        title: "Scouting Outreach & Tracking Wrap-Up",
+        slug: "scouting-outreach-tracking-wrap-up",
+        summary: "Your five-lesson path from first message to a clean record.",
+        sections: [
+          { type: "heading", text: "Outreach that stays organized" },
+          {
+            type: "paragraph",
+            text: "Personal first messages, respectful follow-ups, a staged pipeline, and same-day notes form a complete outreach system. Run it every week.",
+          },
+          {
+            type: "list",
+            items: [
+              "Personalize every first contact",
+              "Follow up on a 2–3 day cadence",
+              "Stage and date every open prospect",
+              "Write call notes the same day",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Pass this knowledge check to earn your Scouting Outreach & Tracking certificate.",
+          },
+        ],
+        questions: [
+          {
+            prompt: "What is the outreach system loop?",
+            options: [
+              "Message, follow up, track, record",
+              "Only mass DMs",
+              "Only cold calls with no notes",
+              "Only hope",
+            ],
+            correctIndex: 0,
+            explanation: "That sequence keeps outreach effective and auditable.",
+          },
+          {
+            prompt: "How should a polite close work?",
+            options: [
+              "Leave the door open for later",
+              "Burn the bridge forever",
+              "Spam until they block you",
+              "Skip all documentation",
+            ],
+            correctIndex: 0,
+            explanation: "A clean close protects future opportunities.",
           },
         ],
       },

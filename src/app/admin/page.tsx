@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon } from "lucide-react";
+import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy } from "lucide-react";
+import GetHelpButton from "@/components/GetHelpButton";
 
 interface Stats {
   totalApplications: number;
@@ -19,6 +20,9 @@ interface Stats {
   totalAccounts: number;
   totalIndependent: number;
   totalStaff: number;
+  openTickets?: number;
+  inProgressTickets?: number;
+  resolvedTickets?: number;
 }
 
 export default function AdminDashboard() {
@@ -82,6 +86,24 @@ export default function AdminDashboard() {
           <button onClick={handleLogout} className="btn-outline flex items-center gap-2 text-sm">
             <LogOut className="h-4 w-4" /> Logout
           </button>
+        </div>
+
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-nmcn-border bg-nmcn-panel/50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+              <LifeBuoy className="h-5 w-5 text-nmcn-blue" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Support</p>
+              <p className="text-xs text-nmcn-muted">Submit a ticket or review open support requests</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <GetHelpButton className="btn-outline text-sm" />
+            <Link href="/admin/tickets" className="btn-gold text-sm">
+              Support Tickets
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
@@ -245,6 +267,18 @@ export default function AdminDashboard() {
             <div>
               <h3 className="font-heading text-lg font-semibold text-white">Academy</h3>
               <p className="text-sm text-nmcn-muted">{stats?.totalCourses || 0} courses</p>
+            </div>
+          </Link>
+
+          <Link href="/admin/tickets" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-gold/10">
+              <LifeBuoy className="h-6 w-6 text-nmcn-gold" />
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-white">Support Tickets</h3>
+              <p className="text-sm text-nmcn-muted">
+                {stats?.openTickets || 0} open · {stats?.inProgressTickets || 0} in progress
+              </p>
             </div>
           </Link>
         </div>
