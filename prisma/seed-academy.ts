@@ -3138,6 +3138,15 @@ const roleCourses: SeedCourse[] = [
 const allCourses: SeedCourse[] = [...courses, ...roleCourses];
 
 async function main() {
+  const dbHost = (() => {
+    try {
+      return new URL(process.env.DATABASE_URL || "").host || "unknown";
+    } catch {
+      return "invalid-url";
+    }
+  })();
+  console.log(`seed-academy start: courses=${allCourses.length} host=${dbHost}`);
+
   for (const courseData of allCourses) {
     const course = await prisma.course.upsert({
       where: { slug: courseData.slug },
@@ -3204,8 +3213,20 @@ async function main() {
       }
     }
 
-    console.log(`Seeded course: ${courseData.title}`);
+    console.log(`Seeded course: ${courseData.title} (${courseData.slug}, ${courseData.lessons.length} lessons)`);
   }
+
+  const totalCourses = await prisma.course.count();
+  const backstage = await prisma.course.findMany({
+    where: { slug: { startsWith: "navigating-backstage" } },
+    select: { slug: true, role: true, _count: { select: { lessons: true } } },
+  });
+  const teamLeadOps = await prisma.lesson.count({
+    where: { course: { slug: "team-lead-ops" } },
+  });
+  console.log(
+    `seed-academy done: dbCourses=${totalCourses} teamLeadOpsLessons=${teamLeadOps} backstage=${JSON.stringify(backstage)}`
+  );
 }
 
 main()
