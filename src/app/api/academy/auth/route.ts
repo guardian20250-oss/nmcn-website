@@ -41,6 +41,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Password updated" });
     }
 
+    if (mode === "updateProfile") {
+      const account = await getCreatorAccountFromRequest(request);
+      if (!account) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const name = String(body.name || "").trim();
+      const email = String(body.email || "").trim().toLowerCase();
+      const tiktokHandle = String(body.tiktokHandle || "").trim();
+
+      if (!name || !email) {
+        return NextResponse.json(
+          { error: "Name and email are required" },
+          { status: 400 }
+        );
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json(
+          { error: "Please enter a valid email address" },
+          { status: 400 }
+        );
+      }
+
+      const dup = await prisma.creatorAccount.findFirst({
+        where: { email, NOT: { id: account.id } },
+        select: { id: true },
+      });
+      if (dup) {
+        return NextResponse.json(
+          { error: "An account with this email already exists" },
+          { status: 409 }
+        );
+      }
+
+      await prisma.creatorAccount.update({
+        where: { id: account.id },
+        data: { name, email, tiktokHandle: tiktokHandle || null },
+      });
+
+      return NextResponse.json({
+        message: "Profile updated",
+        user: {
+          id: account.id,
+          name,
+          email,
+          tiktokHandle: tiktokHandle || null,
+          role: account.role,
+          status: account.status,
+        },
+      });
+    }
+
     if (mode === "register") {
       if (!name || !email || !password) {
         return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
@@ -140,6 +192,20 @@ export async function GET(request: NextRequest) {
     if (!account) {
       return NextResponse.json({ user: null });
     }
+    let tiktokHandle: string | null = null;
+    let createdAt: string | null = null;
+    try {
+      const row = await prisma.creatorAccount.findUnique({
+        where: { id: account.id },
+        select: { tiktokHandle: true, createdAt: true },
+      });
+      if (row) {
+        tiktokHandle = row.tiktokHandle;
+        createdAt = row.createdAt.toISOString();
+      }
+    } catch {
+      // non-fatal
+    }
     return NextResponse.json({
       user: {
         id: account.id,
@@ -149,6 +215,8 @@ export async function GET(request: NextRequest) {
         status: account.status,
         independentCreator: account.independentCreator,
         mustChangePassword: account.mustChangePassword ?? false,
+        tiktokHandle,
+        createdAt,
       },
       courses: getCoursesForRole(account.role, account.independentCreator),
     });
