@@ -119,6 +119,7 @@ export default function Navbar() {
   );
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-nmcn-border bg-nmcn-black/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
@@ -253,13 +254,14 @@ export default function Navbar() {
           </nav>
         </div>
       )}
+    </header>
 
       {loginOpen && (
         <div
           className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4"
           onClick={() => !loginBusy && setLoginOpen(false)}
         >
-          <div className="card w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+          <div className="card w-full max-w-sm p-6 sm:max-w-md" onClick={e => e.stopPropagation()}>
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="font-heading text-xl font-bold text-white">Log In</h2>
@@ -357,6 +359,6 @@ export default function Navbar() {
           setStaff(s => (s ? { ...s, mustChangePassword: false } : s));
         }}
       />
-    </header>
+    </>
   );
 }
