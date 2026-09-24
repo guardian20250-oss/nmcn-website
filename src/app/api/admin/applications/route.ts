@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
+import { sendEmail, rejectionEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("admin-token")?.value;
@@ -24,19 +25,52 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
     const id = Number(body.id);
-    const status = String(body.status || "").trim();
+    const status =
+      body.status !== undefined && body.status !== null
+        ? String(body.status).trim()
+        : undefined;
+    const notes =
+      body.notes !== undefined
+        ? body.notes === null
+          ? null
+          : String(body.notes)
+        : undefined;
 
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
-    if (!["pending", "approved", "rejected"].includes(status)) {
+    if (status === undefined && notes === undefined) {
+      return NextResponse.json(
+        { error: "status or notes is required" },
+        { status: 400 }
+      );
+    }
+    if (status !== undefined && !["pending", "approved", "rejected"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
+    const data: { status?: string; notes?: string | null } = {};
+    if (status !== undefined) data.status = status;
+    if (notes !== undefined) data.notes = notes;
+
     const updated = await prisma.joinApplication.update({
       where: { id },
-      data: { status },
+      data,
     });
+
+    if (status === "rejected") {
+      try {
+        await sendEmail(
+          rejectionEmail({
+            tiktokHandle: updated.tiktokHandle,
+            email: updated.email,
+            note: updated.notes || "",
+          })
+        );
+      } catch (emailError) {
+        console.error("Rejection email failed:", emailError);
+      }
+    }
 
     return NextResponse.json({ application: updated });
   } catch (error) {

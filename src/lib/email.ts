@@ -63,6 +63,33 @@ export function joinApplicationEmail(data: {
   };
 }
 
+function escapeHtml(str: string) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function rejectionEmail(data: {
+  tiktokHandle: string;
+  email: string;
+  note: string;
+}) {
+  return {
+    to: data.email,
+    subject: "Your NMCN Application Update",
+    html: `
+      <h2>Hi ${escapeHtml(data.tiktokHandle.replace(/^@/, ""))},</h2>
+      <p>Thank you for applying to join the Nexus Creator Network.</p>
+      <p>After reviewing your application, we are unable to move forward at this time.</p>
+      ${data.note ? `<p><strong>Reason:</strong></p><p>${escapeHtml(data.note).replace(/\n/g, "<br />")}</p>` : ""}
+      <p>You are welcome to reapply in the future once your channel has grown.</p>
+      <p>— The NMCN Team</p>
+    `,
+  };
+}
+
 export function testimonialEmail(data: {
   name: string;
   role: string;

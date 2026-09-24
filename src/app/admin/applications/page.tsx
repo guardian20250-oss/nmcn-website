@@ -24,6 +24,9 @@ export default function ApplicationsPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [viewingApp, setViewingApp] = useState<Application | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [rejectMode, setRejectMode] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -72,6 +75,63 @@ export default function ApplicationsPage() {
   };
 
   const filtered = filter === "all" ? applications : applications.filter(app => app.status === filter);
+
+  const openView = (app: Application) => {
+    setViewingApp(app);
+    setNoteDraft(app.notes || "");
+    setRejectMode(false);
+  };
+
+  const openReject = (app: Application) => {
+    setViewingApp(app);
+    setNoteDraft(app.notes || "");
+    setRejectMode(true);
+  };
+
+  const patchApplication = async (id: number, payload: Record<string, unknown>) => {
+    const res = await fetch("/api/admin/applications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, ...payload }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Failed to update application");
+    return data.application as Application;
+  };
+
+  const saveNote = async () => {
+    if (!viewingApp) return;
+    setSavingNote(true);
+    setError("");
+    try {
+      const updated = await patchApplication(viewingApp.id, { notes: noteDraft });
+      setApplications(apps => apps.map(app => (app.id === updated.id ? { ...app, notes: updated.notes } : app)));
+      setViewingApp(prev => (prev ? { ...prev, notes: updated.notes } : prev));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save note");
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const confirmReject = async () => {
+    if (!viewingApp) return;
+    setSavingNote(true);
+    setError("");
+    try {
+      const updated = await patchApplication(viewingApp.id, {
+        status: "rejected",
+        notes: noteDraft,
+      });
+      setApplications(apps => apps.map(app => (app.id === updated.id ? updated : app)));
+      setViewingApp(updated);
+      setRejectMode(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reject application");
+    } finally {
+      setSavingNote(false);
+    }
+  };
 
   const statusIcon = (status: string) => {
     switch (status) {
@@ -150,11 +210,16 @@ export default function ApplicationsPage() {
                     {app.agencyExperience && (
                       <p className="mt-2 text-sm text-nmcn-muted">Experience: {app.agencyExperience}</p>
                     )}
+                    {app.notes && (
+                      <p className="mt-2 rounded-lg border border-nmcn-border bg-white/5 px-3 py-1.5 text-xs text-nmcn-muted">
+                        Note: {app.notes}
+                      </p>
+                    )}
                     <p className="mt-1 text-xs text-nmcn-muted">Applied: {new Date(app.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setViewingApp(app)}
+                      onClick={() => openView(app)}
                       className="flex items-center gap-1.5 border border-nmcn-border px-3 py-1.5 text-xs font-medium text-nmcn-muted hover:border-nmcn-blue/40 hover:text-white transition rounded-lg"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -171,11 +236,11 @@ export default function ApplicationsPage() {
                     )}
                     {app.status !== "rejected" && (
                       <button
-                        onClick={() => updateStatus(app.id, "rejected")}
+                        onClick={() => openReject(app)}
                         disabled={updatingId !== null}
                         className="btn-danger text-xs px-3 py-1.5 disabled:opacity-50"
                       >
-                        {updatingId === app.id ? "..." : "Reject"}
+                        Reject
                       </button>
                     )}
                     {app.status !== "pending" && (
@@ -197,7 +262,10 @@ export default function ApplicationsPage() {
         {viewingApp && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-            onClick={() => setViewingApp(null)}
+            onClick={() => {
+              setViewingApp(null);
+              setRejectMode(false);
+            }}
           >
             <div
               className="card w-full max-w-lg p-6"
@@ -211,7 +279,10 @@ export default function ApplicationsPage() {
                   </h2>
                 </div>
                 <button
-                  onClick={() => setViewingApp(null)}
+                  onClick={() => {
+                    setViewingApp(null);
+                    setRejectMode(false);
+                  }}
                   className="text-nmcn-muted hover:text-white transition"
                   aria-label="Close"
                 >
@@ -262,10 +333,53 @@ export default function ApplicationsPage() {
                   </p>
                 </div>
 
-                {viewingApp.notes && (
-                  <div className="rounded-xl border border-nmcn-border p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Notes</p>
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-white">{viewingApp.notes}</p>
+                <div className="rounded-xl border border-nmcn-border p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+                    Admin Note / Rejection Reason
+                  </p>
+                  <textarea
+                    value={noteDraft}
+                    onChange={e => setNoteDraft(e.target.value)}
+                    placeholder="Leave a note explaining why this application was rejected (the applicant will be emailed this reason when you reject)..."
+                    rows={3}
+                    className="textarea mt-2 w-full text-sm"
+                  />
+                  {!rejectMode && (
+                    <button
+                      onClick={saveNote}
+                      disabled={savingNote}
+                      className="mt-2 btn-ghost text-xs px-3 py-1.5 disabled:opacity-50"
+                    >
+                      {savingNote ? "Saving..." : "Save Note"}
+                    </button>
+                  )}
+                </div>
+
+                {rejectMode && (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+                    <p className="text-sm font-semibold text-red-300">
+                      Reject this application?
+                    </p>
+                    <p className="mt-1 text-xs text-red-300/80">
+                      The applicant will be emailed the note above as the reason.
+                      {noteDraft.trim() === "" && " No note entered — the email will not include a reason."}
+                    </p>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={confirmReject}
+                        disabled={savingNote}
+                        className="btn-danger text-xs px-3 py-1.5 disabled:opacity-50"
+                      >
+                        {savingNote ? "Rejecting..." : "Confirm Reject"}
+                      </button>
+                      <button
+                        onClick={() => setRejectMode(false)}
+                        disabled={savingNote}
+                        className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 )}
 
