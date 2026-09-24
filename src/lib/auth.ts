@@ -251,7 +251,7 @@ export async function changeAdminPassword(adminId: number, newPassword: string) 
 
 export async function updateStaffAccount(
   id: number,
-  data: { name?: string; email?: string; role?: string }
+  data: { name?: string; email?: string; role?: string; password?: string }
 ) {
   const existing = await prisma.admin.findUnique({ where: { id }, select: { id: true, email: true } });
   if (!existing) throw new Error("Staff account not found");
@@ -266,12 +266,19 @@ export async function updateStaffAccount(
     throw new Error("Invalid role");
   }
 
+  if (data.password && data.password.length < 8) {
+    throw new Error("Password must be at least 8 characters");
+  }
+
   return prisma.admin.update({
     where: { id },
     data: {
       ...(data.name?.trim() ? { name: data.name.trim() } : {}),
       ...(email ? { email } : {}),
       ...(data.role ? { role: data.role } : {}),
+      ...(data.password
+        ? { password: await hashPassword(data.password), mustChangePassword: true }
+        : {}),
     },
     select: { id: true, email: true, name: true, role: true, createdAt: true },
   });

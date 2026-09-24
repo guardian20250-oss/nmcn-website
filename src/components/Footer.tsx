@@ -1,6 +1,17 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
-export default function Footer() {
+export default async function Footer() {
+  let isLoggedIn = false;
+  try {
+    const cookieStore = await cookies();
+    isLoggedIn = Boolean(
+      cookieStore.get("creator-token")?.value || cookieStore.get("admin-token")?.value
+    );
+  } catch {
+    isLoggedIn = false;
+  }
+
   return (
     <footer className="relative z-10 border-t border-nmcn-border bg-nmcn-black/95 px-6 py-12">
       <div className="mx-auto max-w-7xl">
@@ -31,12 +42,14 @@ export default function Footer() {
               >
                 About Us
               </Link>
-              <Link
-                href="/battle-exchange"
-                className="text-sm text-nmcn-muted transition hover:text-nmcn-blue"
-              >
-                Battle Exchange
-              </Link>
+              {isLoggedIn && (
+                <Link
+                  href="/battle-exchange"
+                  className="text-sm text-nmcn-muted transition hover:text-nmcn-blue"
+                >
+                  Battle Exchange
+                </Link>
+              )}
               <Link
                 href="/academy"
                 className="text-sm text-nmcn-muted transition hover:text-nmcn-blue"

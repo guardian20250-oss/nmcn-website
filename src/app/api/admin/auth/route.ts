@@ -1,6 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin, generateToken, changeAdminPassword, getStaffFromRequest } from "@/lib/auth";
 
+export async function GET(request: NextRequest) {
+  try {
+    const staff = await getStaffFromRequest(request);
+    if (!staff) {
+      return NextResponse.json({ user: null });
+    }
+    return NextResponse.json({
+      user: {
+        id: staff.id,
+        email: staff.email,
+        name: staff.name,
+        role: staff.role,
+        mustChangePassword: staff.mustChangePassword ?? false,
+      },
+    });
+  } catch {
+    return NextResponse.json({ user: null });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

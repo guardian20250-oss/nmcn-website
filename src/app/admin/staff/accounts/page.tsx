@@ -247,6 +247,7 @@ export default function StaffAccountsPage() {
             name: editForm.name,
             email: editForm.email,
             role: editForm.role,
+            password: editForm.password || undefined,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -605,6 +606,7 @@ export default function StaffAccountsPage() {
                 </>
               )}
               {editingStaff && (
+                <>
                 <select
                   className="input"
                   value={editForm.role}
@@ -616,6 +618,19 @@ export default function StaffAccountsPage() {
                   <option value="scout">Scout</option>
                   <option value="battle_coordinator">Battle Coordinator</option>
                 </select>
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="New password (optional, 8+ chars)"
+                  minLength={8}
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                />
+                <p className="text-xs text-nmcn-muted md:col-span-2">
+                  If a new password is set, the account will be required to
+                  change it on next login.
+                </p>
+                </>
               )}
             </div>
             {editError && (

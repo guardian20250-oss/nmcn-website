@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
         name: body.name,
         email: body.email,
         role: body.role,
+        password: body.password || undefined,
       });
       return NextResponse.json({ staff: updated });
     }

@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import GetHelpButton from "@/components/GetHelpButton";
 import TodaySchedule from "@/components/TodaySchedule";
+import OpenLoginButton from "@/components/OpenLoginButton";
 import {
   Swords,
   Users,
@@ -43,7 +45,17 @@ const stats = [
   { num: "2", label: "Countries" },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  let isLoggedIn = false;
+  try {
+    const cookieStore = await cookies();
+    isLoggedIn = Boolean(
+      cookieStore.get("creator-token")?.value || cookieStore.get("admin-token")?.value
+    );
+  } catch {
+    isLoggedIn = false;
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -71,12 +83,18 @@ export default function HomePage() {
             <Link href="/join" className="btn-gold px-8 py-3 text-base">
               Apply Now
             </Link>
-            <Link
-              href="/battle-exchange"
-              className="btn-outline px-8 py-3 text-base"
-            >
-              Battle Exchange
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/battle-exchange"
+                className="btn-outline px-8 py-3 text-base"
+              >
+                Battle Exchange
+              </Link>
+            ) : (
+              <OpenLoginButton className="btn-outline px-8 py-3 text-base">
+                Log In to View Battle Exchange
+              </OpenLoginButton>
+            )}
             <GetHelpButton className="btn-outline px-8 py-3 text-base" />
           </div>
         </div>
@@ -228,13 +246,20 @@ export default function HomePage() {
             <Link href="/join" className="btn-gold px-8 py-3 text-base">
               Apply Now
             </Link>
-            <Link
-              href="/battle-exchange"
-              className="btn-outline px-8 py-3 text-base"
-            >
-              Explore Battle Exchange
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/battle-exchange"
+                className="btn-outline px-8 py-3 text-base"
+              >
+                Explore Battle Exchange
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Link>
+            ) : (
+              <OpenLoginButton className="btn-outline px-8 py-3 text-base">
+                Log In to View Battle Exchange
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </OpenLoginButton>
+            )}
           </div>
         </div>
       </section>

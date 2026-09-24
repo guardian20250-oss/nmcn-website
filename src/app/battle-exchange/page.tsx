@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import OpenLoginButton from "@/components/OpenLoginButton";
 import {
   Swords,
   Calendar,
@@ -6,6 +8,7 @@ import {
   Bell,
   Users,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 
 const features = [
@@ -36,7 +39,47 @@ const features = [
   },
 ];
 
-export default function BattleExchangePage() {
+export default async function BattleExchangePage() {
+  let isLoggedIn = false;
+  try {
+    const cookieStore = await cookies();
+    isLoggedIn = Boolean(
+      cookieStore.get("creator-token")?.value || cookieStore.get("admin-token")?.value
+    );
+  } catch {
+    isLoggedIn = false;
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen pt-24">
+        <section className="px-6 py-24 text-center">
+          <div className="mx-auto max-w-2xl">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-nmcn-gold bg-nmcn-gold/10">
+              <Lock className="h-7 w-7 text-nmcn-gold" />
+            </div>
+            <h1 className="mb-4 font-heading text-4xl font-bold text-white md:text-5xl">
+              Battle Exchange is <span className="gold-text">Members Only</span>
+            </h1>
+            <p className="mb-8 text-lg text-nmcn-muted">
+              Log in with your account to view the Battle Exchange platform, or
+              apply to join the network.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <OpenLoginButton className="btn-gold flex items-center gap-2 px-8 py-3 text-base">
+                <Lock className="h-4 w-4" />
+                Log In to Continue
+              </OpenLoginButton>
+              <Link href="/join" className="btn-outline px-8 py-3 text-base">
+                Apply Now
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-24">
       {/* Hero */}

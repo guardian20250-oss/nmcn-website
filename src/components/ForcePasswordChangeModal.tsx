@@ -7,9 +7,10 @@ interface Props {
   open: boolean;
   onDone: () => void;
   email?: string;
+  variant?: "admin" | "creator";
 }
 
-export default function ForcePasswordChangeModal({ open, onDone, email }: Props) {
+export default function ForcePasswordChangeModal({ open, onDone, email, variant = "admin" }: Props) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -30,10 +31,14 @@ export default function ForcePasswordChangeModal({ open, onDone, email }: Props)
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/auth", {
+      const res = await fetch(variant === "creator" ? "/api/academy/auth" : "/api/admin/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "changePassword", password }),
+        body: JSON.stringify(
+          variant === "creator"
+            ? { mode: "changePassword", newPassword: password }
+            : { action: "changePassword", password }
+        ),
       });
       if (!res.ok) {
         const data = await res.json();
