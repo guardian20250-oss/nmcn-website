@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle, XCircle, Clock, Filter } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Clock, Eye, X } from "lucide-react";
 
 interface Application {
   id: number;
@@ -23,6 +23,7 @@ export default function ApplicationsPage() {
   const [filter, setFilter] = useState("all");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [viewingApp, setViewingApp] = useState<Application | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -131,7 +132,7 @@ export default function ApplicationsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       {statusIcon(app.status)}
-                      <span className="font-heading text-lg font-semibold text-white">@{app.tiktokHandle}</span>
+                      <span className="font-heading text-lg font-semibold text-white">@{app.tiktokHandle.replace(/^@/, "")}</span>
                       <span className={`badge ${
                         app.status === "approved" ? "border-green-500/40 text-green-400" :
                         app.status === "rejected" ? "border-red-500/40 text-red-400" :
@@ -152,6 +153,13 @@ export default function ApplicationsPage() {
                     <p className="mt-1 text-xs text-nmcn-muted">Applied: {new Date(app.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => setViewingApp(app)}
+                      className="flex items-center gap-1.5 border border-nmcn-border px-3 py-1.5 text-xs font-medium text-nmcn-muted hover:border-nmcn-blue/40 hover:text-white transition rounded-lg"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      View
+                    </button>
                     {app.status !== "approved" && (
                       <button
                         onClick={() => updateStatus(app.id, "approved")}
@@ -183,6 +191,99 @@ export default function ApplicationsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {viewingApp && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+            onClick={() => setViewingApp(null)}
+          >
+            <div
+              className="card w-full max-w-lg p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {statusIcon(viewingApp.status)}
+                  <h2 className="font-heading text-xl font-bold text-white">
+                    Application Details
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setViewingApp(null)}
+                  className="text-nmcn-muted hover:text-white transition"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-xl border border-nmcn-border bg-white/5 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+                    TikTok @
+                  </p>
+                  <a
+                    href={`https://www.tiktok.com/@${viewingApp.tiktokHandle.replace(/^@/, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-heading text-lg font-semibold text-nmcn-blue hover:underline"
+                  >
+                    @{viewingApp.tiktokHandle.replace(/^@/, "")}
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                  <div className="rounded-xl border border-nmcn-border p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Discord</p>
+                    <p className="mt-1 text-white">{viewingApp.discordHandle}</p>
+                  </div>
+                  <div className="rounded-xl border border-nmcn-border p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Email</p>
+                    <p className="mt-1 break-all text-white">{viewingApp.email}</p>
+                  </div>
+                  <div className="rounded-xl border border-nmcn-border p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Followers</p>
+                    <p className="mt-1 text-white">{viewingApp.followerCount || "N/A"}</p>
+                  </div>
+                  <div className="rounded-xl border border-nmcn-border p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Avg LIVE Viewers</p>
+                    <p className="mt-1 text-white">{viewingApp.avgLiveViewers || "N/A"}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-nmcn-border p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+                    Previous Agency Experience
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-white">
+                    {viewingApp.agencyExperience || "N/A"}
+                  </p>
+                </div>
+
+                {viewingApp.notes && (
+                  <div className="rounded-xl border border-nmcn-border p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Notes</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-white">{viewingApp.notes}</p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between border-t border-nmcn-border pt-4 text-xs text-nmcn-muted">
+                  <span>
+                    Status:{" "}
+                    <span className={
+                      viewingApp.status === "approved" ? "text-green-400" :
+                      viewingApp.status === "rejected" ? "text-red-400" :
+                      "text-yellow-400"
+                    }>
+                      {viewingApp.status}
+                    </span>
+                  </span>
+                  <span>Applied: {new Date(viewingApp.createdAt).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
