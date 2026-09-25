@@ -43,6 +43,7 @@ model SupportTicket {
   email       String
   name        String?
   phone       String?
+  accessToken String?
   userId      Int?
   userRole    String?
   handledById Int?
@@ -50,9 +51,34 @@ model SupportTicket {
   updatedAt   DateTime @updatedAt
   user        CreatorAccount? @relation(fields: [userId], references: [id], onDelete: SetNull)
   handledBy   Admin?          @relation(fields: [handledById], references: [id], onDelete: SetNull)
+  replies     SupportTicketReply[]
 
   @@index([status])
   @@index([createdAt])
+}
+
+model SupportTicketReply {
+  id         Int           @id @default(autoincrement())
+  ticketId   Int
+  authorType String
+  authorId   Int?
+  authorName String
+  message    String
+  createdAt  DateTime      @default(now())
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+}
+
+model SupportSettings {
+  id                Int      @id @default(autoincrement())
+  discordWebhookUrl String   @default("")
+  notifyPhone       String   @default("")
+  notifyCarrier     String   @default("")
+  notifyEmail       String   @default("nexusmafiacreatornetworkllc@outlook.com")
+  updatedAt         DateTime @updatedAt
+
+  @@map("support_settings")
 }
 
 model CreatorAccount {

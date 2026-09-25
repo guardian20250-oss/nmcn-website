@@ -28,6 +28,7 @@ export default function SupportTicketModal({ open, onClose, defaultEmail, defaul
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [ticketId, setTicketId] = useState<number | null>(null);
+  const [ticketToken, setTicketToken] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +43,7 @@ export default function SupportTicketModal({ open, onClose, defaultEmail, defaul
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit ticket");
       setTicketId(data.ticket.id);
+      setTicketToken(data.ticket.accessToken || null);
       setSuccess(true);
     } catch (err: any) {
       setError(err.message);
@@ -62,6 +64,7 @@ export default function SupportTicketModal({ open, onClose, defaultEmail, defaul
       setError("");
       setSuccess(false);
       setTicketId(null);
+      setTicketToken(null);
     }, 200);
   }
 
@@ -88,16 +91,26 @@ export default function SupportTicketModal({ open, onClose, defaultEmail, defaul
               <span className="text-nmcn-blue">{email}</span>.
             </p>
             {ticketId && (
-              <p className="text-nmcn-muted/70 text-xs mb-6">
+              <p className="text-nmcn-muted/70 text-xs mb-2">
                 Ticket #{ticketId}
               </p>
             )}
-            <button
-              onClick={handleClose}
-              className="btn-gold text-sm"
-            >
-              Close
-            </button>
+            {ticketId && ticketToken && (
+              <a
+                href={`/support/${ticketId}?token=${ticketToken}`}
+                className="btn-outline mb-6 inline-flex text-sm"
+              >
+                View Ticket &amp; Replies
+              </a>
+            )}
+            <div className="mt-4">
+              <button
+                onClick={handleClose}
+                className="btn-gold text-sm"
+              >
+                Close
+              </button>
+            </div>
           </div>
         ) : (
           <>

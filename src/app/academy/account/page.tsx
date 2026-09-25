@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AuthPrompt from "@/components/academy/AuthPrompt";
+import SupportTicketModal from "@/components/SupportTicketModal";
 import {
   Loader2,
   User,
@@ -14,6 +15,7 @@ import {
   Pencil,
   KeyRound,
   CheckCircle,
+  LifeBuoy,
 } from "lucide-react";
 import { Suspense } from "react";
 
@@ -27,6 +29,20 @@ interface Userinfo {
   createdAt: string | null;
   mustChangePassword?: boolean;
 }
+
+interface MyTicket {
+  id: number;
+  subject: string;
+  status: string;
+  createdAt: string;
+  _count?: { replies: number };
+}
+
+const TICKET_STATUS_META: Record<string, { label: string; className: string }> = {
+  open: { label: "Open", className: "border-amber-500/40 text-amber-300" },
+  in_progress: { label: "In Progress", className: "border-nmcn-blue/40 text-nmcn-blue" },
+  resolved: { label: "Resolved", className: "border-emerald-500/40 text-emerald-300" },
+};
 
 const roleLabels: Record<string, string> = {
   creator: "Creator",
@@ -73,8 +89,26 @@ function AcademyAccountContent() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState("");
   const [pwErr, setPwErr] = useState("");
+  const [tickets, setTickets] = useState<MyTicket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode") === "register" ? "register" : "login";
+
+  const reloadTickets = async () => {
+    setTicketsLoading(true);
+    try {
+      const res = await fetch("/api/support");
+      if (res.ok) {
+        const data = await res.json();
+        setTickets(data.tickets || []);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -88,6 +122,15 @@ function AcademyAccountContent() {
             email: data.user.email || "",
             tiktokHandle: data.user.tiktokHandle || "",
           });
+          try {
+            const t = await fetch("/api/support");
+            if (t.ok) {
+              const td = await t.json();
+              setTickets(td.tickets || []);
+            }
+          } catch {
+            // ignore
+          }
         }
       } catch {
         setUser(null);
@@ -381,6 +424,68 @@ function AcademyAccountContent() {
                   </button>
                 </form>
               </div>
+
+              <div className="card mt-4 p-6">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="flex items-center gap-2 font-heading text-lg font-semibold text-white">
+                    <LifeBuoy className="h-4 w-4 text-nmcn-blue" />
+                    Support Tickets
+                  </p>
+                  <button
+                    onClick={() => setShowTicketModal(true)}
+                    className="btn-outline px-3 py-1.5 text-xs"
+                  >
+                    New Ticket
+                  </button>
+                </div>
+                {ticketsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-nmcn-blue" />
+                  </div>
+                ) : tickets.length === 0 ? (
+                  <p className="text-sm text-nmcn-muted">
+                    No tickets yet. Need help? Submit one and track every reply right
+                    here.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {tickets.map((t) => {
+                      const meta =
+                        TICKET_STATUS_META[t.status] || TICKET_STATUS_META.open;
+                      return (
+                        <Link
+                          key={t.id}
+                          href={`/support/${t.id}`}
+                          className="flex items-center justify-between gap-3 rounded-xl border border-nmcn-border p-3 transition hover:border-nmcn-blue/50"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm text-white">{t.subject}</p>
+                            <p className="text-xs text-nmcn-muted">
+                              #{t.id} · {new Date(t.createdAt).toLocaleDateString()} ·{" "}
+                              {t._count?.replies ?? 0} replies
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${meta.className}`}
+                          >
+                            {meta.label}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <SupportTicketModal
+                open={showTicketModal}
+                onClose={() => {
+                  setShowTicketModal(false);
+                  reloadTickets();
+                }}
+                defaultEmail={user.email}
+                defaultName={user.name}
+              />
 
               <div className="mt-4 flex flex-col gap-3">
                 <Link href="/academy" className="btn-gold text-center py-2.5">
