@@ -113,7 +113,7 @@ icon: "Video",
             ],
             correctIndex: 1,
             explanation:
-              "A strong open with planned topics keeps viewers in the room.",
+              "Diamonds are the 'net value' metric that TikTok distributes to creators after platform revenue sharing. Since creators only cash out diamonds, final net earnings will mathematically be lower than the gross coin total displayed on screen.",
           },
         ],
       },
@@ -680,310 +680,7 @@ icon: "Video",
             explanation: "Professional tone protects reputation.",
           },
         ],
-},
-    ],
-  },
-  {
-    title: "Discord for Creators",
-    slug: "discord",
-    description:
-      "Use Discord to run community, coordinate battles, and support your creator brand safely.",
-    icon: "MessagesSquare",
-    order: 2,
-    role: "creator",
-    lessons: [
-      {
-        title: "Why Discord Matters",
-        slug: "why-discord-matters",
-        summary: "Own your community beyond the algorithm.",
-        sections: [
-          { type: "heading", text: "Your home base" },
-          {
-            type: "paragraph",
-            text: "Social platforms change reach daily. Discord is a space you structure — announcements, battle callouts, fan hangouts, and support live there.",
-          },
-          {
-            type: "list",
-            items: [
-              "Direct access to your most loyal fans",
-              "Organized channels for topics and events",
-              "Roles to recognize supporters and team",
-              "Works alongside TikTok LIVE and Battle Exchange",
-            ],
-          },
-        ],
-        questions: [
-          {
-            prompt: "What is Discord mainly for creators?",
-            options: [
-              "An owned community home base",
-              "Only file storage",
-              "Replacing TikTok entirely",
-              "Private email marketing spam",
-            ],
-            correctIndex: 0,
-            explanation:
-              "Discord is a structured community space you control.",
-          },
-          {
-            prompt: "Which Discord feature organizes topics?",
-            options: [
-              "Channels",
-              "Emojis only",
-              "Screen resolution",
-              "Unlimited DMs",
-            ],
-            correctIndex: 0,
-            explanation: "Channels keep conversations categorized.",
-          },
-          {
-            prompt: "How does Discord relate to Battle Exchange?",
-            options: [
-              "It can coordinate callouts and schedules",
-              "It is unrelated",
-              "It replaces scoring entirely",
-              "It is only for memes",
-            ],
-            correctIndex: 0,
-            explanation:
-              "Discord is ideal for battle scheduling and coordination.",
-          },
-        ],
       },
-      {
-        title: "Server Structure",
-        slug: "server-structure",
-        summary: "Channels and roles that scale.",
-        sections: [
-          { type: "heading", text: "Start simple" },
-          {
-            type: "paragraph",
-            text: "Do not drown members in 50 empty channels. Launch with clear categories: Announcements, Community, Battles, Wins, and Support.",
-          },
-          {
-            type: "list",
-            items: [
-              "# announcements — you or mods only",
-              "# introductions — new members say hello",
-              "# battle-callouts — schedules and looking-for-group",
-              "# wins-and-clips — celebrate results",
-              "# support — questions about agency/platform",
-            ],
-          },
-          {
-            type: "callout",
-            text: "Roles like Member, VIP, and Mod make the server feel alive and moderated.",
-          },
-        ],
-        questions: [
-          {
-            prompt: "Which channel should be post-restricted?",
-            options: [
-              "# announcements",
-              "# random DMs",
-              "# guestbook",
-              "# reaction-roles spam",
-            ],
-            correctIndex: 0,
-            explanation: "Announcements should only be posted by staff.",
-          },
-          {
-            prompt: "What is a healthy approach to channels?",
-            options: [
-              "Few clear channels that scale",
-              "100 empty channels day one",
-              "No categories ever",
-              "Voice-only servers",
-            ],
-            correctIndex: 0,
-            explanation: "Start lean and expand as the community needs it.",
-          },
-          {
-            prompt: "What do roles help with?",
-            options: [
-              "Permissions and recognition",
-              "Faster internet",
-              "Video encoding",
-              "Gift conversion rates",
-            ],
-            correctIndex: 0,
-            explanation: "Roles control permissions and show status.",
-          },
-        ],
-      },
-      {
-        title: "Moderation & Safety",
-        slug: "moderation-and-safety",
-        summary: "Keep the space welcoming and secure.",
-        sections: [
-          { type: "heading", text: "Protect members" },
-          {
-            type: "paragraph",
-            text: "Set rules, enable verification, train mods, and act quickly on harassment or scam links. Safety is a feature, not an afterthought.",
-          },
-          {
-            type: "list",
-            items: [
-              "Publish clear rules and pin them",
-              "Require verification before full access",
-              "Use bots for raid and spam protection",
-              "Document mod actions so the team stays consistent",
-            ],
-          },
-        ],
-        questions: [
-          {
-            prompt: "First step for a safe server?",
-            options: [
-              "Clear published rules",
-              "Zero moderation forever",
-              "Open DM invites for everyone",
-              "Ignoring scam links",
-            ],
-            correctIndex: 0,
-            explanation: "Rules set expectations for members and mods.",
-          },
-          {
-            prompt: "What helps stop raids and spam?",
-            options: [
-              "Verification and moderation bots",
-              "Disabling all channels",
-              "Nothing",
-              "More public invite links everywhere",
-            ],
-            correctIndex: 0,
-            explanation: "Verification gates and bots reduce raid damage.",
-          },
-          {
-            prompt: "Why document mod actions?",
-            options: [
-              "Consistency across the team",
-              "To leak private info",
-              "To bore members",
-              "It is illegal not to post them",
-            ],
-            correctIndex: 0,
-            explanation: "Shared logs keep moderation fair and consistent.",
-          },
-        ],
-      },
-      {
-        title: "Growing & Engaging",
-        slug: "growing-and-engaging",
-        summary: "Turn silent members into active regulars.",
-        sections: [
-          { type: "heading", text: "Activity loops" },
-          {
-            type: "paragraph",
-            text: "Post prompts, host voice hangouts before LIVE, celebrate member wins, and give VIP roles to consistent contributors.",
-          },
-          {
-            type: "list",
-            items: [
-              "Weekly discussion prompts or polls",
-              "Go-live alerts in #announcements",
-              "Spotlight member clips in #wins",
-              "AMA or office-hours voice channels",
-            ],
-          },
-        ],
-        questions: [
-          {
-            prompt: "Which tactic boosts Discord activity?",
-            options: [
-              "Weekly prompts and go-live alerts",
-              "Only posting once a month",
-              "Muting everyone",
-              "Never celebrating members",
-            ],
-            correctIndex: 0,
-            explanation: "Regular rituals create reasons to return.",
-          },
-          {
-            prompt: "Where should LIVE alerts go?",
-            options: [
-              "A dedicated announcements channel",
-              "Random voice channels",
-              "Nowhere",
-              "Only in DMs",
-            ],
-            correctIndex: 0,
-            explanation: "A single announcements channel keeps alerts clear.",
-          },
-          {
-            prompt: "How can VIP roles help?",
-            options: [
-              "Recognize consistent contributors",
-              "Hack accounts",
-              "Boost internet speed",
-              "Disable moderation",
-            ],
-            correctIndex: 0,
-            explanation: "Recognition rewards encourage ongoing participation.",
-          },
-        ],
-      },
-      {
-        title: "Discord + Academy Wrap-Up",
-        slug: "discord-academy-wrap-up",
-        summary: "Connect Discord habits to your overall creator system.",
-        sections: [
-          { type: "heading", text: "Bring it together" },
-          {
-            type: "paragraph",
-            text: "Your stack now includes TikTok LIVE fundamentals, Battle Exchange coordination, and a Discord home base. Cross-promote each pillar so fans always know the next place to show up.",
-          },
-          {
-            type: "list",
-            items: [
-              "LIVE → invite viewers to Discord for clips and schedules",
-              "Discord → announce battles and recaps",
-              "Battle Exchange → coordinate through Discord callouts",
-              "Academy → share progress and certificates with your team",
-            ],
-          },
-          {
-            type: "callout",
-            text: "Pass this final knowledge check to unlock your Discord course certificate.",
-          },
-        ],
-        questions: [
-          {
-            prompt: "How should LIVE and Discord connect?",
-            options: [
-              "Invite viewers to Discord for clips and schedules",
-              "Keep them completely isolated",
-              "Delete Discord after each stream",
-              "Only use Discord for complaints",
-            ],
-            correctIndex: 0,
-            explanation: "Cross-promotion keeps fans in your ecosystem.",
-          },
-          {
-            prompt: "What is Discord's role with Battle Exchange?",
-            options: [
-              "Coordinate callouts and recaps",
-              "Replace the scoring system",
-              "Nothing",
-              "Hide battle times",
-            ],
-            correctIndex: 0,
-            explanation: "Discord is a natural coordination hub for battles.",
-          },
-          {
-            prompt: "Why share Academy progress with your team?",
-            options: [
-              "Alignment and shared standards",
-              "It is required by law",
-              "It boosts WiFi",
-              "It disables moderation",
-            ],
-            correctIndex: 0,
-            explanation:
-              "Shared learning keeps your crew consistent and growing together.",
-          },
-        ],
-},
     ],
   },
   {
@@ -3808,6 +3505,991 @@ icon: "Video",
       },
     ],
   },
+  {
+    title: "Academy Discord Navigation",
+    slug: "discord-navigation",
+    description:
+      "Orientation for creators who are brand new to Discord — what the sidebar and channels are, verifying your account, joining voice rooms, getting private help, and spotting scam DMs. Ends with a comprehensive final exam.",
+    icon: "MessagesSquare",
+    order: 2,
+    role: "creator",
+    lessons: [
+      {
+        title: "Module 1: The Map (Reading the Server Layout)",
+        slug: "the-map",
+        summary:
+          "See how the server is organized and what each channel symbol means.",
+        sections: [
+          { type: "heading", text: "New to Discord? Start here" },
+          {
+            type: "paragraph",
+            text: "Discord servers are built from channels. The dark list on the left side of your screen is your channel sidebar — every channel in the server is listed there. Click a channel name to open it, then read messages or type your own. There are two basic kinds: text channels (you read and type) and voice channels (you talk with your microphone).",
+          },
+          { type: "heading", text: "The Three Areas of the Server" },
+          {
+            type: "list",
+            items: [
+              "INFRASTRUCTURE & INFORMATIONAL HUBS [READ-ONLY] — official news: These sit at the top of your sidebar. You can read them, but you cannot type in them — only agency staff and bots post here. Check them every day for schedules, rosters, and announcements.",
+              "CLASSROOM CHANNELS & RESOURCE VAULTS [STUDENT AREA] — your classes: Each channel belongs to a course. This is where you read lessons, submit assignments, and download templates and links.",
+              "COMMUNITY LOUNGES & NETWORKING STAGES [INTERACTIVE HUB] — hanging out: Open chat channels and voice rooms where you talk with other creators, ask quick questions, and network.",
+            ],
+          },
+          { type: "heading", text: "The Four Symbols Next to Channel Names" },
+          {
+            type: "paragraph",
+            text: "Every channel name starts with a small symbol. The symbol tells you what the channel does:",
+          },
+          {
+            type: "list",
+            items: [
+              "'#' (Hashtag) — a normal text channel. Click it, read the conversation, and type messages, upload images, or share links.",
+              "'📢' (Megaphone) — an announcement channel. Official news only; you can read it but not type in it. Turn notifications on for these so you never miss an update.",
+              "'🔊' (Speaker) — a voice channel. Clicking it connects your microphone so you can talk live with everyone in the room.",
+              "'🎟️' (Ticket) — a private help room. It is created for you when you ask for help, and only you and staff can see it.",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Quick habit: start every day in the read-only Information Hubs — schedules, rosters, and official notices are always posted there.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "You are looking for the official calendar containing next week's TikTok LIVE Battle Exchange pairings. In which category zone and channel archetype should you search?",
+            options: [
+              "Inside the Open Community Lounge within a standard voice channel ('🔊').",
+              "Inside the locked Information Hubs category within an announcement feed channel ('📢').",
+              "Inside a random classroom channel chat history.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Schedules, rosters, and official notices are posted in the read-only Information Hubs as announcements, so they are easy to find and never buried in chat.",
+          },
+          {
+            prompt:
+              "Which category zone functions as your digital campus, where you submit assignments and download operational templates?",
+            options: [
+              "INFRASTRUCTURE & INFORMATIONAL HUBS [READ-ONLY].",
+              "CLASSROOM CHANNELS & RESOURCE VAULTS [STUDENT AREA].",
+              "COMMUNITY LOUNGES & NETWORKING STAGES [INTERACTIVE HUB].",
+            ],
+            correctIndex: 1,
+            explanation:
+              "The classroom area is where course work happens — you read lessons, submit assignments, and download templates there.",
+          },
+          {
+            prompt:
+              "What does the '🎟️' (Ticket) glyph preceding a channel name represent?",
+            options: [
+              "A normal text channel for everyday conversation.",
+              "An announcement channel that broadcasts official news.",
+              "A private support room created for you, visible only to you and staff.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "A ticket is a private help room created when you open one — only you and staff can see it.",
+          },
+        ],
+      },
+      {
+        title: "Module 2: The Gatehouse (First-Time Onboarding & Secure Verification)",
+        slug: "the-gatehouse",
+        summary:
+          "Unlock the server: read the rules and click the verify button.",
+        sections: [
+          { type: "heading", text: "Why You Can Only See One Channel at First" },
+          {
+            type: "paragraph",
+            text: "When you first join the server, you will see a single channel called #rules-and-safety and nothing else. This is normal — it is a security lock that hides the rest of the server from spam bots and strangers until you prove you are a real person.",
+          },
+          {
+            type: "paragraph",
+            text: "To unlock everything, first read the community rules saved at the top of the channel (look for the pin icon). The rules cover our zero-tolerance policy on hate speech, taking creators from other agencies, and sharing internal agency files.",
+          },
+          { type: "heading", text: "How to Verify (Takes About 10 Seconds)" },
+          {
+            type: "list",
+            items: [
+              "In the same channel, find the message titled 'NEXUS MAFIA ACCOUNT AUTHENTICATION'.",
+              "Click the green button that says 'Verify My Profile'.",
+              "A pop-up will ask permission to check your TikTok profile. Confirm it.",
+              "Done — your temporary 'guest' label is replaced with the 'Verified Creator' or 'Academy Student' role, and all classrooms and lounges instantly appear in your sidebar.",
+            ],
+          },
+          {
+            type: "callout",
+            text: "If the classrooms are missing from your sidebar, you have not finished verifying yet — go back to #rules-and-safety and click the verify button.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "A new creator joins the server but states they can only see a single channel called '#rules-and-safety' and cannot view the training classrooms. What step must they take to resolve this?",
+            options: [
+              "They must log out of Discord and create an entirely new account.",
+              "They must type their full legal name and email address into the open rules channel.",
+              "They must locate the authentication panel inside that channel and click the interactive button to complete profile verification.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "You stay locked in the rules channel until you verify — that is what keeps bots and strangers from seeing the rest of the server.",
+          },
+          {
+            prompt:
+              "Why does a newly authenticated user start in a restricted guest state that can only see #rules-and-safety?",
+            options: [
+              "To keep bots and strangers out until a real person verifies.",
+              "To reduce the server's monthly hosting costs.",
+              "To test the user's internet connection speed.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Hiding the server behind verification stops automated bots and scrapers from getting in.",
+          },
+          {
+            prompt:
+              "After the 'Verify My Profile' check finishes, what happens to your account?",
+            options: [
+              "Your account is permanently deleted for security purposes.",
+              "The 'guest' label is replaced with the 'Verified Creator' or 'Academy Student' role, and all classrooms and lounges appear.",
+              "Your microphone is muted across the entire Discord application.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Verification swaps your guest label for a real role, and that role unlocks every classroom and lounge.",
+          },
+        ],
+      },
+      {
+        title: "Module 3: Classroom Interaction & Digital Etiquette",
+        slug: "classroom-etiquette",
+        summary:
+          "Join voice rooms the right way, ask questions, and find downloads.",
+        sections: [
+          { type: "heading", text: "Two Kinds of Voice Rooms" },
+          {
+            type: "paragraph",
+            text: "The academy uses two types of voice rooms. Knowing which one you are in tells you whether your microphone is on:",
+          },
+          {
+            type: "list",
+            items: [
+              "Voice lounges ('🔊'): Casual rooms. Your microphone turns on as soon as you join, so everyone can hear you right away. Use these for workshops, battle syncs, and chatting with other creators.",
+              "Stage channels ('🎙️'): Lecture rooms. When you join, you land in the 'Audience' and your microphone is OFF by default, so the speaker is never interrupted. Only instructors and guest speakers sit on the 'Stage'. They can invite you up to speak when it is your turn.",
+            ],
+          },
+          { type: "heading", text: "Asking Questions and Finding Downloads" },
+          {
+            type: "paragraph",
+            text: "During a lecture in a stage channel, do not try to talk over the speaker. Type your question instead:",
+          },
+          {
+            type: "list",
+            items: [
+              "Click the small text-bubble icon at the top right of the stage screen.",
+              "A text chat that belongs to this voice room opens — type your question there and the speaker can answer it live.",
+              "Looking for downloads, templates, or links? Find the 'Thumbtack' (📌) icon at the top of any classroom text channel and click it. Everything saved there — including the shortcut to www.nexusmafiaagency.com/academy — stays easy to find.",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Never talk over a live lecture — type your question in the Text-In-Voice chat so it gets seen without interrupting.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "You are in a stage channel listening to a lecture and want to ask the speaker a question. What do you do?",
+            options: [
+              "Leave the room, join a voice lounge, and talk there instead.",
+              "Click the text bubble icon on the stage screen to open the Text-In-Voice chat and type your question.",
+              "Type the question over and over in a lounge channel.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Text-In-Voice lets you type during the lecture so your question is seen without talking over the speaker.",
+          },
+          {
+            prompt:
+              "What is the main difference between a voice lounge and a stage channel?",
+            options: [
+              "In a stage channel you join as audience with your mic off by default; in a voice lounge your mic is on as soon as you enter.",
+              "Standard voice lounges allow only the host to speak, while stage channels are text-only.",
+              "There is no difference — both are identical open-mic rooms.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Stage channels mute everyone until a speaker is invited up; voice lounges let everyone talk immediately.",
+          },
+          {
+            prompt:
+              "Where do physical downloadables, spreadsheet templates, and official portal links live inside a classroom channel?",
+            options: [
+              "Inside the channel's chat scroll history at random positions.",
+              "Inside the channel's voice audio settings menu.",
+              "In the Pinned Messages list, opened with the thumbtack icon.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "The thumbtack opens Pinned Messages, where saved templates, links, and the academy shortcut stay easy to find.",
+          },
+        ],
+      },
+      {
+        title: "Module 4: Confidential Support Systems & Account Security",
+        slug: "support-security",
+        summary:
+          "Open a private help ticket and protect yourself from scam DMs.",
+        sections: [
+          { type: "heading", text: "Getting Help in Private" },
+          {
+            type: "paragraph",
+            text: "Never share passwords, payment details, or account problems in open chat channels — anyone can read them. For private matters we use support tickets, which are hidden from everyone except you and staff:",
+          },
+          {
+            type: "list",
+            items: [
+              "Go to the #help-and-support channel.",
+              "Click the button labeled 'Open a Support Ticket'.",
+              "A new private channel named #ticket-XXXX appears at the bottom of your sidebar. Nobody else in the server can see it — only you and authorized staff.",
+              "Describe your problem inside it. When your issue is solved, use the close button in the ticket to archive it.",
+            ],
+          },
+          { type: "heading", text: "Spotting Scam Direct Messages (DMs)" },
+          {
+            type: "paragraph",
+            text: "A Direct Message (DM) is a private one-on-one message outside the server. Scammers copy the name and profile picture of real staff members, then DM you with fake links or urgent requests. Always assume a surprise DM telling you to act fast is a scam.",
+          },
+          {
+            type: "callout",
+            text: "THE RULE: Real Nexus Mafia staff will NEVER send you a direct message asking for your password, login codes, or wallet details. No exceptions.",
+          },
+          {
+            type: "paragraph",
+            text: "What to do if it happens: do not click anything and do not reply. Right-click the user and select 'Block', then open a support ticket to report them to real staff.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "An account using the Nexus Mafia logo and a director's name DMs you, claiming your enrollment is expiring and asking you to paste your Discord token. What do you do?",
+            options: [
+              "Copy and paste the token right away to save your enrollment.",
+              "Ignore the message and tell nobody.",
+              "Do not click or share anything. Block the account, then open a support ticket to report it.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Real staff never need your login details. A DM asking for tokens or link clicks is always a scam — block it and report it in a ticket.",
+          },
+          {
+            prompt:
+              "Where must sensitive financial details, dispute resolutions, and onboarding issues be discussed with staff?",
+            options: [
+              "Inside the private support ticket opened from #help-and-support.",
+              "In the open community lounge text channels for faster responses.",
+              "Through unsolicited Direct Messages to any staff member online.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Sensitive topics always stay inside your private ticket — never in open channels or DMs.",
+          },
+          {
+            prompt:
+              "Once you click 'Open a Support Ticket', what is generated and who can see it?",
+            options: [
+              "A public announcement channel visible to the entire server.",
+              "A permanent voice room anyone can join.",
+              "A private text channel named #ticket-XXXX that only you and authorized staff can see.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Opening a ticket creates a private channel — other creators cannot see it, and the conversation is archived for records.",
+          },
+        ],
+      },
+      {
+        title: "Discord Navigation Course: Comprehensive Final Exam",
+        slug: "discord-final-exam",
+        summary:
+          "Twelve-question comprehensive exam covering the full orientation manual. 80% passing threshold required.",
+        sections: [
+          {
+            type: "heading",
+            text: "Comprehensive Final Exam",
+          },
+          {
+            type: "paragraph",
+            text: "This exam validates completion of the Academy Discord Navigation orientation course. You must achieve an 80% passing threshold to validate orientation completion. Answer all twelve questions below.",
+          },
+          {
+            type: "callout",
+            text: "Review Modules 1–4 before attempting — the server areas, the verify button, pinned messages, support tickets, and scam DMs are all covered.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "What is the difference between a normal text channel ('#') and an announcement channel ('📢')?",
+            options: [
+              "Text channels allow images while announcement feeds are strictly code-only.",
+              "Announcement channels are read-only news feeds, while text channels are open conversations anyone can type in.",
+              "Voice communication is enabled inside announcement channels automatically.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Announcement channels are read-only news; normal text channels are for conversation.",
+          },
+          {
+            prompt:
+              "What happens when you click the 'Verify My Profile' button?",
+            options: [
+              "The server automatically charges a subscription fee to your linked profile.",
+              "It checks your TikTok profile and adds a role to your account, making the classrooms and lounges appear in your sidebar.",
+              "It permanently mutes your microphone across the entire application interface.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Verification checks your profile, applies your role, and that role unlocks the hidden channels.",
+          },
+          {
+            prompt:
+              "If you require a downloadable excel template for tracking daily battle performance, where is it permanently archived inside a classroom channel?",
+            options: [
+              "Mixed randomly into the general community chat scroll history.",
+              "In the channel's Pinned Messages, opened with the thumbtack icon.",
+              "In the voice channel audio settings menu.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Downloadables, templates, and links are saved in Pinned Messages behind the thumbtack icon.",
+          },
+          {
+            prompt:
+              "How do you close a support ticket after your issue is resolved?",
+            options: [
+              "Delete Discord from your device.",
+              "Type '/delete' in a lounge channel.",
+              "Use the close button inside your ticket channel to archive it cleanly.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Tickets are closed with the close button inside the ticket channel, which archives the conversation.",
+          },
+          {
+            prompt:
+              "What is the agency's rule about staff sending you direct messages (DMs)?",
+            options: [
+              "Staff will frequently DM you to ask for your account password during system upgrades.",
+              "Official staff will never DM you asking for security tokens, passwords, or account access links — any such message is a scam.",
+              "All agency training is conducted exclusively via unsolicited private DMs.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Official staff never ask for tokens, passwords, or links by DM — treat any such message as a scam.",
+          },
+          {
+            prompt:
+              "Which area is for hanging out and networking with other creators?",
+            options: [
+              "INFRASTRUCTURE & INFORMATIONAL HUBS [READ-ONLY].",
+              "CLASSROOM CHANNELS & RESOURCE VAULTS [STUDENT AREA].",
+              "COMMUNITY LOUNGES & NETWORKING STAGES [INTERACTIVE HUB].",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Community Lounges are where creators gather to chat and talk between coursework.",
+          },
+          {
+            prompt:
+              "What does the '#' glyph preceding a channel name represent?",
+            options: [
+              "A normal text channel where you read and type messages.",
+              "A voice-only audio room.",
+              "A dynamically generated private ticket portal.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "'#' means a normal text channel; voice rooms show a speaker icon, and tickets show a ticket icon.",
+          },
+          {
+            prompt:
+              "Where are official agency announcements posted?",
+            options: [
+              "Inside the community lounge chat scroll history.",
+              "In the read-only Information Hub announcement channels.",
+              "Through unsolicited Direct Messages from staff accounts.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Official notices are posted in the read-only Information Hubs so they stay easy to find.",
+          },
+          {
+            prompt:
+              "In a Stage Channel, what is the default state of an audience member's microphone?",
+            options: [
+              "Off by default — you only speak after the host moves you up to the stage.",
+              "Fully open to every audience member simultaneously.",
+              "Permanently broken and unusable for the entire session.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Stage channels keep every audience mic muted until a speaker is invited up, so lectures stay clean.",
+          },
+          {
+            prompt:
+              "Where do you find the www.nexusmafiaagency.com/academy shortcut?",
+            options: [
+              "Mixed randomly into the general chat scroll history.",
+              "Inside the channel's voice audio settings menu.",
+              "In Pinned Messages, opened with the thumbtack icon.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Shortcuts and links are saved in Pinned Messages so they never get lost in chat.",
+          },
+          {
+            prompt:
+              "Who can view the private ticket channel created when you open a support request?",
+            options: [
+              "Every member of the Discord server.",
+              "Only you and authorized administrators — it is hidden from all other creators.",
+              "All creators with the Verified Creator role.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Your ticket belongs only to you and authorized staff — other creators cannot see it at all.",
+          },
+          {
+            prompt:
+              "A Direct Message claims to be a Nexus Mafia executive asking for your login token. What is the correct response?",
+            options: [
+              "Block the impersonator and open a ticket through official in-server support channels.",
+              "Reply asking them to verify themselves before deciding.",
+              "Send the credentials, then immediately change your password afterward.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Real staff never ask for credentials by DM. Block them, then report it in a real in-server ticket.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "TikTok LIVE Beginner Mechanics & Compliance",
+    slug: "tiktok-live-compliance",
+    description:
+      "Beginner mechanics and compliance for TikTok LIVE — interface basics, the gifting economy, battles, studio setup, chat moderation, policy violations, enforcement ladders, and official appeal workflows. Ends with a comprehensive final exam.",
+    icon: "KeyRound",
+    order: 0,
+    role: "creator",
+    lessons: [
+      {
+        title: "Module 5: The Beginner Broadcaster's Interface Mechanics",
+        slug: "interface-mechanics",
+        summary:
+          "Decode the LIVE studio UI, the coin-to-diamond economy, and core LIVE Battle mechanics.",
+        sections: [
+          { type: "heading", text: "Decoding the Live Studio Visual User Interface (UI)" },
+          {
+            type: "paragraph",
+            text: "Stepping onto the TikTok LIVE platform for the first time can be a visually overwhelming experience due to the high volume of real-time data streams on screen. Let us isolate the four core components of your broadcasting dashboard:",
+          },
+          {
+            type: "list",
+            items: [
+              "THE LIVE VIEWER COUNT [TOP HEADER]: Positioned at the absolute peak of the interface layout. This real-time tracker displays the exact volume of concurrent user profiles actively viewing your broadcast at any given second. Sudden spikes here indicate your stream has hit a discovery node on the primary For You Page (FYP) algorithm.",
+              "THE LIVE CHAT TIMELINE [BOTTOM LEFT]: A fast-scrolling text feed displaying interactive comments from your audience. This feed prioritizes comments chronologically. High-tier viewers or subscribing members are visually highlighted with custom badges.",
+              "THE VIRTUAL GIFT ALERT FIELD [CENTER INTERFACE]: When a user transmits a digital gift, high-fidelity visual asset animations flash across the middle of your screen, declaring the sender's username and the specific gift value tier.",
+              "HOST STREAM CONTROLS [LOWER FOOTER]: Access points for technical parameters, including camera flip toggles, real-time beauty filters, video enhancement tools, sound effect boards, and plugin access menus.",
+            ],
+          },
+          { type: "heading", text: "The Virtual Gifting Economy and Diamond Conversion" },
+          {
+            type: "paragraph",
+            text: "Monetization on TikTok LIVE operates through a multi-tier virtual utility token architecture:",
+          },
+          {
+            type: "list",
+            items: [
+              "THE VIEWERS' COINS: Viewers purchase digital 'Coins' inside the TikTok app using standard fiat currency. These coins serve as the exclusive platform currency used to purchase varied animated gifts.",
+              "THE CREATORS' DIAMONDS: When an audience member transmits a virtual gift to your stream, the platform's backend ingestion system processes the gift asset and credits your creator wallet with an asset equivalent known as 'Diamonds'.",
+              "WALLET CASH OUT: Diamonds serve as the baseline metric for calculating creator metrics and revenue. These diamonds accumulate securely within your creator balance dashboard and can be withdrawn as direct cash payouts to your verified banking infrastructure or processed through agency accounts.",
+            ],
+          },
+          { type: "heading", text: "Core Mechanics of TikTok LIVE Battles (Match Mode)" },
+          {
+            type: "paragraph",
+            text: "A LIVE Battle (Match Mode) is an intensive, hyper-engaging split-screen feature where two creators link their broadcasts to drive collaborative viewer interactions:",
+          },
+          {
+            type: "list",
+            items: [
+              "CO-HOST LAYOUT: The system splits the vertical video screen precisely in half, placing your broadcast on one side and your opponent's live feed on the other.",
+              "THE THEMED SCORING BAR: A highly visible progress bar stretches across the top of the interface, mapping your team's score directly against your opponent's score in real time.",
+              "THE POINTS METRIC: Every coin value of a gift transmitted by your audience translates directly into interactive Battle Points on the scoring bar.",
+              "THE 5-MINUTE WINDOW: Battles operate within a strict, automated five-minute countdown timer. The host whose team secures the higher point volume on the bar at the exact second the clock expires wins the match, moving into a designated victory or punishment routine window.",
+            ],
+          },
+          {
+            type: "callout",
+            text: "The money chain is always: Viewers buy Coins → send Gifts → your wallet is credited with Diamonds → Diamonds are cashed out as revenue.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "A viewer sends an animated 'Lion' gift to your live stream during a battle. What direct backend conversion occurs inside your platform wallet?",
+            options: [
+              "The gift instantly increases your cellular internet data bandwidth limit.",
+              "The gift is translated into 'Diamonds' on your balance dashboard, representing secure, withdrawable creator revenue.",
+              "The gift automatically forces the opponent's camera feed to disconnect.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "TikTok LIVE monetization utilizes a clear coin-to-gift-to-diamond transformation chain. The diamonds that accumulate on your dashboard form the absolute basis of your financial earnings.",
+          },
+          {
+            prompt:
+              "Where do you access host stream controls such as camera flip toggles, beauty filters, and sound effect boards?",
+            options: [
+              "Inside the virtual gift alert field in the center of the interface.",
+              "In the lower footer of the broadcast interface, beneath the chat timeline.",
+              "Only through a separate external streaming application.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "The host stream controls sit in the lower footer of the interface — camera flip, beauty filters, video enhancement, sound boards, and plugin menus are all docked there.",
+          },
+          {
+            prompt:
+              "What does a sudden spike in your LIVE viewer count typically indicate?",
+            options: [
+              "Your stream has hit a discovery node on the primary For You Page (FYP) algorithm and should be met with strong engagement.",
+              "Your internet connection is failing.",
+              "Your device storage is running low.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "The top header's real-time tracker shows viewer count — a sudden spike means the FYP algorithm surfaced your stream to new discovery nodes.",
+          },
+        ],
+      },
+      {
+        title: "Module 6: General Broadcasting Infrastructure & Discovery Optimization",
+        slug: "broadcasting-infrastructure",
+        summary:
+          "Build a compliant studio — framing, lighting, acoustics — and deploy live chat moderators.",
+        sections: [
+          { type: "heading", text: "Technical Studio Requirements" },
+          {
+            type: "paragraph",
+            text: "The TikTok LIVE discovery engine penalizes streams with low visual or acoustic quality score metrics. To maintain baseline compliance and ensure high algorithmic distribution, you must build a clean studio environment:",
+          },
+          {
+            type: "list",
+            items: [
+              "VISUAL FRAMING: Position your camera at eye level. Your facial features must sit cleanly within the middle third of the vertical frame. Use stable tripod mounts to eliminate micro-vibrations.",
+              "LIGHTING GEOMETRY: Never stream with a bright window or open light source positioned directly behind you, as this triggers severe lens underexposure and turns your silhouette black. Utilize front-facing, diffused ring lights or softboxes to illuminate your features uniformly.",
+              "ACOUSTIC ISOLATION: The platform algorithm scans for background audio anomalies. Stream from enclosed spaces with minimal room echo, deactivate external television feeds, and utilize dedicated directional or lavalier microphones to keep your vocal delivery crisp and isolated from background distortion.",
+            ],
+          },
+          { type: "heading", text: "Deploying Live Chat Moderators" },
+          {
+            type: "paragraph",
+            text: "As a professional creator, you cannot successfully manage a rapidly scrolling chat timeline while remaining fully engaged on camera. You must assign trusted users or agency staff members the functional role of 'Live Chat Moderators':",
+          },
+          {
+            type: "list",
+            items: [
+              "Open your live setting menu prior to broadcasting, or click a trusted user's profile card directly within the live chat timeline.",
+              "Select 'Add as Moderator'.",
+              "This applies an administrative badge to their profile card and unlocks an active moderation toolkit on their interface.",
+              "Moderators possess the capability to temporarily mute disruptive profiles for 5 to 10 minutes, permanently block toxic profiles from viewing your profile, and manage community word-filter lists to automatically scrub inappropriate text from public visibility.",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Moderators are operational support assets — they keep chat clean so you never have to break show structure mid-performance.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "Your live stream chat suddenly becomes targeted by an automated wave of toxic spam profiles dropping inappropriate phrases. What is the most effective operational solution?",
+            options: [
+              "Stop speaking entirely, step away from the camera, and wait for the spammers to leave.",
+              "Rely on your pre-assigned Live Chat Moderators to utilize their administrative toolkit to mute, block, and enforce word filters in real time while you stay focused on entertaining.",
+              "Abruptly end the broadcast without checking your settings dashboard.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Live Chat Moderators are critical operational support assets. They manage the safety and cleanliness of the text timeline, allowing the creator to maintain continuous performance focus without breaking show structure.",
+          },
+          {
+            prompt:
+              "Where should your facial features sit within the vertical camera frame?",
+            options: [
+              "Anywhere, as long as the background is visually interesting.",
+              "Cleanly within the middle third of the vertical frame, with the camera positioned at eye level.",
+              "Tight against the top edge of the frame so the gift alert field stays visible.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Eye-level cameras with the face centered in the middle third of the vertical frame are the baseline the discovery engine expects for visual quality scoring.",
+          },
+          {
+            prompt:
+              "What is the correct workflow to assign a Live Chat Moderator?",
+            options: [
+              "They must send a formal written application to agency headquarters.",
+              "Type a special command in front of their username in the chat timeline.",
+              "Open your live settings before broadcasting, or tap their profile card in chat, and select 'Add as Moderator'.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Moderators are assigned from the live settings menu or directly from a trusted user's profile card in chat — one tap applies the badge and toolkit.",
+          },
+        ],
+      },
+      {
+        title: "Module 7: Platform Policy Violations & Restricted Content Boundaries",
+        slug: "policy-violations",
+        summary:
+          "Master Class A (harassment), Class B (dangerous/regulated), and Class C (fraudulent/inauthentic) violations.",
+        sections: [
+          { type: "heading", text: "Class A Violations - Community Integrity & Harassment" },
+          {
+            type: "paragraph",
+            text: "TikTok enforces a strict policy framework to eliminate negative or hostile behavior across its ecosystem. Creators must master these boundaries to protect their broadcast status:",
+          },
+          {
+            type: "list",
+            items: [
+              "CYBERBULLYING & TARGETED ATTACKS: You are completely prohibited from weaponizing your audience to attack other profiles. Do not call viewers derogatory names, do not mock an opponent's physical appearance during a live battle, and do not coordinate 'hate raids' against alternative creator streams.",
+              "DISCRIMINATORY LANGUAGE & HATE SPEECH: Any verbal or visual deployment of slurs, hate speech targeting protected characteristics, or symbols associated with discriminatory organizations triggers an immediate, hard automated shutdown of the broadcast asset.",
+            ],
+          },
+          { type: "heading", text: "Class B Violations - Dangerous & Regulated Content On-Camera" },
+          {
+            type: "paragraph",
+            text: "The visual scanning software operating behind the TikTok LIVE engine monitors every pixel frame in real-time. The presence of regulated substances or dangerous actions will flag your stream instantly:",
+          },
+          {
+            type: "list",
+            items: [
+              "REGULATED GOODS EXPOSURE: The camera frame must NEVER capture tobacco products, electronic vaporizers, open alcoholic beverage containers, or weapons of any description. This includes decorative items in your room background. Vaping on camera or drinking a beer while streaming will result in an immediate automated streaming suspension.",
+              "DANGEROUS RECKLESSNESS: Do not stream while operating a motor vehicle, do not perform unverified fitness stunts that risk severe bodily injury, and do not participate in extreme viral challenges that jeopardize personal safety.",
+            ],
+          },
+          { type: "heading", text: "Class C Violations - Fraudulent & Inauthentic Behavior" },
+          {
+            type: "paragraph",
+            text: "The algorithm rewards authentic, real-time human performance. Attempting to bypass the physical broadcasting process triggers severe profile restrictions:",
+          },
+          {
+            type: "list",
+            items: [
+              "AWAY FROM KEYBOARD (AFK) / LOOPING EXPLOITS: You are completely prohibited from leaving an empty room running on camera while your stream is live. This includes sleeping on stream or looping pre-recorded video clips via software to simulate an ongoing live appearance. Your physical presence must remain continuous.",
+              "INAUTHENTIC MONETIZATION DEMANDS: While asking for audience support is standard, you cannot engage in predatory or spam-like financial demands. Do not promise financial returns or split payouts in exchange for gifts, and do not use automated clicker bots or synthetic scripts to fake stream metrics.",
+            ],
+          },
+          {
+            type: "callout",
+            text: "If it is regulated, reckless, hateful, or fake — it cannot be on your screen. Assume every frame is being scanned.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "You are hosting a late-night LIVE broadcast and decide to step into the kitchen to prepare food, leaving your stream active with an empty gaming chair visible on camera for 30 minutes. What policy standard does this breach?",
+            options: [
+              "It is completely compliant as long as background music is playing.",
+              "It represents an Inauthentic/AFK Looping exploit violation because a live stream requires continuous, real-time human presence and interaction.",
+              "It is classified as an acoustic isolation violation.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "TikTok requires live streams to stay active with genuine human performance. Leaving an empty room running on camera (AFK streaming) is flagged by automated systems as inauthentic behavior and results in immediate stream termination.",
+          },
+          {
+            prompt:
+              "A vape pen is visible on camera during a split-screen battle. Which violation class applies?",
+            options: [
+              "Class A — Community Integrity & Harassment.",
+              "Class B — Dangerous & Regulated Content.",
+              "No violation, since nothing is being consumed.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Regulated goods exposure is Class B — the frame must never capture tobacco, vaporizers, open alcohol, or weapons, even as background props or without active consumption.",
+          },
+          {
+            prompt:
+              "What is the automated consequence of deploying slurs or hate speech during a live broadcast?",
+            options: [
+              "An immediate hard automated shutdown of the broadcast asset, treated as a Class A violation.",
+              "A gentle recommendation to choose different wording.",
+              "A temporary reduction in video bitrate only.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Discriminatory language and hate speech trigger an instant, hard automated shutdown — it sits at the top of the Class A tier with no soft warning.",
+          },
+        ],
+      },
+      {
+        title: "Module 8: Systemic Enforcement & Compliance Recovery Workflows",
+        slug: "enforcement-recovery",
+        summary:
+          "Understand the four-tier disciplinary escalation ladder and the official in-app appeal workflow.",
+        sections: [
+          { type: "heading", text: "The Cascading Disciplinary Escalation Architecture" },
+          {
+            type: "paragraph",
+            text: "When a policy breach is validated by automated engines or human moderation centers, the platform applies a structured, multi-tier escalation pathway against the offending profile:",
+          },
+          {
+            type: "list",
+            items: [
+              "INTERACTIVE FORMAL WARNING: A high-priority system notification is dispatched to your account inbox outlining the specific rule violated. The stream remains active, but visibility is temporarily throttled.",
+              "THE AUTOMATED 10-MINUTE MUTE: For moderate or sudden infractions, the system executes an instant interruption, severing your live connection and locking your account out of the live feature for exactly ten minutes.",
+              "MULTI-DAY STREAMING SUSPENSION: Repeated violations or high-severity breaches trigger multi-day lockouts ranging from 24 hours to a maximum of 7 full days. Your creator profile completely loses access to the live studio interface.",
+              "PERMANENT ACCOUNT TERMINATION: Extreme or continuous non-compliance results in the total deactivation of the user profile. Access to accumulated diamond balances, creator rewards accounts, and agency registry logs is completely destroyed.",
+            ],
+          },
+          { type: "heading", text: "Secure Internal In-App Appeal Workflows" },
+          {
+            type: "paragraph",
+            text: "If your broadcast is interrupted due to an algorithmic false-positive or an unfair automated flag, you must utilize official, secure internal platform channels to seek resolution:",
+          },
+          {
+            type: "list",
+            items: [
+              "Navigate directly to your primary TikTok profile view.",
+              "Tap the three-line menu icon in the upper right-hand corner and select 'Settings and Privacy'.",
+              "Scroll downwards to locate the 'Support' header and tap 'Safety Center'.",
+              "Select 'Account Status' and click 'Violation Record Logs'.",
+              "Locate the specific live stream enforcement entry, review the exact policy flag applied, and select 'Submit a Request for Manual Appeal Review'. Use this portal to upload clear text explanations or supporting evidence. Avoid third-party recovery scams or alternate profile spams.",
+            ],
+          },
+          {
+            type: "callout",
+            text: "Restorations happen ONLY through Settings and Privacy > Support > Safety Center > Account Status. Anyone offering 'recovery services' outside the app is running a scam.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "Your live stream is suddenly disconnected due to an automated flag claiming you displayed a regulated item, but you were actually holding an opaque coffee mug. What is the correct protocol to safely recover your account status?",
+            options: [
+              "Delete your primary profile and complain on external networks.",
+              "Navigate to Settings and Privacy > Support > Safety Center > Account Status inside the app, view the log, and submit an official manual appeal review request.",
+              "Spam the TikTok corporate accounts comment section with frantic messages.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Legitimate, secure account restorations are handled exclusively through the official in-app compliance dashboard under the Safety Center architecture. This routes the log directly to human moderators for manual verification and override.",
+          },
+          {
+            prompt:
+              "What happens to your broadcast when an Interactive Formal Warning is issued?",
+            options: [
+              "The stream is terminated immediately and permanently.",
+              "The stream remains active, but visibility is temporarily throttled while the specific violated rule is outlined in your inbox.",
+              "Your entire account is suspended for seven days.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "The first tier keeps you live — you get a high-priority inbox notice of the rule violated while visibility is throttled, giving you a chance to self-correct.",
+          },
+          {
+            prompt:
+              "What is the maximum duration of a multi-day streaming suspension?",
+            options: [
+              "24 hours.",
+              "3 days.",
+              "7 full days.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Multi-day suspensions range from 24 hours up to a maximum of 7 days, during which the profile loses all access to the live studio interface.",
+          },
+        ],
+      },
+      {
+        title: "TikTok LIVE Compliance: Comprehensive Final Exam",
+        slug: "tiktok-compliance-final-exam",
+        summary:
+          "Twelve-question comprehensive exam covering interface mechanics, studio standards, policy boundaries, enforcement, and appeals. 80% passing threshold required.",
+        sections: [
+          { type: "heading", text: "Comprehensive Final Exam" },
+          {
+            type: "paragraph",
+            text: "This exam validates completion of the TikTok LIVE Beginner Mechanics & Compliance course. You must achieve an 80% passing threshold to validate compliance onboarding. Answer all twelve questions below.",
+          },
+          {
+            type: "callout",
+            text: "Review Modules 5–8 before attempting — the coin/diamond chain, studio standards, Class A/B/C violations, the enforcement ladder, and the appeal pathway are all covered.",
+          },
+          {
+            type: "heading", text: "General Informational & Compliance Disclaimer" },
+          {
+            type: "paragraph",
+            text: "This curriculum reflects broad social media platform operational baselines, digital industry compliance standards, and default user interface architectures. Because parent corporations (including ByteDance Ltd. and Discord Inc.) routinely update their Community Guidelines, automated detection models, internal wallet payout algorithms, and client user interface software, the creator and academy administrator must consistently cross-reference the updated terms of service documentation provided directly by TikTok and Discord to verify current platform compliance boundaries. This training manual serves informational purposes only and does not constitute personalized legal, financial, or operational advice.",
+          },
+        ],
+        questions: [
+          {
+            prompt:
+              "Which option precisely describes the relationship between Coins and Diamonds inside the TikTok LIVE ecosystem?",
+            options: [
+              "Creators buy Diamonds with Coins to upgrade their mobile application storage.",
+              "Viewers purchase digital Coins to send animated virtual gifts, which convert into withdrawable Diamonds inside the creator's platform wallet balance.",
+              "Coins and Diamonds are completely cosmetic and possess no real-world financial tracking metrics.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Viewers buy Coins, send gifts with them, and those gifts are credited to the creator as withdrawable Diamonds.",
+          },
+          {
+            prompt:
+              "What visual parameters must be maintained to ensure the platform algorithm does not penalize your stream's visual quality metrics?",
+            options: [
+              "Keep the camera completely dark and face away from the screen frame.",
+              "Frame your face cleanly within the middle third of a vertical camera view, utilize front-facing diffused lighting, and eliminate environmental echo.",
+              "Keep multiple commercial television monitors playing loudly in your background.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Middle-third framing, front-facing diffused lighting, and clean acoustics are the baseline studio standards.",
+          },
+          {
+            prompt:
+              "Which specific behavior constitutes an active violation under the Dangerous and Regulated Content policy framework?",
+            options: [
+              "Displaying a clean studio ring light setup on a solid desk mount.",
+              "Interacting with viewer names during a standard, timed split-screen live battle.",
+              "Displaying a vaporizer pen, consuming alcoholic beverages on screen, or holding up a weapon prop.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Tobacco/vaping products, open alcohol, and weapons — even as background props — are regulated goods that trigger automated flags.",
+          },
+          {
+            prompt:
+              "If an automated scanning center issues a multi-day suspension against your live broadcasting privileges, what occurs to your account dashboard?",
+            options: [
+              "Your profile completely loses access to the live studio interface for a duration of 24 hours to 7 days.",
+              "Your profile is granted a permanent verified creator badge automatically.",
+              "Your follow list is instantly transferred to a random rival agency profile.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Multi-day suspensions lock the profile out of the live studio interface for 24 hours up to a maximum of 7 days.",
+          },
+          {
+            prompt:
+              "What is the accurate procedure for verifying an enforcement status flag and submitting supporting documentation for manual system review?",
+            options: [
+              "Send an email containing your private passwords to an unverified online account helper tool.",
+              "Use the official in-app pathway: Settings and Privacy > Support > Safety Center > Account Status to access the manual appeal queue.",
+              "Create twenty separate unverified profiles to spam help forums.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "The official in-app pathway under Safety Center > Account Status routes your log to human moderators for manual review.",
+          },
+          {
+            prompt:
+              "On your own device, where is the real-time live viewer count displayed during a broadcast?",
+            options: [
+              "Inside the scrolling live chat feed at the bottom left.",
+              "Hidden within the virtual gift inventory menu.",
+              "At the very top of the broadcast header.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "The top header of the broadcast interface carries the live viewer count; it is the primary signal of FYP discovery spikes.",
+          },
+          {
+            prompt:
+              "How long is a single LIVE battle window before the scores are tallied?",
+            options: [
+              "5 minutes.",
+              "30 minutes.",
+              "1 hour.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "Every battle runs a locked 5-minute window, after which the platform calculates the winner and applies the battle mode's payout rule.",
+          },
+          {
+            prompt:
+              "Which studio setup violates the recommended lighting standard?",
+            options: [
+              "Diffused lighting positioned in front of your face.",
+              "Placing your setup so a bright window sits BEHIND you, silhouetting you on camera.",
+              "A ring light mounted at eye level.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "A bright source behind you forces the camera to underexpose your face. Light should come from the front or slightly beside the lens.",
+          },
+          {
+            prompt:
+              "Which scenario is a Class C (Inauthentic Content) violation?",
+            options: [
+              "Greeting your chat at the start of a broadcast.",
+              "Sleeping or remaining AFK while claiming to be actively live.",
+              "Ending your stream at your scheduled time.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Class C targets deceptive authenticity — sleeping on stream or fake active presence tricks viewers and defeats the platform's engagement integrity rules.",
+          },
+          {
+            prompt:
+              "Which behavior is a Class A (Critical) violation?",
+            options: [
+              "Changing your beauty filter mid-stream.",
+              "Adjusting your lighting between segments.",
+              "Weaponizing your audience to mock or harass an opponent during a live battle.",
+            ],
+            correctIndex: 2,
+            explanation:
+              "Class A covers weaponized audiences, harassment, and hate speech — the most severe tier, carrying the fastest path to suspension or bans.",
+          },
+          {
+            prompt:
+              "What is the FIRST step in TikTok's enforcement ladder against a live room?",
+            options: [
+              "An immediate permanent ban of the account.",
+              "An interactive formal warning displaying the related content rules.",
+              "A multi-day suspension of live privileges.",
+            ],
+            correctIndex: 1,
+            explanation:
+              "Enforcement begins with an interactive warning so the creator can self-correct; stricter tiers only follow repeated or severe offenses.",
+          },
+          {
+            prompt:
+              "What does a 10-minute mute do to your broadcast?",
+            options: [
+              "Severs your live connection and locks the ability to go live for 10 minutes.",
+              "Only silences your microphone while video continues normally.",
+              "Temporarily hides your viewer count from your header.",
+            ],
+            correctIndex: 0,
+            explanation:
+              "A mute is a hard connection cut plus a live-feature lockout timer — a content boundary reset, not a soft audio toggle.",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 const roleCourses: SeedCourse[] = [];
@@ -3823,6 +4505,13 @@ async function main() {
     }
   })();
   console.log(`seed-academy start: courses=${allCourses.length} host=${dbHost}`);
+
+  const replaced = await prisma.course.deleteMany({
+    where: { slug: { in: ["tiktok-live", "discord"] } },
+  });
+  if (replaced.count > 0) {
+    console.log(`seed-academy: removed ${replaced.count} replaced course(s)`);
+  }
 
   for (const courseData of allCourses) {
     const course = await prisma.course.upsert({

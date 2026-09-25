@@ -122,8 +122,10 @@ export function isCourseComplete(
 
 const CODE_PREFIXES: Record<string, string> = {
   "tiktok-live": "TIKTOK",
+  "tiktok-live-compliance": "TIKTOK",
   "battle-exchange": "BATTLE",
   "discord": "DISCORD",
+  "discord-navigation": "DISCORD",
 };
 
 export function certificateCode(courseSlug: string): string {
