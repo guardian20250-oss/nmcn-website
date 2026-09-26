@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = "admin@nexusmafiaagency.com";
+  const email = "nexusmafiacreatornetworkllc@outlook.com";
   const defaultPassword = "Nexus2026!";
 
   const existing = await prisma.admin.findUnique({ where: { email } });
