@@ -46,6 +46,9 @@ export default function StaffAccountsPage() {
   const [editingCreator, setEditingCreator] = useState<any | null>(null);
   const [editingStaff, setEditingStaff] = useState<any | null>(null);
   const [resetPassword, setResetPassword] = useState<{ account: any; tempPassword: string } | null>(null);
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchResult, setSearchResult] = useState<{ creatorAccount: any; creator: any; found: boolean } | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     email: "",
@@ -173,6 +176,30 @@ export default function StaffAccountsPage() {
       setActionError("Reject failed — network error");
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const searchAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchEmail.trim()) return;
+    setSearchLoading(true);
+    try {
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "searchAccounts", email: searchEmail }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSearchResult(data);
+      } else {
+        setSearchResult({ creatorAccount: null, creator: null, found: false });
+        setActionError(data.error || "Search failed");
+      }
+    } catch {
+      setActionError("Search failed — network error");
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -655,6 +682,71 @@ export default function StaffAccountsPage() {
             </div>
           </div>
         )}
+
+        {/* Search Account */}
+        <div className="mb-6">
+          <form onSubmit={searchAccount} className="flex flex-wrap gap-3">
+            <input
+              type="email"
+              placeholder="Search account by email (checks both Creator and CreatorAccount)..."
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              className="input flex-1 min-w-[250px]"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={searchLoading}
+              className="btn-outline flex items-center gap-2 disabled:opacity-50"
+            >
+              {searchLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              Search
+            </button>
+            {searchResult && (
+              <button
+                type="button"
+                onClick={() => setSearchResult(null)}
+                className="btn-ghost text-sm text-red-400"
+              >
+                Clear
+              </button>
+            )}
+          </form>
+          {searchResult && searchResult.found && (
+            <div className="mt-4 rounded-xl border border-green-500/30 bg-green-500/10 p-4">
+              <p className="font-semibold text-green-400 mb-2">Account Found</p>
+              {searchResult.creatorAccount && (
+                <div className="mb-3 p-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40">
+                  <p className="text-sm font-semibold text-nmcn-blue">CreatorAccount</p>
+                  <p className="text-xs text-nmcn-muted">ID: {searchResult.creatorAccount.id}</p>
+                  <p className="text-xs text-nmcn-muted">Name: {searchResult.creatorAccount.name}</p>
+                  <p className="text-xs text-nmcn-muted">Email: {searchResult.creatorAccount.email}</p>
+                  <p className="text-xs text-nmcn-muted">Status: {searchResult.creatorAccount.status}</p>
+                  <p className="text-xs text-nmcn-muted">Role: {searchResult.creatorAccount.assignedRole}</p>
+                  <p className="text-xs text-nmcn-muted">Independent: {searchResult.creatorAccount.independentCreator ? "Yes" : "No"}</p>
+                </div>
+              )}
+              {searchResult.creator && (
+                <div className="p-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40">
+                  <p className="text-sm font-semibold text-nmcn-gold">Creator (Academy)</p>
+                  <p className="text-xs text-nmcn-muted">ID: {searchResult.creator.id}</p>
+                  <p className="text-xs text-nmcn-muted">Name: {searchResult.creator.name}</p>
+                  <p className="text-xs text-nmcn-muted">Email: {searchResult.creator.email}</p>
+                  <p className="text-xs text-nmcn-muted">TikTok: {searchResult.creator.tiktokHandle || "Not set"}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {searchResult && !searchResult.found && (
+            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-400">
+              No account found for <strong>{searchEmail}</strong> in CreatorAccount or Creator models.
+            </div>
+          )}
+        </div>
 
         {/* Tabs */}
         <div className="mb-6 flex flex-wrap gap-2 border-b border-nmcn-border">

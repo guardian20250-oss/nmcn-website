@@ -16,14 +16,12 @@ function todayKey(date = new Date()) {
   return date.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 }
 
-function battleDayKey(iso: string) {
-  if (!iso) return "";
-  // If the input is a date-only string (YYYY-MM-DD), treat it as local date in TIME_ZONE
-  // not as UTC midnight, to avoid off-by-one errors when converting to EST
-  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-    return iso;
+function normalizeBattleDate(battleDate: string): string {
+  if (!battleDate) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(battleDate)) {
+    return battleDate;
   }
-  const d = new Date(iso);
+  const d = new Date(battleDate);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 }
@@ -77,7 +75,7 @@ function toPublicBattle(raw: any): PublicBattle {
     title: String(raw?.title || "Confirmed battle"),
     battleType: String(raw?.battleType || ""),
     status: String(raw?.status || ""),
-    dayKey: battleDayKey(raw?.battleDate),
+    dayKey: normalizeBattleDate(raw?.battleDate),
     timeLabel: battleClock(raw?.battleTime),
     durationMinutes: Number(raw?.durationMinutes) || 15,
     agency: raw?.agency?.name || null,

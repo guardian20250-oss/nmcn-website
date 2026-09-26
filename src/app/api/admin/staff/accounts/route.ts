@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getStaffFromRequest, canManageStaff } from "@/lib/auth";
 import {
   createStaffAccount,
@@ -113,6 +114,23 @@ export async function POST(request: NextRequest) {
       }
       const result = await resetStaffPassword(id, staff.id);
       return NextResponse.json({ account: result.account, tempPassword: result.tempPassword });
+    }
+
+    if (action === "searchAccounts") {
+      const email = body.email ? String(body.email).toLowerCase().trim() : "";
+      if (!email) {
+        return NextResponse.json({ error: "Email is required" }, { status: 400 });
+      }
+      // Search both CreatorAccount and Creator models
+      const [creatorAccount, creator] = await Promise.all([
+        prisma.creatorAccount.findUnique({ where: { email } }),
+        prisma.creator.findUnique({ where: { email } }),
+      ]);
+      return NextResponse.json({
+        creatorAccount,
+        creator,
+        found: !!creatorAccount || !!creator,
+      });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });

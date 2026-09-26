@@ -42,6 +42,22 @@ function battleDayKey(iso: string) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
     return iso;
   }
+  // For full ISO timestamps, convert to EST date
+  return d.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
+}
+
+function normalizeBattleDate(battleDate: string): string {
+  if (!battleDate) return "";
+  // Handle various date formats from the API
+  // Format 1: "2026-09-27" (date only)
+  // Format 2: "2026-09-27T04:00:00.000Z" (full ISO)
+  // Format 3: "2026-09-27T04:00:00Z" (ISO without ms)
+  if (!battleDate) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(battleDate)) {
+    return battleDate;
+  }
+  const d = new Date(battleDate);
+  if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 }
 
@@ -81,7 +97,7 @@ function toPublicBattle(raw: any): PublicBattle {
     title: String(raw?.title || "Confirmed battle"),
     battleType: String(raw?.battleType || ""),
     status: String(raw?.status || ""),
-    dayKey: battleDayKey(raw?.battleDate),
+    dayKey: normalizeBattleDate(raw?.battleDate),
     timeLabel: battleClock(raw?.battleTime),
     durationMinutes: Number(raw?.durationMinutes) || 15,
     agency: raw?.agency?.name || null,
