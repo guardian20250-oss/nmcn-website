@@ -121,15 +121,17 @@ export async function POST(request: NextRequest) {
       if (!email) {
         return NextResponse.json({ error: "Email is required" }, { status: 400 });
       }
-      // Search both CreatorAccount and Creator models
-      const [creatorAccount, creator] = await Promise.all([
+      // Search CreatorAccount, Creator, and JoinApplication models
+      const [creatorAccount, creator, joinApplication] = await Promise.all([
         prisma.creatorAccount.findUnique({ where: { email } }),
         prisma.creator.findUnique({ where: { email } }),
+        prisma.joinApplication.findFirst({ where: { email } }),
       ]);
       return NextResponse.json({
         creatorAccount,
         creator,
-        found: !!creatorAccount || !!creator,
+        joinApplication,
+        found: !!creatorAccount || !!creator || !!joinApplication,
       });
     }
 

@@ -47,7 +47,7 @@ export default function StaffAccountsPage() {
   const [editingStaff, setEditingStaff] = useState<any | null>(null);
   const [resetPassword, setResetPassword] = useState<{ account: any; tempPassword: string } | null>(null);
   const [searchEmail, setSearchEmail] = useState("");
-  const [searchResult, setSearchResult] = useState<{ creatorAccount: any; creator: any; found: boolean } | null>(null);
+  const [searchResult, setSearchResult] = useState<{ creatorAccount: any; creator: any; joinApplication: any; found: boolean } | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -193,7 +193,7 @@ export default function StaffAccountsPage() {
       if (res.ok) {
         setSearchResult(data);
       } else {
-        setSearchResult({ creatorAccount: null, creator: null, found: false });
+        setSearchResult({ creatorAccount: null, creator: null, joinApplication: null, found: false });
         setActionError(data.error || "Search failed");
       }
     } catch {
@@ -731,12 +731,23 @@ export default function StaffAccountsPage() {
                 </div>
               )}
               {searchResult.creator && (
-                <div className="p-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40">
+                <div className="mb-3 p-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40">
                   <p className="text-sm font-semibold text-nmcn-gold">Creator (Academy)</p>
                   <p className="text-xs text-nmcn-muted">ID: {searchResult.creator.id}</p>
                   <p className="text-xs text-nmcn-muted">Name: {searchResult.creator.name}</p>
                   <p className="text-xs text-nmcn-muted">Email: {searchResult.creator.email}</p>
                   <p className="text-xs text-nmcn-muted">TikTok: {searchResult.creator.tiktokHandle || "Not set"}</p>
+                </div>
+              )}
+              {searchResult.joinApplication && (
+                <div className="p-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40">
+                  <p className="text-sm font-semibold text-nmcn-blue">Join Application (Pending)</p>
+                  <p className="text-xs text-nmcn-muted">ID: {searchResult.joinApplication.id}</p>
+                  <p className="text-xs text-nmcn-muted">Name: {searchResult.joinApplication.name || searchResult.joinApplication.tiktokHandle}</p>
+                  <p className="text-xs text-nmcn-muted">Email: {searchResult.joinApplication.email}</p>
+                  <p className="text-xs text-nmcn-muted">TikTok: {searchResult.joinApplication.tiktokHandle}</p>
+                  <p className="text-xs text-nmcn-muted">Status: {searchResult.joinApplication.status}</p>
+                  <p className="text-xs text-nmcn-muted">Applied: {new Date(searchResult.joinApplication.createdAt).toLocaleDateString()}</p>
                 </div>
               )}
             </div>
