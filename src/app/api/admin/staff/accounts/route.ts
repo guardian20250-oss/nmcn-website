@@ -9,6 +9,8 @@ import {
   deleteStaffAccount,
   updateCreatorAccount,
   deleteCreatorAccount,
+  resetCreatorPassword,
+  resetStaffPassword,
 } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
@@ -94,6 +96,23 @@ export async function POST(request: NextRequest) {
       if (!id) return NextResponse.json({ error: "Account ID is required" }, { status: 400 });
       await deleteCreatorAccount(id);
       return NextResponse.json({ ok: true });
+    }
+
+    if (action === "resetCreatorPassword") {
+      const id = Number(body.id);
+      if (!id) return NextResponse.json({ error: "Account ID is required" }, { status: 400 });
+      const result = await resetCreatorPassword(id, staff.id);
+      return NextResponse.json({ account: result.account, tempPassword: result.tempPassword });
+    }
+
+    if (action === "resetStaffPassword") {
+      const id = Number(body.id);
+      if (!id) return NextResponse.json({ error: "Staff ID is required" }, { status: 400 });
+      if (id === staff.id) {
+        return NextResponse.json({ error: "You cannot reset your own password" }, { status: 400 });
+      }
+      const result = await resetStaffPassword(id, staff.id);
+      return NextResponse.json({ account: result.account, tempPassword: result.tempPassword });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });

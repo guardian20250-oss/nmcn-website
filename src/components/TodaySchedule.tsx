@@ -37,6 +37,11 @@ function battleDayKey(iso: string) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
+  // If the input is a date-only string (YYYY-MM-DD), treat it as local date in TIME_ZONE
+  // not as UTC midnight, to avoid off-by-one errors when converting to EST
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return iso;
+  }
   return d.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 }
 
@@ -106,12 +111,11 @@ export default function TodaySchedule() {
 
   const load = useCallback(async () => {
     try {
-      // Fetch directly from the browser so Cloudflare sees a real user request
-      // (Vercel serverless → CF was returning 403).
-      const res = await fetch(
-        `${BATTLE_EXCHANGE_URL}/api/battles/public?status=CONFIRMED&limit=200`,
-        { cache: "no-store" }
-      );
+      // Fetch all confirmed battles from API (larger limit) and filter client-side
+      // using client's correct EST date to avoid server timezone issues
+      const res = await fetch(`${BATTLE_EXCHANGE_URL}/api/battles/public?status=CONFIRMED&limit=300`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error(`status ${res.status}`);
       const json = (await res.json()) as { battles?: any[] };
       const today = todayKey();
@@ -129,14 +133,22 @@ export default function TodaySchedule() {
         .slice(0, 3);
       setData({ date: today, battles, upcoming });
     } catch {
-      setData((prev) =>
-        prev || {
-          date: new Date().toISOString().slice(0, 10),
-          battles: [],
-          upcoming: [],
-          error: "Battle schedule unavailable",
-        }
-      );
+      // Fallback to local API route
+      try {
+        const res = await fetch("/api/battles/today", { cache: "no-store" });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const json = (await res.json()) as TodayBattlesResponse;
+        setData(json);
+      } catch {
+        setData((prev) =>
+          prev || {
+            date: todayKey(),
+            battles: [],
+            upcoming: [],
+            error: "Battle schedule unavailable",
+          }
+        );
+      }
     } finally {
       setLoading(false);
     }

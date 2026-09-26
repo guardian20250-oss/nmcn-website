@@ -18,7 +18,14 @@ function todayKey(date = new Date()) {
 
 function battleDayKey(iso: string) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
+  // If the input is a date-only string (YYYY-MM-DD), treat it as local date in TIME_ZONE
+  // not as UTC midnight, to avoid off-by-one errors when converting to EST
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return iso;
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 }
 
 function battleClock(iso: string) {

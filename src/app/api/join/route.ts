@@ -31,21 +31,39 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if DB is unavailable
     }
 
-    // Try to send email notification
+    // Get all admin emails (site owner and head admins with role "admin")
+    let adminEmails: string[] = [];
     try {
-      await sendEmail(
-        joinApplicationEmail({
-          tiktokHandle,
-          discordHandle,
-          email,
-          followerCount: followerCount || "",
-          avgLiveViewers: avgLiveViewers || "",
-          agencyExperience: agencyExperience || "",
-        })
-      );
-    } catch (emailError) {
-      console.error("Email send failed, continuing without email:", emailError);
+      const admins = await prisma.admin.findMany({
+        where: { role: "admin" },
+        select: { email: true },
+      });
+      adminEmails = admins.map((a) => a.email).filter(Boolean);
+    } catch (adminError) {
+      console.error("Failed to fetch admin emails:", adminError);
     }
+
+    // Fallback to CONTACT_EMAIL if no admins found
+    const fallbackEmail = process.env.CONTACT_EMAIL || "nexusmafiacreatornetworkllc@outlook.com";
+    const recipients = adminEmails.length > 0 ? adminEmails : [fallbackEmail];
+
+    // Send email notification to all admins (site owner + head admins)
+    const emailData = joinApplicationEmail({
+      tiktokHandle,
+      discordHandle,
+      email,
+      followerCount: followerCount || "",
+      avgLiveViewers: avgLiveViewers || "",
+      agencyExperience: agencyExperience || "",
+    });
+
+    // Send to each admin
+    const emailPromises = recipients.map((to) =>
+      sendEmail({ ...emailData, to }).catch((err) => {
+        console.error(`Failed to send email to ${to}:`, err);
+      })
+    );
+    await Promise.allSettled(emailPromises);
 
     return NextResponse.json(
       { message: "Application submitted successfully" },

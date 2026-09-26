@@ -376,6 +376,41 @@ export async function changeCreatorPassword(creatorId: number, newPassword: stri
   });
 }
 
+export async function resetCreatorPassword(creatorId: number, resetById: number) {
+  const tempPassword = generateTempPassword();
+  const account = await prisma.creatorAccount.update({
+    where: { id: creatorId },
+    data: {
+      password: await hashPassword(tempPassword),
+      mustChangePassword: true,
+    },
+    select: { id: true, email: true, name: true },
+  });
+  return { account, tempPassword };
+}
+
+export async function resetStaffPassword(staffId: number, resetById: number) {
+  const tempPassword = generateTempPassword();
+  const account = await prisma.admin.update({
+    where: { id: staffId },
+    data: {
+      password: await hashPassword(tempPassword),
+      mustChangePassword: true,
+    },
+    select: { id: true, email: true, name: true },
+  });
+  return { account, tempPassword };
+}
+
+function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
 export async function getPendingAccounts() {
   return prisma.creatorAccount.findMany({
     where: { status: "pending" },

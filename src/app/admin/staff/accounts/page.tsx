@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Users, Plus, CheckCircle, XCircle, Mail, Shield, GraduationCap, Crown, Search, Star, Swords, Eye, Pencil, Trash2, KeyRound, Copy, X } from "lucide-react";
+import { Loader2, Users, Plus, CheckCircle, XCircle, Mail, Shield, GraduationCap, Crown, Search, Star, Swords, Eye, Pencil, Trash2, KeyRound, Copy, X, RotateCcw } from "lucide-react";
 
 const roleIcons: Record<string, React.ReactNode> = {
   admin: <Shield className="h-5 w-5 text-nmcn-blue" />,
@@ -45,6 +45,7 @@ export default function StaffAccountsPage() {
   const [actionError, setActionError] = useState("");
   const [editingCreator, setEditingCreator] = useState<any | null>(null);
   const [editingStaff, setEditingStaff] = useState<any | null>(null);
+  const [resetPassword, setResetPassword] = useState<{ account: any; tempPassword: string } | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
     email: "",
@@ -305,6 +306,62 @@ export default function StaffAccountsPage() {
     }
   };
 
+  const handleResetCreatorPassword = async (accountId: number) => {
+    if (busyId !== null) return;
+    setActionError("");
+    setBusyId(accountId);
+    try {
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "resetCreatorPassword", accountId: Number(accountId) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setActionError(data.error || "Reset failed");
+        setBusyId(null);
+        return;
+      }
+      setResetPassword({
+        account: data.account,
+        tempPassword: data.tempPassword,
+      });
+      setBusyId(null);
+      await fetchAccounts();
+    } catch {
+      setActionError("Reset failed — network error");
+      setBusyId(null);
+    }
+  };
+
+  const handleResetStaffPassword = async (staffId: number) => {
+    if (busyId !== null) return;
+    setActionError("");
+    setBusyId(staffId);
+    try {
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "resetStaffPassword", id: Number(staffId) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setActionError(data.error || "Reset failed");
+        setBusyId(null);
+        return;
+      }
+      setResetPassword({
+        account: data.staff || { name: "Staff", email: "unknown" },
+        tempPassword: data.tempPassword,
+      });
+      setBusyId(null);
+      await fetchAccounts();
+    } catch {
+      setActionError("Reset failed — network error");
+      setBusyId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -511,6 +568,86 @@ export default function StaffAccountsPage() {
               <button
                 type="button"
                 onClick={() => setCreatedStaff(null)}
+                className="btn-gold w-full"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+        {resetPassword && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setResetPassword(null)}
+            />
+            <div className="card relative w-full max-w-md p-6 sm:p-8">
+              <button
+                type="button"
+                onClick={() => setResetPassword(null)}
+                className="absolute top-4 right-4 text-nmcn-muted transition hover:text-nmcn-blue"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-nmcn-gold/40 bg-nmcn-gold/10">
+                  <KeyRound className="h-5 w-5 text-nmcn-gold" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-white">
+                    Password Reset
+                  </h3>
+                  <p className="text-xs text-nmcn-muted">
+                    A new temporary password has been generated and emailed to
+                    <span className="text-nmcn-blue">{resetPassword.account.email}</span>.
+                  </p>
+                </div>
+              </div>
+              <dl className="mb-4 space-y-3 text-sm">
+                <div className="flex justify-between gap-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40 px-3 py-2">
+                  <dt className="text-nmcn-muted">Name</dt>
+                  <dd className="text-right text-white">{resetPassword.account.name}</dd>
+                </div>
+                <div className="flex justify-between gap-3 rounded-lg border border-nmcn-border bg-nmcn-deep/40 px-3 py-2">
+                  <dt className="text-nmcn-muted">Email</dt>
+                  <dd className="break-all text-right text-white">{resetPassword.account.email}</dd>
+                </div>
+                <div className="flex justify-between gap-3 rounded-lg border border-nmcn-gold/40 bg-nmcn-gold/10 px-3 py-2">
+                  <dt className="flex items-center gap-1.5 text-nmcn-gold">
+                    <KeyRound className="h-3.5 w-3.5" /> Temp password
+                  </dt>
+                  <dd className="flex items-center gap-2 break-all text-right font-mono text-white">
+                    {resetPassword.tempPassword}
+                    <button
+                      type="button"
+                      title="Copy password"
+                      onClick={() => {
+                        navigator.clipboard
+                          .writeText(resetPassword.tempPassword)
+                          .then(() => {
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          })
+                          .catch(() => {});
+                      }}
+                      className="text-nmcn-muted transition hover:text-nmcn-blue"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    {copied && <span className="text-xs text-green-400">Copied</span>}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mb-5 rounded-lg border border-nmcn-blue/30 bg-nmcn-blue/10 px-3 py-2.5 text-xs text-nmcn-muted">
+                <strong className="text-nmcn-blue">Must change password:</strong>{" "}
+                When {resetPassword.account.email} signs in for the first time, a popup
+                will force them to set a new password before accessing the
+                dashboard.
+              </p>
+              <button
+                type="button"
+                onClick={() => setResetPassword(null)}
                 className="btn-gold w-full"
               >
                 Done
@@ -846,6 +983,15 @@ export default function StaffAccountsPage() {
                         </button>
                         <button
                           type="button"
+                          onClick={() => handleResetCreatorPassword(account.id)}
+                          disabled={busyId !== null}
+                          className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                          title="Reset Password"
+                        >
+                          <KeyRound className="h-3 w-3" /> Reset
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => deleteCreator(account.id)}
                           disabled={busyId !== null}
                           className="btn-ghost flex items-center gap-1 text-xs text-red-400 disabled:opacity-50"
@@ -874,7 +1020,7 @@ export default function StaffAccountsPage() {
               </div>
             ) : (
               <div className="grid gap-3">
-                {rejected.map((account: any) => (
+{rejected.map((account: any) => (
                   <div key={account.id} className="card p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -897,6 +1043,15 @@ export default function StaffAccountsPage() {
                           className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
                         >
                           <Pencil className="h-3 w-3" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleResetCreatorPassword(account.id)}
+                          disabled={busyId !== null}
+                          className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                          title="Reset Password"
+                        >
+                          <KeyRound className="h-3 w-3" /> Reset
                         </button>
                         <button
                           type="button"
@@ -930,7 +1085,7 @@ export default function StaffAccountsPage() {
               </div>
             ) : (
               <div className="grid gap-3">
-                {staff.map((s: any) => (
+{staff.map((s: any) => (
                   <div key={s.id} className="card p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -957,6 +1112,15 @@ export default function StaffAccountsPage() {
                           title="Edit"
                         >
                           <Pencil className="h-3 w-3" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleResetStaffPassword(s.id)}
+                          disabled={busyId !== null}
+                          className="btn-outline flex items-center gap-1 text-xs disabled:opacity-50"
+                          title="Reset Password"
+                        >
+                          <KeyRound className="h-3 w-3" /> Reset
                         </button>
                         <button
                           type="button"
