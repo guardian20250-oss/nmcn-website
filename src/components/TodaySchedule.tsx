@@ -23,7 +23,6 @@ interface PublicBattle {
 interface TodayBattlesResponse {
   date: string;
   battles: PublicBattle[];
-  upcoming?: PublicBattle[];
   error?: string;
 }
 
@@ -147,7 +146,7 @@ export default function TodaySchedule() {
             : a.dayKey.localeCompare(b.dayKey)
         )
         .slice(0, 3);
-      setData({ date: today, battles, upcoming });
+      setData({ date: today, battles });
     } catch {
       // Fallback to local API route
       try {
@@ -160,7 +159,6 @@ export default function TodaySchedule() {
           prev || {
             date: todayKey(),
             battles: [],
-            upcoming: [],
             error: "Battle schedule unavailable",
           }
         );
@@ -173,7 +171,7 @@ export default function TodaySchedule() {
   useEffect(() => {
     load();
 
-    const hourly = window.setInterval(load, 60 * 60 * 1000);
+    const hourly = window.setInterval(load, 10 * 60 * 1000);
 
     const scheduleDaily = () => {
       if (dailyRefreshTimer) window.clearTimeout(dailyRefreshTimer);
@@ -240,23 +238,7 @@ export default function TodaySchedule() {
       ) : battles.length === 0 ? (
         <div className="flex items-start gap-2 rounded-xl border border-nmcn-border bg-nmcn-black/30 px-4 py-3">
           <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-nmcn-muted" />
-          <p className="text-sm text-nmcn-muted">
-            No confirmed battles scheduled for today.
-            {data?.upcoming && data.upcoming.length > 0 && (
-              <>
-                {" "}
-                Next up:{" "}
-                <span className="text-white">
-                  {data.upcoming[0].title}
-                </span>{" "}
-                on {data.upcoming[0].dayKey}
-                {data.upcoming[0].timeLabel
-                  ? ` at ${data.upcoming[0].timeLabel}`
-                  : ""}
-                .
-              </>
-            )}
-          </p>
+          <p className="text-sm text-nmcn-muted">No confirmed battles scheduled for today.</p>
         </div>
       ) : (
         <ul className="space-y-2">
