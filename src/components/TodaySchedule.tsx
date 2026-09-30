@@ -125,47 +125,50 @@ export default function TodaySchedule() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    const today = todayKey();
+    let result: TodayBattlesResponse | null = null;
+
+    // Fetch all confirmed battles from API (larger limit) and filter client-side
+    // using client's correct EST date to avoid server timezone issues
     try {
-      // Fetch all confirmed battles from API (larger limit) and filter client-side
-      // using client's correct EST date to avoid server timezone issues
-      const res = await fetch(`${BATTLE_EXCHANGE_URL}/api/battles/public?status=CONFIRMED&limit=300`, {
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `${BATTLE_EXCHANGE_URL}/api/battles/public?status=CONFIRMED&limit=300`,
+        { cache: "no-store" }
+      );
       if (!res.ok) throw new Error(`status ${res.status}`);
       const json = (await res.json()) as { battles?: any[] };
-      const today = todayKey();
-      const all = (json.battles || []).map(toPublicBattle);
-      const battles = all
+      const battles = (json.battles || [])
+        .map(toPublicBattle)
         .filter((b) => b.dayKey === today)
         .sort((a, b) => a.timeLabel.localeCompare(b.timeLabel));
-      const upcoming = all
-        .filter((b) => b.dayKey > today)
-        .sort((a, b) =>
-          a.dayKey === b.dayKey
-            ? a.timeLabel.localeCompare(b.timeLabel)
-            : a.dayKey.localeCompare(b.dayKey)
-        )
-        .slice(0, 3);
-      setData({ date: today, battles });
+      result = { date: today, battles };
     } catch {
-      // Fallback to local API route
+      result = null;
+    }
+
+    // The upstream feed can answer 200 with a stale/empty list, which renders
+    // "0 battles" on days that do have battles — cross-check the local proxy
+    // whenever the primary feed has nothing for today.
+    if (!result || result.battles.length === 0) {
       try {
         const res = await fetch("/api/battles/today", { cache: "no-store" });
-        if (!res.ok) throw new Error(`status ${res.status}`);
-        const json = (await res.json()) as TodayBattlesResponse;
-        setData(json);
+        if (res.ok) {
+          const json = (await res.json()) as TodayBattlesResponse;
+          if (!result || json?.battles?.length) result = json;
+        }
       } catch {
-        setData((prev) =>
-          prev || {
-            date: todayKey(),
-            battles: [],
-            error: "Battle schedule unavailable",
-          }
-        );
+        // keep whatever we already have
       }
-    } finally {
-      setLoading(false);
     }
+
+    setData(
+      result || {
+        date: today,
+        battles: [],
+        error: "Battle schedule unavailable",
+      }
+    );
+    setLoading(false);
   }, []);
 
   useEffect(() => {

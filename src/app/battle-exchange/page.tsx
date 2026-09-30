@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import OpenLoginButton from "@/components/OpenLoginButton";
+import { getSiteSettings } from "@/lib/site-settings";
 import {
   Swords,
   Calendar,
@@ -35,11 +36,21 @@ const features = [
   {
     icon: Users,
     title: "Agency Network",
-    desc: "Connect with 12+ partner agencies across the US and Canada for cross-agency events.",
+    desc: "Connect with partner agencies across the US and Canada for cross-agency events.",
   },
 ];
 
 export default async function BattleExchangePage() {
+  const settings = await getSiteSettings();
+  const platformFeatures = features.map((f) =>
+    f.title === "Agency Network"
+      ? {
+          ...f,
+          desc: `Connect with ${settings.stat_partner_agencies}+ partner agencies across the US and Canada for cross-agency events.`,
+        }
+      : f
+  );
+
   let isLoggedIn = false;
   try {
     const cookieStore = await cookies();
@@ -124,7 +135,7 @@ export default async function BattleExchangePage() {
             Everything You Need to Battle
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((f, i) => (
+            {platformFeatures.map((f, i) => (
               <div
                 key={i}
                 className="card group p-6 transition-all hover:-translate-y-1 hover:border-nmcn-gold/50"

@@ -4,6 +4,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import GetHelpButton from "@/components/GetHelpButton";
 import TodaySchedule from "@/components/TodaySchedule";
 import OpenLoginButton from "@/components/OpenLoginButton";
+import { getSiteSettings } from "@/lib/site-settings";
 import {
   Swords,
   Users,
@@ -38,14 +39,16 @@ const features = [
   },
 ];
 
-const stats = [
-  { num: "100+", label: "Creators" },
-  { num: "12", label: "Partner Agencies" },
-  { num: "500+", label: "Battles Completed" },
-  { num: "2", label: "Countries" },
-];
-
 export default async function HomePage() {
+  const settings = await getSiteSettings();
+
+  const stats = [
+    { num: settings.stat_creators, label: "Creators" },
+    { num: settings.stat_partner_agencies, label: "Partner Agencies" },
+    { num: settings.stat_battles_completed, label: "Battles Completed" },
+    { num: settings.stat_countries, label: "Countries" },
+  ];
+
   let isLoggedIn = false;
   try {
     const cookieStore = await cookies();
@@ -71,9 +74,7 @@ export default async function HomePage() {
             <span className="gold-text">The Right Family</span>
           </h1>
           <p className="mx-auto mb-8 max-w-2xl text-lg text-nmcn-muted">
-            Nexus Mafia Creator Network LLC - Professional creator management,
-            battle coordination, and personalized coaching for TikTok LIVE
-            creators and agencies across the US &amp; Canada.
+            {settings.hero_subtitle}
           </p>
           <TodaySchedule />
           <div className="flex flex-wrap justify-center gap-4">
@@ -173,7 +174,7 @@ export default async function HomePage() {
               {
                 icon: Globe,
                 title: "Growing Network",
-                desc: "12 partner agencies, 100+ creators across the US and Canada, and we're just getting started.",
+                desc: `${settings.stat_partner_agencies} partner agencies, ${settings.stat_creators} creators across the US and Canada, and we're just getting started.`,
               },
             ].map((item, i) => (
               <div key={i} className="flex gap-4">

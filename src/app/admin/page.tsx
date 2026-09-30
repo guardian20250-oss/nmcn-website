@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy, BadgeCheck, Search, XCircle, Download, Shield } from "lucide-react";
+import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy, BadgeCheck, Search, XCircle, Download, Shield, Globe } from "lucide-react";
 import GetHelpButton from "@/components/GetHelpButton";
 
 interface CertResult {
@@ -404,6 +404,25 @@ export default function AdminDashboard() {
             )}
           </div>
         </section>
+
+        {isAdmin && (
+          <section className="mt-8">
+            <h2 className="mb-4 font-heading text-xl font-semibold text-white">
+              Website
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Link href="/admin/site" className="card group flex items-center gap-4 p-6 transition-all hover:-translate-y-1 hover:border-nmcn-blue/50">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-nmcn-border bg-nmcn-blue/10">
+                  <Globe className="h-6 w-6 text-nmcn-blue" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-semibold text-white">Home Page Content</h3>
+                  <p className="text-sm text-nmcn-muted">Creators, partner agencies, battles completed, countries & intro text</p>
+                </div>
+              </Link>
+            </div>
+          </section>
+        )}
 
         <section className="mt-8">
           <h2 className="mb-4 font-heading text-xl font-semibold text-white">

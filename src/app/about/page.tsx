@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Globe,
 } from "lucide-react";
+import { getSiteSettings } from "@/lib/site-settings";
 
 const values = [
   {
@@ -32,30 +33,32 @@ const values = [
   },
 ];
 
-const milestones = [
-  {
-    year: "Founded",
-    title: "NMCN Established",
-    desc: "Nexus Mafia Creator Network LLC founded with a vision to revolutionize the TikTok LIVE creator space.",
-  },
-  {
-    year: "Launch",
-    title: "Battle Exchange Platform",
-    desc: "Launched our proprietary Battle Exchange platform for cross-agency battle coordination.",
-  },
-  {
-    year: "Growth",
-    title: "12 Agency Partners",
-    desc: "Expanded to 12 partner agencies across the US and Canada with 100+ creators.",
-  },
-  {
-    year: "Now",
-    title: "Building the Future",
-    desc: "Continuing to grow, innovate, and empower creators to build their empires.",
-  },
-];
+export default async function AboutPage() {
+  const settings = await getSiteSettings();
 
-export default function AboutPage() {
+  const milestones = [
+    {
+      year: "Founded",
+      title: "NMCN Established",
+      desc: "Nexus Mafia Creator Network LLC founded with a vision to revolutionize the TikTok LIVE creator space.",
+    },
+    {
+      year: "Launch",
+      title: "Battle Exchange Platform",
+      desc: "Launched our proprietary Battle Exchange platform for cross-agency battle coordination.",
+    },
+    {
+      year: "Growth",
+      title: `${settings.stat_partner_agencies} Agency Partners`,
+      desc: `Expanded to ${settings.stat_partner_agencies} partner agencies across the US and Canada with ${settings.stat_creators} creators.`,
+    },
+    {
+      year: "Now",
+      title: "Building the Future",
+      desc: "Continuing to grow, innovate, and empower creators to build their empires.",
+    },
+  ];
+
   return (
     <div className="min-h-screen pt-24">
       {/* Hero */}

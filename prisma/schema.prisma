@@ -81,6 +81,14 @@ model SupportSettings {
   @@map("support_settings")
 }
 
+model SiteSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
 model CreatorAccount {
   id                 Int      @id @default(autoincrement())
   email              String   @unique
