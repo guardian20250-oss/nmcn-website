@@ -2,15 +2,42 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X, LogIn, Loader2, User } from "lucide-react";
+import { Menu, X, LogIn, Loader2, User, ExternalLink } from "lucide-react";
 import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
 
 const baseNavLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
+  { href: "https://nmcnbattleexchange.com/pickup-board", label: "Pickup Board", external: true },
   { href: "/academy", label: "Academy" },
   { href: "/contact", label: "Contact" },
 ];
+
+function NavLink({ link, onClick }: { link: { href: string; label: string; external?: boolean }; onClick?: () => void }) {
+  if (link.external) {
+    return (
+      <a
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+        className="text-sm font-medium text-nmcn-muted transition hover:text-nmcn-blue flex items-center gap-1"
+      >
+        {link.label}
+        <ExternalLink className="h-3 w-3" />
+      </a>
+    );
+  }
+  return (
+    <Link
+      href={link.href}
+      onClick={onClick}
+      className="text-sm font-medium text-nmcn-muted transition hover:text-nmcn-blue"
+    >
+      {link.label}
+    </Link>
+  );
+}
 
 interface SessionUser {
   id: number;
@@ -133,13 +160,7 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-nmcn-muted transition hover:text-nmcn-blue"
-            >
-              {link.label}
-            </Link>
+            <NavLink key={link.href} link={link} />
           ))}
         </nav>
 
@@ -180,14 +201,7 @@ export default function Navbar() {
         <div className="border-t border-nmcn-border bg-nmcn-black/95 px-6 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="text-sm font-medium text-nmcn-muted transition hover:text-nmcn-blue"
-              >
-                {link.label}
-              </Link>
+              <NavLink key={link.href} link={link} onClick={() => setMobileOpen(false)} />
             ))}
             <Link
                 href="/academy"
