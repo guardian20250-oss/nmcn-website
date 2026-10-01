@@ -104,6 +104,26 @@ export default function Navbar() {
         body: JSON.stringify({ mode: "login", email, password }),
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        const sres = await fetch("/api/admin/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const sdata = await sres.json().catch(() => ({}));
+        if (!sres.ok) {
+          setLoginError(sdata.error || "Invalid email or password");
+          return;
+        }
+        if (sdata.mustChangePassword) {
+          setLoginOpen(false);
+          setStaff({ id: 0, email, name: sdata.name, mustChangePassword: true });
+          setForceStaff(true);
+          return;
+        }
+        window.location.href = "/admin";
+        return;
+      }
       if (!res.ok) {
         setLoginError(data.error || "Login failed");
         return;
@@ -171,11 +191,6 @@ export default function Navbar() {
           {!loggedIn && (
             <Link href="/academy/account?mode=register" className="btn-outline text-sm">
               Create Account
-            </Link>
-          )}
-          {!loggedIn && (
-            <Link href="/admin/login" className="btn-outline text-sm">
-              Staff Login
             </Link>
           )}
           {accountButton}
@@ -249,17 +264,8 @@ export default function Navbar() {
                 Dashboard
               </Link>
             )}
-            {!loggedIn && (
-              <Link
-                  href="/admin/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="btn-outline mt-2 text-center text-sm"
-              >
-                Staff Login
-              </Link>
-            )}
             <Link
-              href="/join"
+                href="/join"
               onClick={() => setMobileOpen(false)}
               className="btn-gold mt-2 text-center text-sm"
             >
@@ -280,7 +286,7 @@ export default function Navbar() {
               <div>
                 <h2 className="font-heading text-xl font-bold text-white">Log In</h2>
                 <p className="mt-1 text-sm text-nmcn-muted">
-                  Access the academy and Battle Exchange.
+                  Creators and staff both log in here.
                 </p>
               </div>
               <button
@@ -341,11 +347,6 @@ export default function Navbar() {
               </button>
 
               <p className="text-center text-xs text-nmcn-muted">
-                Staff member?{" "}
-                <Link href="/admin/login" className="text-nmcn-blue hover:underline">
-                  Use Staff Login
-                </Link>
-                {" · "}
                 <Link href="/academy/account?mode=register" className="text-nmcn-blue hover:underline">
                   Create Account
                 </Link>
