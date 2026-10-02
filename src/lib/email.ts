@@ -16,7 +16,71 @@ interface EmailOptions {
   html: string;
 }
 
+async function readGraphRefreshToken(): Promise<string | null> {
+  if (process.env.GRAPH_TOKEN_FILE) {
+    try {
+      const fs = await import("fs/promises");
+      const value = (await fs.readFile(process.env.GRAPH_TOKEN_FILE, "utf8")).trim();
+      if (value) return value;
+    } catch {}
+  }
+  return process.env.GRAPH_REFRESH_TOKEN || null;
+}
+
+async function graphAccessToken(): Promise<string> {
+  const refreshToken = await readGraphRefreshToken();
+  if (!process.env.GRAPH_CLIENT_ID || !refreshToken) throw new Error("Graph email not configured");
+  const body = new URLSearchParams({
+    client_id: process.env.GRAPH_CLIENT_ID,
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+  });
+  const res = await fetch("https://login.microsoftonline.com/consumers/oauth2/v2.0/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const data: any = await res.json();
+  if (!res.ok || !data.access_token) throw new Error(`Graph token refresh failed: ${data.error || res.status}`);
+  if (data.refresh_token && data.refresh_token !== refreshToken && process.env.GRAPH_TOKEN_FILE) {
+    try {
+      const fs = await import("fs/promises");
+      await fs.writeFile(process.env.GRAPH_TOKEN_FILE, data.refresh_token, { encoding: "utf8", mode: 0o600 });
+    } catch {}
+  }
+  return data.access_token;
+}
+
 export async function sendEmail({ to, subject, html }: EmailOptions) {
+  if (process.env.GRAPH_CLIENT_ID && process.env.GRAPH_REFRESH_TOKEN) {
+    try {
+      const token = await graphAccessToken();
+      const fromAddress = process.env.GRAPH_USER || "nexusmafiacreatornetworkllc@outlook.com";
+      const res = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: {
+            subject,
+            body: { contentType: "HTML", content: html },
+            from: { emailAddress: { address: fromAddress, name: "Nexus Mafia Creator Network LLC" } },
+            toRecipients: [{ emailAddress: { address: to } }],
+          },
+          saveToSentItems: true,
+        }),
+      });
+      if (!res.ok) {
+        const detail = (await res.text()).slice(0, 300);
+        throw new Error(`Graph sendMail failed (${res.status}): ${detail}`);
+      }
+      console.log("Email sent via Graph:", { to, subject });
+      return { success: true, messageId: "graph" };
+    } catch (error) {
+      console.error("Graph email error:", error);
+      return { success: false, error };
+    }
+  }
+
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log("Email not configured - skipping send");
     console.log("Would have sent:", { to, subject });
