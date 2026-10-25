@@ -18,6 +18,9 @@ model Admin {
   updatedAt          DateTime @updatedAt
   createdCreators    CreatorAccount[]
   handledTickets     SupportTicket[]
+  statsSnapshots     CreatorStatSnapshot[]
+  statsManagerOf     CreatorStatManagerAssignment[] @relation("StatsManager")
+  statsTeamLeadOf    CreatorStatManagerAssignment[] @relation("StatsTeamLead")
 
   @@map("admins")
 }
@@ -106,6 +109,7 @@ model CreatorAccount {
   certificates       Certificate[]
   quizAttempts       QuizAttempt[]
   supportTickets     SupportTicket[]
+  creatorStats       CreatorStat[]
   createdAt          DateTime @default(now())
   updatedAt          DateTime @default(now()) @updatedAt
 }
@@ -236,4 +240,108 @@ model ContactMessage {
   read      Boolean  @default(false)
   replied   Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// ---- Creator Stats (TikTok LIVE Backstage export imports) ----
+// Each upload of the Backstage "Manage creators" export = one snapshot record.
+// Owners import every row; team leads / managers import only rows in their
+// scope (out-of-scope rows are never stored). Rows merge per creator by
+// (Creator ID, export date), so overlapping uploads never duplicate data.
+
+model CreatorStatSnapshot {
+  id                Int           @id @default(autoincrement())
+  exportedAt        DateTime
+  periodType        String        @default("weekly") // weekly | monthly (end of month)
+  originalFilename  String
+  uploaderRole      String?
+  rowCount          Int           @default(0) // rows imported
+  matchedCount      Int           @default(0) // imported rows linked to a creator account
+  skippedOutOfScope Int           @default(0)
+  duplicateCount    Int           @default(0) // already on file for that export date
+  unmatchedCount    Int           @default(0) // imported rows with no creator account
+  uploadedById      Int?
+  uploadedBy        Admin?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  stats             CreatorStat[]
+  createdAt         DateTime      @default(now())
+
+  @@index([exportedAt])
+  @@map("creator_stat_snapshots")
+}
+
+model CreatorStat {
+  id                       Int                 @id @default(autoincrement())
+  snapshotId               Int
+  snapshot                 CreatorStatSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  creatorAccountId         Int?
+  creatorAccount           CreatorAccount?     @relation(fields: [creatorAccountId], references: [id], onDelete: SetNull)
+  exportedAt               DateTime // copied from the snapshot for per-creator merging
+  periodType               String              @default("weekly")
+  backstageCreatorId       String              @db.VarChar(40)
+  username                 String              @db.VarChar(100)
+  groupName                String?
+  teamLead                 String? // "Creator Network manager" column = team lead's email
+  graduationStatus         String?
+  tierStatus               String?
+  tierLastMonth            Int?
+  relationshipStatus       String?
+  subscriptionStatus       String?
+  joinTime                 DateTime?
+  daysSinceJoining         Int?
+  invitationType           String?
+  invitedBy                String? // ADMIN-ONLY: never expose to creators
+  promotePermission        String?
+  lastLive                 DateTime?
+  notes                    String?             @db.Text // ADMIN-ONLY: never expose to creators
+  followers                Int                 @default(0)
+  videos                   Int                 @default(0)
+  likes                    BigInt              @default(0)
+  diamondsL30D             Int                 @default(0)
+  validDaysL30D            Int                 @default(0)
+  liveDurationL30D         Float               @default(0) // hours
+  fanClubDiamondsL30D      Int                 @default(0)
+  fanClubActiveFansL30D    Int                 @default(0)
+  managementDates          String?
+  renewedManagementDates   String?
+  achievedStarCreator      Boolean             @default(false)
+  starCreatorDaysThisMonth Int                 @default(0)
+  createdAt                DateTime            @default(now())
+
+  @@unique([backstageCreatorId, exportedAt])
+  @@index([creatorAccountId, exportedAt])
+  @@index([snapshotId])
+  @@index([username])
+  @@index([teamLead])
+  @@map("creator_stats")
+}
+
+model CreatorStatAuditLog {
+  id         Int      @id @default(autoincrement())
+  action     String // preview | import | delete | manager_assign | manager_unassign
+  adminId    Int?
+  adminEmail String
+  snapshotId Int?
+  details    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("creator_stat_audit_logs")
+}
+
+// Managers are not identified in the Backstage export, so an admin (owner)
+// assigns each manager either team leads (manager sees all creators whose
+// "Creator Network manager" column = that team lead's email) or specific
+// creators by Backstage Creator ID.
+model CreatorStatManagerAssignment {
+  id                 Int      @id @default(autoincrement())
+  managerId          Int
+  manager            Admin    @relation("StatsManager", fields: [managerId], references: [id], onDelete: Cascade)
+  teamLeadId         Int?
+  teamLead           Admin?   @relation("StatsTeamLead", fields: [teamLeadId], references: [id], onDelete: Cascade)
+  backstageCreatorId String?  @db.VarChar(40)
+  createdAt          DateTime @default(now())
+
+  @@unique([managerId, teamLeadId])
+  @@unique([managerId, backstageCreatorId])
+  @@index([managerId])
+  @@map("creator_stat_manager_assignments")
 }

@@ -43,6 +43,7 @@ interface SessionUser {
   id: number;
   email: string;
   name?: string;
+  role?: string;
   mustChangePassword?: boolean;
 }
 
@@ -89,8 +90,16 @@ export default function Navbar() {
     return () => window.removeEventListener("open-login", onOpenLogin);
   }, []);
 
+  // Stats links: main site only. They are never added to the separate Battle Exchange site.
+  const statsLinks = [
+    ...(creator ? [{ href: "/academy/stats", label: "My Stats" }] : []),
+    ...(staff && ["admin", "manager", "team_lead"].includes(staff.role || "")
+      ? [{ href: "/admin/creator-stats", label: staff.role === "admin" ? "Creator Stats" : "Team Stats" }]
+      : []),
+  ];
+
   const navLinks = loggedIn
-    ? [...baseNavLinks.slice(0, 2), { href: "/battle-exchange", label: "Battle Exchange" }, ...baseNavLinks.slice(2)]
+    ? [...baseNavLinks.slice(0, 2), { href: "/battle-exchange", label: "Battle Exchange" }, ...baseNavLinks.slice(2, 4), ...statsLinks, ...baseNavLinks.slice(4)]
     : baseNavLinks;
 
   const submitLogin = async (e: React.FormEvent) => {
