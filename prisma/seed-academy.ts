@@ -4020,11 +4020,18 @@ async function main() {
   })();
   console.log(`seed-academy start: courses=${allCourses.length} host=${dbHost}`);
 
-  const replaced = await prisma.course.deleteMany({
-    where: { slug: { in: ["tiktok-live", "discord"] } },
+  // "tiktok-live" and "discord" were replaced by "tiktok-live-compliance" and
+  // "discord-navigation" (new slugs above). ARCHIVE, NOT DELETE: the old slug
+  // deleteMany ran on every build and — because Certificate.course is
+  // onDelete: Cascade — wiped every certificate ever issued for those courses
+  // on each deploy. Archiving hides the retired courses from every page/API
+  // while their lessons, progress and certificates survive forever.
+  const replaced = await prisma.course.updateMany({
+    where: { slug: { in: ["tiktok-live", "discord"] }, status: { not: "archived" } },
+    data: { status: "archived" },
   });
   if (replaced.count > 0) {
-    console.log(`seed-academy: removed ${replaced.count} replaced course(s)`);
+    console.log(`seed-academy: archived ${replaced.count} replaced course(s)`);
   }
 
   // The YouTube course was removed from `allCourses`, but earlier builds
