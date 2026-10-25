@@ -124,3 +124,22 @@ ALTER TABLE "creator_stat_manager_assignments" ADD CONSTRAINT "creator_stat_mana
 
 -- AddForeignKey
 ALTER TABLE "creator_stat_manager_assignments" ADD CONSTRAINT "creator_stat_manager_assignments_teamLeadId_fkey" FOREIGN KEY ("teamLeadId") REFERENCES "admins"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- CreateTable (Backstage email -> staff account mapping; additive)
+CREATE TABLE "creator_stat_email_mappings" (
+    "id" SERIAL NOT NULL,
+    "backstageEmail" VARCHAR(254) NOT NULL,
+    "adminId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "creator_stat_email_mappings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "creator_stat_email_mappings_backstageEmail_key" ON "creator_stat_email_mappings"("backstageEmail");
+
+-- CreateIndex
+CREATE INDEX "creator_stat_email_mappings_adminId_idx" ON "creator_stat_email_mappings"("adminId");
+
+-- AddForeignKey
+ALTER TABLE "creator_stat_email_mappings" ADD CONSTRAINT "creator_stat_email_mappings_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "admins"("id") ON DELETE CASCADE ON UPDATE CASCADE;

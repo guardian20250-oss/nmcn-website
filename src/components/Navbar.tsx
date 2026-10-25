@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X, LogIn, Loader2, User, ExternalLink } from "lucide-react";
+import { Menu, X, LogIn, Loader2, User } from "lucide-react";
 import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
 
 const baseNavLinks = [
@@ -16,15 +16,16 @@ const baseNavLinks = [
 function NavLink({ link, onClick }: { link: { href: string; label: string; external?: boolean }; onClick?: () => void }) {
   if (link.external) {
     return (
+      // External links (e.g. Pickup Board) keep opening in a new tab, but show
+      // only the label — the icon pushed the header past its width on md screens.
       <a
         href={link.href}
         target="_blank"
         rel="noopener noreferrer"
         onClick={onClick}
-        className="text-sm font-medium text-nmcn-muted transition hover:text-nmcn-blue flex items-center gap-1"
+        className="text-sm font-medium text-nmcn-muted transition hover:text-nmcn-blue"
       >
         {link.label}
-        <ExternalLink className="h-3 w-3" />
       </a>
     );
   }

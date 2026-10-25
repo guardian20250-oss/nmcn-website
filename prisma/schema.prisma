@@ -21,6 +21,7 @@ model Admin {
   statsSnapshots     CreatorStatSnapshot[]
   statsManagerOf     CreatorStatManagerAssignment[] @relation("StatsManager")
   statsTeamLeadOf    CreatorStatManagerAssignment[] @relation("StatsTeamLead")
+  statsEmailMappings CreatorStatEmailMapping[]
 
   @@map("admins")
 }
@@ -344,4 +345,24 @@ model CreatorStatManagerAssignment {
   @@unique([managerId, backstageCreatorId])
   @@index([managerId])
   @@map("creator_stat_manager_assignments")
+}
+
+// Backstage stores its own "Creator Network manager" email, which is frequently
+// DIFFERENT from the email that staff member used to sign up on this site. That
+// mismatch is why an owner sees "no team lead account with that email". An owner
+// maps the Backstage value onto the real staff account, and that person's creators
+// resolve to them automatically.
+//
+// Additive only: mappings extend the original email rule, they never replace it,
+// so a team lead still sees creators listed under their own email as before.
+model CreatorStatEmailMapping {
+  id             Int     @id @default(autoincrement())
+  backstageEmail String  @db.VarChar(254) // exact value from the Backstage column
+  adminId        Int // the staff account on this site
+  admin          Admin   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([backstageEmail])
+  @@index([adminId])
+  @@map("creator_stat_email_mappings")
 }

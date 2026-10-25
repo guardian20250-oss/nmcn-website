@@ -31,6 +31,20 @@ export interface StatsViewerScope {
   creatorIds: string[];
 }
 
+/**
+ * Backstage emails mapped onto these staff accounts (see CreatorStatEmailMapping).
+ * Returns lowercased values, de-duplicated, empty when nothing is mapped.
+ */
+async function mappedBackstageEmails(adminIds: number[]): Promise<string[]> {
+  const ids = [...new Set(adminIds.filter(Boolean))];
+  if (!ids.length) return [];
+  const rows = await prisma.creatorStatEmailMapping.findMany({
+    where: { adminId: { in: ids } },
+    select: { backstageEmail: true },
+  });
+  return [...new Set(rows.map(r => emailKey(r.backstageEmail)).filter(Boolean))];
+}
+
 export async function getStatsViewer(request: NextRequest) {
   const staff = await getStaffFromRequest(request);
   if (!staff) return { status: 401 as const };
@@ -39,16 +53,22 @@ export async function getStatsViewer(request: NextRequest) {
 
   const access: StatsViewerScope = { teamLeadEmails: [], creatorIds: [] };
   if (scope === "team_lead") {
-    access.teamLeadEmails = [emailKey(staff.email)];
+    // Own signup email PLUS any Backstage email mapped to this account, so a
+    // lead whose Backstage email differs from their site email still gets their
+    // creators. Additive: the original rule is never removed.
+    access.teamLeadEmails = [...new Set([emailKey(staff.email), ...(await mappedBackstageEmails([staff.id]))])];
   } else if (scope === "manager") {
     const rows = await prisma.creatorStatManagerAssignment.findMany({
       where: { managerId: staff.id },
-      select: { backstageCreatorId: true, teamLead: { select: { email: true, role: true } } },
+      select: { backstageCreatorId: true, teamLead: { select: { id: true, email: true, role: true } } },
     });
-    access.teamLeadEmails = [
+    const leadIds = rows.filter(r => r.teamLead?.role === "team_lead").map(r => r.teamLead!.id);
+    // The manager's own mapped emails, plus each assigned lead's mapped emails.
+    access.teamLeadEmails = [...new Set([
       emailKey(staff.email),
       ...rows.filter(r => r.teamLead?.role === "team_lead").map(r => emailKey(r.teamLead!.email)),
-    ];
+      ...(await mappedBackstageEmails([staff.id, ...leadIds])),
+    ])];
     access.creatorIds = rows.map(r => r.backstageCreatorId).filter((x): x is string => Boolean(x));
   }
   return { status: 200 as const, staff, scope, access };

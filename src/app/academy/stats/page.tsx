@@ -4,6 +4,7 @@ import { BarChart3 } from "lucide-react";
 import { getCreatorAccountByToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CREATOR_SAFE_SELECT, STATS_CONFIG, isPeriodType, periodLabel } from "@/lib/creator-stats";
+import { linkCreatorStatsByHandle } from "@/lib/creator-stats-link";
 import OpenLoginButton from "@/components/OpenLoginButton";
 
 export const dynamic = "force-dynamic";
@@ -95,15 +96,24 @@ export default async function MyStatsPage({ searchParams }: { searchParams: Prom
   }
 
   // SECURITY: only rows linked to the logged-in account, approved fields only.
-  const history = await prisma.creatorStat.findMany({
-    where: { creatorAccountId: account.id },
-    select: CREATOR_SAFE_SELECT,
-    orderBy: [{ exportedAt: "desc" }, { id: "desc" }],
-    take: 60,
-  });
-  const latest = history[0];
+  const readHistory = () =>
+    prisma.creatorStat.findMany({
+      where: { creatorAccountId: account.id },
+      select: CREATOR_SAFE_SELECT,
+      orderBy: [{ exportedAt: "desc" }, { id: "desc" }],
+      take: 60,
+    });
+  let history = await readHistory();
   const own = await prisma.creatorAccount.findUnique({ where: { id: account.id }, select: { tiktokHandle: true } });
   const handle = own?.tiktokHandle ? `@${own.tiktokHandle.trim().replace(/^@+/, "")}` : account.name;
+
+  if (!history.length) {
+    // Self-heal: the handle may have been saved AFTER the last upload, in which
+    // case this account was never linked. Try once, then read again.
+    await linkCreatorStatsByHandle(account.id, own?.tiktokHandle).catch(() => null);
+    history = await readHistory();
+  }
+  const latest = history[0];
 
   if (!latest) {
     return (

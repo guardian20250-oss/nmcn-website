@@ -47,8 +47,9 @@ interface History {
 type Person = { id: number; name: string; email: string };
 interface Assignments {
   managers: Person[];
-  teamLeads: (Person & { creators: number })[];
+  teamLeads: (Person & { creators: number; mappedBackstageEmails: string[] })[];
   unmatchedTeamLeads: { value: string; count: number }[];
+  mappings: { id: number; backstageEmail: string; adminId: number; admin: Person }[];
   creators: { backstageCreatorId: string; username: string }[];
   assignments: { id: number; backstageCreatorId: string | null; creatorUsername: string | null; manager: Person; teamLead: Person | null }[];
 }
@@ -479,12 +480,18 @@ function AssignmentsPanel() {
   const [asg, setAsg] = useState<Assignments | null>(null);
   const [assign, setAssign] = useState({ managerId: "", teamLeadId: "", backstageCreatorId: "" });
   const [version, setVersion] = useState(0);
+  // backstageEmail -> chosen staff id, for the "unmatched" list
+  const [mapChoice, setMapChoice] = useState<Record<string, string>>({});
+  const [staffForm, setStaffForm] = useState({ name: "", email: "", password: "", role: "team_lead" });
+  const [staffMsg, setStaffMsg] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
     fetch("/api/admin/creator-stats/assignments").then(r => (r.ok ? r.json() : null)).then(d => alive && d && setAsg(d)).catch(() => {});
     return () => { alive = false; };
   }, [version]);
+  const reload = () => setVersion(v => v + 1);
 
   const save = async (kind: "lead" | "creator") => {
     if (!assign.managerId || (kind === "lead" ? !assign.teamLeadId : !assign.backstageCreatorId)) return;
@@ -496,6 +503,50 @@ function AssignmentsPanel() {
     setAssign(a => ({ ...a, teamLeadId: "", backstageCreatorId: "" })); setVersion(v => v + 1);
   };
   const remove = async (id: number) => { await fetch(`/api/admin/creator-stats/assignments?id=${id}`, { method: "DELETE" }); setVersion(v => v + 1); };
+
+  // Link a Backstage "Creator Network manager" email to a real staff account.
+  // Fixes the case where Backstage holds a different address than the one the
+  // person signed up with, so their creators never matched them.
+  const linkEmail = async (backstageEmail: string) => {
+    const adminId = Number(mapChoice[backstageEmail]);
+    if (!adminId) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/creator-stats/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ backstageEmail, adminId }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Could not link that email"); return; }
+      setMapChoice(c => { const n = { ...c }; delete n[backstageEmail]; return n; });
+      reload();
+    } finally { setBusy(false); }
+  };
+
+  const unlinkEmail = async (id: number) => {
+    await fetch(`/api/admin/creator-stats/assignments?mappingId=${id}`, { method: "DELETE" });
+    reload();
+  };
+
+  // Shortcut so an owner never has to leave this page to add a team lead or
+  // manager. Uses the same /api/admin/staff/accounts flow as Staff → Accounts.
+  const createStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffForm.name.trim() || !staffForm.email.trim() || !staffForm.password) return;
+    setBusy(true); setStaffMsg("");
+    try {
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "createStaff", ...staffForm }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setStaffMsg(data.error || "Could not create that account"); return; }
+      setStaffMsg(`Created ${staffForm.name.trim()} — they can sign in with ${staffForm.email.trim()}.`);
+      setStaffForm({ name: "", email: "", password: "", role: "team_lead" });
+      reload();
+    } catch { setStaffMsg("Network error"); } finally { setBusy(false); }
+  };
 
   return (
     <section className="card mt-6 p-6">
@@ -510,13 +561,75 @@ function AssignmentsPanel() {
             <div className="rounded-lg border border-nmcn-border p-3">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Team leads · creators on file</p>
               <ul className="space-y-1">
-                {asg.teamLeads.map(t => <li key={t.id} className="flex justify-between"><span className="text-white">{t.name} <span className="text-nmcn-muted">{t.email}</span></span><span className="text-nmcn-gold">{t.creators}</span></li>)}
+                {asg.teamLeads.map(t => (
+                  <li key={t.id} className="flex justify-between gap-2">
+                    <span className="text-white">
+                      {t.name} <span className="text-nmcn-muted">{t.email}</span>
+                      {t.mappedBackstageEmails.length > 0 && (
+                        <span className="block text-[11px] text-nmcn-blue">
+                          Backstage: {t.mappedBackstageEmails.join(", ")}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-nmcn-gold">{t.creators}</span>
+                  </li>
+                ))}
                 {asg.teamLeads.length === 0 && <li className="text-nmcn-muted">No team lead staff accounts yet.</li>}
               </ul>
+
+              {/* Backstage emails matching no staff account: map one onto a real person. */}
               {asg.unmatchedTeamLeads.length > 0 && (
-                <p className="mt-2 text-xs text-amber-300">
-                  In Backstage data but no team lead account with that email: {asg.unmatchedTeamLeads.map(u => `${u.value} (${u.count})`).join(", ")}
-                </p>
+                <div className="mt-3 rounded-lg border border-amber-400/30 p-3">
+                  <p className="mb-2 text-xs font-semibold text-amber-300">
+                    In Backstage data but no team lead account with that email
+                  </p>
+                  <ul className="space-y-2">
+                    {asg.unmatchedTeamLeads.map(u => (
+                      <li key={u.value} className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-nmcn-text">{u.value} ({u.count})</span>
+                        <select
+                          className="input min-w-[160px] flex-1 text-xs"
+                          value={mapChoice[u.value] || ""}
+                          onChange={e => setMapChoice(c => ({ ...c, [u.value]: e.target.value }))}
+                        >
+                          <option value="">Assign to…</option>
+                          {[...asg.teamLeads, ...asg.managers].map(p => (
+                            <option key={p.id} value={p.id}>{p.name} ({p.email})</option>
+                          ))}
+                        </select>
+                        <button
+                          className="btn-gold whitespace-nowrap px-2 py-1 text-xs disabled:opacity-50"
+                          disabled={busy || !mapChoice[u.value]}
+                          onClick={() => linkEmail(u.value)}
+                        >
+                          Link
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {asg.mappings.length > 0 && (
+                <div className="mt-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Linked Backstage emails</p>
+                  <ul className="divide-y divide-nmcn-border/40 text-xs">
+                    {asg.mappings.map(m => (
+                      <li key={m.id} className="flex items-center justify-between gap-2 py-1.5">
+                        <span className="text-nmcn-text">
+                          {m.backstageEmail} → <span className="text-white">{m.admin.name}</span>
+                        </span>
+                        <button
+                          className="text-nmcn-muted hover:text-red-400"
+                          onClick={() => unlinkEmail(m.id)}
+                          aria-label={`Unlink ${m.backstageEmail}`}
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
             <div className="space-y-2 rounded-lg border border-nmcn-border p-3">
@@ -553,6 +666,66 @@ function AssignmentsPanel() {
             ))}
             {asg.assignments.length === 0 && <li className="py-2 text-nmcn-muted">No manager assignments yet.</li>}
           </ul>
+
+          {/* Shortcut: add a team lead or manager without leaving this page.
+              Uses the same /api/admin/staff/accounts "createStaff" flow as Staff → Accounts. */}
+          <form onSubmit={createStaff} className="mt-6 rounded-lg border border-nmcn-border p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+              Add a team lead or manager
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="text-xs text-nmcn-muted">
+                Name
+                <input
+                  className="input mt-1 block text-sm"
+                  value={staffForm.name}
+                  onChange={e => setStaffForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="Full name"
+                  required
+                />
+              </label>
+              <label className="text-xs text-nmcn-muted">
+                Email
+                <input
+                  type="email"
+                  className="input mt-1 block text-sm"
+                  value={staffForm.email}
+                  onChange={e => setStaffForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="their@email.com"
+                  required
+                />
+              </label>
+              <label className="text-xs text-nmcn-muted">
+                Password
+                <input
+                  type="text"
+                  className="input mt-1 block text-sm"
+                  value={staffForm.password}
+                  onChange={e => setStaffForm(f => ({ ...f, password: e.target.value }))}
+                  placeholder="They can change it later"
+                  required
+                />
+              </label>
+              <label className="text-xs text-nmcn-muted">
+                Role
+                <select
+                  className="input mt-1 block text-sm"
+                  value={staffForm.role}
+                  onChange={e => setStaffForm(f => ({ ...f, role: e.target.value }))}
+                >
+                  <option value="team_lead">Team Lead</option>
+                  <option value="manager">Manager</option>
+                </select>
+              </label>
+              <button type="submit" className="btn-gold text-sm disabled:opacity-50" disabled={busy}>
+                {busy ? "Creating…" : "Create account"}
+              </button>
+            </div>
+            {staffMsg && <p className="mt-3 text-sm text-nmcn-gold">{staffMsg}</p>}
+            <p className="mt-2 text-xs text-nmcn-muted">
+              Same accounts as Staff → Accounts. If their Backstage email differs from this one, link it above.
+            </p>
+          </form>
         </>
       )}
     </section>

@@ -8,12 +8,32 @@ Main site only. Nothing was added to the Battle Exchange site; the main site's e
 | Role | Page | Sees | Can upload |
 |---|---|---|---|
 | Creator | `/academy/stats` (My Stats) | **Only their own latest row**: manager/team lead, tier status, days since joining, Diamonds L30D, valid go-LIVE days L30D, LIVE duration L30D, Achieved Star Creator, Star Creator days this month. Met / not met badges for 8 days and 20 hours, plus a Tier 5 (500,000 ◆) note. Never Notes or Invited by. | No |
-| Team lead | `/admin/creator-stats` | Creators whose **"Creator Network manager"** column = the team lead's staff email (case-insensitive) | Yes, rows for their own team only |
-| Manager | `/admin/creator-stats` | Creators of the team leads assigned to them, plus individually assigned creators | Yes, rows in that scope only |
-| Owner / co-owner (`admin`) | `/admin/creator-stats` | Everything (all columns incl. Notes and Invited by), totals, leaderboards, search/filter, history, audit log, manager assignments | Yes, everything |
+| Team lead | `/admin/creator-stats` | Creators whose **"Creator Network manager"** column = the team lead's staff email (case-insensitive), **plus any Backstage emails mapped to their account**. All columns, including Notes and Invited by. | Yes, rows for their own team only |
+| Manager | `/admin/creator-stats` | Creators of the team leads assigned to them, plus individually assigned creators (and their mapped Backstage emails). All columns, including Notes and Invited by. | Yes, rows in that scope only |
+| Owner / co-owner (`admin`) | `/admin/creator-stats` | Everything (all columns incl. Notes and Invited by), totals, leaderboards, search/filter, history, audit log, manager assignments, email mappings, staff creation | Yes, everything |
 | Scout / battle coordinator | none | none | No |
 
+**Notes and Invited by are staff-wide** — every role that can open `/admin/creator-stats`
+(owner, manager, team lead) sees them. The only people blocked from those two fields
+are **creators**, enforced by the `CREATOR_SAFE_SELECT` allowlist on their own page.
+
 The Navbar shows **My Stats** to creators, and **Creator Stats** / **Team Stats** to owners, managers and team leads.
+
+## When the Backstage email doesn't match a staff account
+
+Backstage stores its own "Creator Network manager" email, which is often **different
+from the email the person used to sign up on this site**. The Assignments panel lists
+these as *"In Backstage data but no team lead account with that email"*.
+
+Map each one to the real staff account and their creators appear under that person
+automatically — no per-creator clicking, and nothing is hidden from anyone.
+
+1. Open `/admin/creator-stats` → **Teams & manager assignments**.
+2. Next to an unmatched Backstage email, pick the staff account it belongs to.
+3. Save. That team lead's scope (and any manager assigned to them) now includes
+   those creators on the next request.
+
+Mappings are additive: the original Backstage email rule keeps working alongside them.
 
 ## Uploading
 
@@ -33,6 +53,10 @@ How merging works:
 
 - First time: match the export's username to `CreatorAccount.tiktokHandle` (case-insensitive, `@` and tiktok.com prefix stripped).
 - After that, the **Backstage Creator ID** link is kept even if the handle changes.
+- **Linking also runs outside of uploads.** A creator who sets or changes their TikTok
+  handle on `/academy/account` is linked immediately against stats already on file, so
+  they never have to wait for the next upload to see their numbers. The stats page also
+  re-attempts the link if it finds none.
 - Conflicts are flagged and not auto-linked: two accounts with the same handle, or an account already linked to a different Creator ID. This blocks someone from setting their handle to another creator's to see their stats.
 - The uploader can untick any suggested link in the preview.
 
@@ -43,11 +67,26 @@ How merging works:
 
 ## Database
 
-Additive only: 4 new tables (`creator_stat_snapshots`, `creator_stats`,
-`creator_stat_audit_logs`, `creator_stat_manager_assignments`). No existing
-table or column changes. The SQL is in `prisma/sql/20261025_creator_stats.sql`.
-The existing Vercel build runs `prisma db push`, which creates these tables
-on deploy.
+Additive only: 5 new tables (`creator_stat_snapshots`, `creator_stats`,
+`creator_stat_audit_logs`, `creator_stat_manager_assignments`,
+`creator_stat_email_mappings`). No existing table or column changes. The SQL is in
+`prisma/sql/20261025_creator_stats.sql`. The existing Vercel build runs
+`prisma db push`, which creates these tables on deploy.
+
+## Upload reminders (Discord)
+
+The site checks for stale uploads and posts to a Discord webhook when a team is
+overdue, so nobody has to remember to upload.
+
+- Set `DISCORD_STATS_WEBHOOK` in the project environment variables to your Discord
+  webhook URL. Leave it unset to disable reminders entirely.
+- `CRON_SECRET` protects the scheduled endpoint; Vercel's cron job sends it
+  (the endpoint returns 503 until it is set, and 401 for any other caller).
+- The endpoint is `GET /api/cron/stats-reminders`, scheduled daily at 09:00 UTC
+  via the `crons` entry in `vercel.json`.
+- A team is **overdue** when its newest Backstage export row is older than
+  7 days. One message per run lists every overdue team with days since its
+  last upload (capped at 20 teams to respect Discord's 2000-char limit).
 
 ## Privacy
 

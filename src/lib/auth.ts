@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { NextRequest } from "next/server";
+import { linkCreatorStatsByHandle } from "./creator-stats-link";
 
 const JWT_SECRET = process.env.JWT_SECRET || "nmcn-admin-secret-key-change-in-production";
 const CREATOR_JWT_SECRET = process.env.CREATOR_JWT_SECRET || "nmcn-creator-secret-key-change-in-production";
@@ -328,7 +329,7 @@ export async function updateCreatorAccount(
         ? assignedRole === "independent_creator"
         : undefined;
 
-  return prisma.creatorAccount.update({
+  const updated = await prisma.creatorAccount.update({
     where: { id },
     data: {
       ...(data.name?.trim() ? { name: data.name.trim() } : {}),
@@ -350,6 +351,15 @@ export async function updateCreatorAccount(
       createdAt: true,
     },
   });
+
+  // The handle changed, so try to attach this account to stat rows that are
+  // already on file. Without this, a creator who set or corrected their handle
+  // after an upload would stay invisible until the next upload. Never unlinks.
+  if (data.tiktokHandle !== undefined) {
+    await linkCreatorStatsByHandle(id, updated.tiktokHandle).catch(() => null);
+  }
+
+  return updated;
 }
 
 export async function deleteCreatorAccount(id: number) {
