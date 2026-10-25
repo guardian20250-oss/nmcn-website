@@ -486,6 +486,7 @@ function AssignmentsPanel() {
   const [picked, setPicked] = useState<string[]>([]); // selected creator ids
   const [creatorQuery, setCreatorQuery] = useState("");
   const [editId, setEditId] = useState<number | null>(null); // roster row being edited
+  const [editLeadId, setEditLeadId] = useState<number | null>(null); // lead card being edited
   const [linkForm, setLinkForm] = useState({ accountId: "", creatorId: "" });
   const [linkMsg, setLinkMsg] = useState("");
   const [version, setVersion] = useState(0);
@@ -831,8 +832,37 @@ function AssignmentsPanel() {
                       <span className="font-semibold text-white">
                         {t.name} <span className="text-xs font-normal text-nmcn-muted">{t.email}</span>
                       </span>
-                      <span className="whitespace-nowrap text-sm text-nmcn-gold">{t.creators} creators on file</span>
+                      <span className="flex items-center gap-2">
+                        <span className="whitespace-nowrap text-sm text-nmcn-gold">{t.creators} creators on file</span>
+                        {/* Owner-only: change this lead's role — how you take a
+                            stray account off the team leads list without deleting it. */}
+                        {canEditAll && t.role !== "admin" && (
+                          <button
+                            className="text-nmcn-muted hover:text-nmcn-gold"
+                            title="Change role"
+                            onClick={() => setEditLeadId(editLeadId === t.id ? null : t.id)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </span>
                     </div>
+                    {editLeadId === t.id && canEditAll && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-nmcn-muted">Role for {t.name}:</span>
+                        <select
+                          className="input py-0 text-xs"
+                          value={t.role}
+                          onChange={e => { setEditLeadId(null); setRole(t.id, e.target.value); }}
+                        >
+                          <option value="team_lead">Team lead</option>
+                          <option value="manager">Manager</option>
+                          <option value="scout">Scout</option>
+                          <option value="battle_coordinator">Battle coordinator</option>
+                        </select>
+                        <span className="text-nmcn-muted">They drop off the leads list for any role except Team lead.</span>
+                      </div>
+                    )}
                     {t.mappedBackstageEmails.length > 0 && (
                       <p className="text-[11px] text-nmcn-blue">Backstage: {t.mappedBackstageEmails.join(", ")}</p>
                     )}
