@@ -44,10 +44,26 @@ export async function GET(request: NextRequest) {
   ]);
   const creators = [...latestRows].sort((a, b) => a.username.localeCompare(b.username)).map(({ backstageCreatorId, username, teamLead }) => ({ backstageCreatorId, username, teamLead }));
 
+  // Per-Backstage-email counts — powers the "no account with that email" box.
   const countByLead = new Map<string, number>();
   for (const c of latestRows) {
     const k = emailKey(c.teamLead);
     if (k) countByLead.set(k, (countByLead.get(k) || 0) + 1);
+  }
+  // Per-staff-account counts — this is the roster number. It matches on the
+  // account's own email AND any Backstage email mapped to it, so a lead whose
+  // Backstage email differs from their signup email (Daniel's case) shows
+  // their real creator count instead of 0.
+  const emailToAdmin = new Map<string, number>();
+  for (const t of teamLeads) emailToAdmin.set(emailKey(t.email), t.id);
+  for (const m of mappings) {
+    const k = emailKey(m.backstageEmail);
+    if (!emailToAdmin.has(k)) emailToAdmin.set(k, m.adminId); // a staff account's own email always wins
+  }
+  const countByAdmin = new Map<number, number>();
+  for (const c of latestRows) {
+    const adminId = emailToAdmin.get(emailKey(c.teamLead));
+    if (adminId) countByAdmin.set(adminId, (countByAdmin.get(adminId) || 0) + 1);
   }
   const leadEmails = new Set(teamLeads.map(t => emailKey(t.email)));
   const mappedEmails = new Set(mappings.map(m => emailKey(m.backstageEmail)));
@@ -62,7 +78,7 @@ export async function GET(request: NextRequest) {
     managers,
     teamLeads: teamLeads.map(t => ({
       ...t,
-      creators: countByLead.get(emailKey(t.email)) || 0,
+      creators: countByAdmin.get(t.id) || 0,
       mappedBackstageEmails: mappingsByAdmin.get(t.id) || [],
     })),
     mappings,
@@ -120,32 +136,47 @@ export async function POST(request: NextRequest) {
   const managerId = Number(body.managerId);
   const teamLeadId = body.teamLeadId ? Number(body.teamLeadId) : null;
   const backstageCreatorId = body.backstageCreatorId ? String(body.backstageCreatorId).trim().slice(0, 40) : null;
-  if (!Number.isInteger(managerId) || (!teamLeadId && !backstageCreatorId) || (teamLeadId && backstageCreatorId)) {
-    return NextResponse.json({ error: "Provide managerId and either teamLeadId or backstageCreatorId" }, { status: 400 });
+  // The flow is lead → manager → creator, so lead and creator may now arrive
+  // together: "assign this manager under that lead, to that person".
+  if (!Number.isInteger(managerId) || (!teamLeadId && !backstageCreatorId)) {
+    return NextResponse.json({ error: "Provide managerId and a team lead, a creator, or both" }, { status: 400 });
   }
   const manager = await prisma.admin.findUnique({ where: { id: managerId }, select: { email: true, role: true } });
   if (!manager || manager.role !== "manager") return NextResponse.json({ error: "Selected account is not a manager" }, { status: 400 });
 
-  let label = "";
+  const parts: string[] = [];
   if (teamLeadId) {
     const lead = await prisma.admin.findUnique({ where: { id: teamLeadId }, select: { email: true, role: true } });
     // Owners (role admin) are accepted too: their account may not exist in the
     // Backstage export, but managers can still be assigned under them.
     if (!lead || !["team_lead", "admin"].includes(lead.role)) return NextResponse.json({ error: "Selected account is not a team lead or owner" }, { status: 400 });
-    const exists = await prisma.creatorStatManagerAssignment.findFirst({ where: { managerId, teamLeadId } });
-    if (!exists) await prisma.creatorStatManagerAssignment.create({ data: { managerId, teamLeadId } });
-    label = `team lead ${lead.email}`;
-  } else {
-    const known = await prisma.creatorStat.findFirst({ where: { backstageCreatorId: backstageCreatorId! }, select: { username: true } });
-    if (!known) return NextResponse.json({ error: "Unknown Creator ID" }, { status: 400 });
-    const exists = await prisma.creatorStatManagerAssignment.findFirst({ where: { managerId, backstageCreatorId } });
-    if (!exists) await prisma.creatorStatManagerAssignment.create({ data: { managerId, backstageCreatorId } });
-    label = `creator @${known.username}`;
+    parts.push(`team lead ${lead.email}`);
   }
-  await prisma.creatorStatAuditLog.create({
-    data: { action: "manager_assign", adminId: staff.id, adminEmail: staff.email, details: `Assigned ${label} to manager ${manager.email}` },
-  });
-  return NextResponse.json({ ok: true });
+  if (backstageCreatorId) {
+    const known = await prisma.creatorStat.findFirst({ where: { backstageCreatorId }, select: { username: true } });
+    if (!known) return NextResponse.json({ error: "Unknown Creator ID" }, { status: 400 });
+    parts.push(`creator @${known.username}`);
+  }
+
+  const where = { managerId, teamLeadId: teamLeadId ?? null, backstageCreatorId: backstageCreatorId ?? null };
+  let created = false;
+  const exists = await prisma.creatorStatManagerAssignment.findFirst({ where });
+  if (!exists) {
+    try {
+      await prisma.creatorStatManagerAssignment.create({ data: where });
+      created = true;
+    } catch (e) {
+      // P2002: a unique pair already covers this (e.g. the manager is already
+      // assigned to that whole team). Treat as already done, not an error.
+      if ((e as { code?: string })?.code !== "P2002") throw e;
+    }
+  }
+  if (created) {
+    await prisma.creatorStatAuditLog.create({
+      data: { action: "manager_assign", adminId: staff.id, adminEmail: staff.email, details: `Assigned ${parts.join(" + ")} to manager ${manager.email}` },
+    });
+  }
+  return NextResponse.json({ ok: true, created });
 }
 
 // DELETE ?id=<assignmentId> | ?mappingId=<email mapping id>
