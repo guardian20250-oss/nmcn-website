@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Upload, Search, Trophy, AlertTriangle, Users, Trash2, Link2, History as HistoryIcon } from "lucide-react";
+import { Loader2, Upload, Search, Trophy, AlertTriangle, Users, Trash2, Link2, History as HistoryIcon, Pencil } from "lucide-react";
 
 // Staff dashboard for Creator Stats.
 //   Owner/co-owner (admin): every creator, all columns, uploads, assignments, audit.
@@ -46,12 +46,15 @@ interface History {
 }
 type Person = { id: number; name: string; email: string };
 interface Assignments {
+  viewerRole: string;
   managers: Person[];
+  scouts: Person[];
   teamLeads: (Person & { role: string; creators: number; mappedBackstageEmails: string[] })[];
   unmatchedTeamLeads: { value: string; count: number }[];
   mappings: { id: number; backstageEmail: string; adminId: number; admin: Person }[];
-  creators: { backstageCreatorId: string; username: string; teamLead: string | null }[];
-  assignments: { id: number; backstageCreatorId: string | null; creatorUsername: string | null; manager: Person; teamLead: Person | null }[];
+  creators: { backstageCreatorId: string; username: string; teamLead: string | null; accountId: number | null }[];
+  creatorAccounts: { id: number; name: string; email: string; assignedRole: string; status: string; linked: { backstageCreatorId: string; username: string } | null }[];
+  assignments: { id: number; backstageCreatorId: string | null; creatorUsername: string | null; manager: Person & { role: string }; teamLead: Person | null; leadId: number | null }[];
 }
 
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -289,7 +292,7 @@ export default function CreatorStatsAdminPage() {
         )}
 
         <UploadPanel isOwner={isAll} onImported={reload} />
-        {isAll && <AssignmentsPanel />}
+        {(isAll || dash?.viewer.role === "team_lead" || dash?.viewer.role === "manager") && <AssignmentsPanel />}
       </div>
     </div>
   );
@@ -475,10 +478,16 @@ function UploadPanel({ isOwner, onImported }: { isOwner: boolean; onImported: ()
   );
 }
 
-// ── Owner-only: manager ↔ team lead / creator assignments ───────────────────
+// ── Teams: owner edits everything; leads/managers edit their own slice ───────
 function AssignmentsPanel() {
   const [asg, setAsg] = useState<Assignments | null>(null);
-  const [assign, setAssign] = useState({ managerId: "", teamLeadId: "", backstageCreatorId: "" });
+  // Assign flow: 1 team lead → 2 manager/scout → 3 multi-select creators.
+  const [assign, setAssign] = useState({ teamLeadId: "", managerId: "", scoutId: "" });
+  const [picked, setPicked] = useState<string[]>([]); // selected creator ids
+  const [creatorQuery, setCreatorQuery] = useState("");
+  const [editId, setEditId] = useState<number | null>(null); // roster row being edited
+  const [linkForm, setLinkForm] = useState({ accountId: "", creatorId: "" });
+  const [linkMsg, setLinkMsg] = useState("");
   const [version, setVersion] = useState(0);
   // backstageEmail -> chosen staff id, for the "unmatched" list
   const [mapChoice, setMapChoice] = useState<Record<string, string>>({});
@@ -493,20 +502,70 @@ function AssignmentsPanel() {
   }, [version]);
   const reload = () => setVersion(v => v + 1);
 
-  const save = async (kind: "lead" | "creator") => {
-    // The flow is team lead → manager → creator → Assign. The lead is the
-    // anchor: it is always required. The creator is optional — blank means the
-    // manager covers the whole team under that lead.
-    if (!assign.managerId || !assign.teamLeadId) return;
-    if (kind === "creator" && !assign.backstageCreatorId) return;
-    const body = kind === "lead"
-      ? { managerId: assign.managerId, teamLeadId: assign.teamLeadId }
-      : { managerId: assign.managerId, backstageCreatorId: assign.backstageCreatorId };
-    const res = await fetch("/api/admin/creator-stats/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Failed"); return; }
-    setAssign(a => ({ ...a, backstageCreatorId: "" })); setVersion(v => v + 1);
+  // One request: put these managers/scouts on that team and attach these creators.
+  const save = async () => {
+    if (!assign.teamLeadId || (!assign.managerId && !assign.scoutId)) return;
+    const assigneeIds = [assign.managerId, assign.scoutId].filter(Boolean).map(Number);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/creator-stats/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamLeadId: Number(assign.teamLeadId), assigneeIds, backstageCreatorIds: picked }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Failed"); return; }
+      setPicked([]);
+      reload();
+    } catch { alert("Network error"); } finally { setBusy(false); }
   };
-  const remove = async (id: number) => { await fetch(`/api/admin/creator-stats/assignments?id=${id}`, { method: "DELETE" }); setVersion(v => v + 1); };
+  const remove = async (id: number) => { await fetch(`/api/admin/creator-stats/assignments?id=${id}`, { method: "DELETE" }); setEditId(null); setVersion(v => v + 1); };
+
+  // Owner: change someone's role (manager ↔ scout ↔ team lead) from the roster.
+  const setRole = async (adminId: number, role: string) => {
+    const res = await fetch("/api/admin/creator-stats/assignments", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "setRole", adminId, role }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Could not change role"); return; }
+    setEditId(null); reload();
+  };
+
+  // Move a creator row to a different profile (someone left, someone joined).
+  const reassign = async (id: number, cid: string) => {
+    if (!cid) return;
+    const res = await fetch("/api/admin/creator-stats/assignments", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, backstageCreatorId: cid }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Could not move that creator"); return; }
+    setEditId(null); reload();
+  };
+
+  // Profile ↔ account: bind one of the 162 Backstage profiles to a site account.
+  const linkProfile = async () => {
+    if (!linkForm.accountId || !linkForm.creatorId) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/creator-stats/assignments", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "linkProfile", creatorAccountId: Number(linkForm.accountId), backstageCreatorId: linkForm.creatorId }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setLinkMsg(d.error || "Could not link that profile"); return; }
+      setLinkMsg(`Linked @${d.username} → ${d.account}`);
+      setLinkForm({ accountId: "", creatorId: "" });
+      reload();
+    } catch { setLinkMsg("Network error"); } finally { setBusy(false); }
+  };
+  const unlinkProfile = async (cid: string) => {
+    const res = await fetch("/api/admin/creator-stats/assignments", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "unlinkProfile", backstageCreatorId: cid }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Could not unlink"); return; }
+    setLinkMsg("Profile unlinked from its account");
+    reload();
+  };
 
   // Link a Backstage "Creator Network manager" email to a real staff account.
   // Fixes the case where Backstage holds a different address than the one the
@@ -552,23 +611,26 @@ function AssignmentsPanel() {
     } catch { setStaffMsg("Network error"); } finally { setBusy(false); }
   };
 
-  // Step 3 of the assign flow: creators whose Backstage "Creator Network
-  // manager" is the selected lead — the lead's own email plus any Backstage
-  // emails mapped to that account. Empty until a lead is picked.
-  const lead = asg?.teamLeads.find(t => String(t.id) === assign.teamLeadId);
-  const leadEmails = new Set(
-    lead ? [lead.email, ...lead.mappedBackstageEmails].map(e => e.trim().toLowerCase()) : []
+  // Step 3 list: ALL profiles from the data sheet (162), filterable — nothing
+  // is hidden because of the selected lead.
+  const q = creatorQuery.trim().toLowerCase();
+  const shownCreators = (asg?.creators || []).filter(
+    c => !q || c.username.toLowerCase().includes(q) || (c.teamLead || "").toLowerCase().includes(q)
   );
-  const leadCreators = (asg?.creators || []).filter(
-    c => c.teamLead && leadEmails.has(c.teamLead.trim().toLowerCase())
-  );
+  const toggleCreator = (id: string) =>
+    setPicked(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]));
+
+  // Only the owner can flip roles; leads and managers can still remove rows
+  // and move creators (enforced server-side too).
+  const canEditAll = asg?.viewerRole === "admin";
 
   return (
     <section className="card mt-6 p-6">
       <h2 className="mb-1 flex items-center gap-2 font-heading text-xl font-semibold text-white"><Users className="h-5 w-5 text-nmcn-gold" /> Teams &amp; manager assignments</h2>
       <p className="mb-4 text-sm text-nmcn-muted">
-        Team leads see creators whose Backstage &quot;Creator Network manager&quot; is their staff email (automatic).
-        Managers aren&apos;t in the export, so assign each manager their team leads and/or specific creators here.
+        Pick a team lead, then the manager and/or scout assigned to them, then tick any number of creators
+        (all {asg?.creators.length ?? "162"} profiles from the data sheet are listed) and assign in one go.
+        Everyone on a team can be edited below — change a role, move someone, or remove them completely.
       </p>
       {asg && (
         <>
@@ -608,7 +670,7 @@ function AssignmentsPanel() {
                           onChange={e => setMapChoice(c => ({ ...c, [u.value]: e.target.value }))}
                         >
                           <option value="">Assign to…</option>
-                          {[...asg.teamLeads, ...asg.managers].map(p => (
+                          {[...asg.teamLeads, ...asg.managers, ...asg.scouts].map(p => (
                             <option key={p.id} value={p.id}>{p.name} ({p.email})</option>
                           ))}
                         </select>
@@ -649,7 +711,7 @@ function AssignmentsPanel() {
             </div>
             <div className="space-y-2 rounded-lg border border-nmcn-border p-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
-                Assign a manager · team lead → manager → creator
+                Assign to a team · 1 lead → 2 manager/scout → 3 creators
               </p>
 
               {/* 1 — Team lead (the anchor). Owner accounts are included even
@@ -657,7 +719,7 @@ function AssignmentsPanel() {
               <select
                 className="input text-sm"
                 value={assign.teamLeadId}
-                onChange={e => setAssign(a => ({ ...a, teamLeadId: e.target.value, backstageCreatorId: "" }))}
+                onChange={e => setAssign(a => ({ ...a, teamLeadId: e.target.value }))}
               >
                 <option value="">1 · Team lead…</option>
                 {asg.teamLeads.map(t => (
@@ -667,61 +729,280 @@ function AssignmentsPanel() {
                 ))}
               </select>
 
-              {/* 2 — Manager being assigned */}
-              <select
-                className="input text-sm"
-                value={assign.managerId}
-                onChange={e => setAssign(a => ({ ...a, managerId: e.target.value }))}
-              >
-                <option value="">2 · Manager…</option>
-                {asg.managers.map(m => <option key={m.id} value={m.id}>{m.name} · {m.email}</option>)}
-              </select>
+              {/* 2 — Manager and scout each get their own section/dropdown. */}
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-nmcn-muted">
+                  2 · Manager
+                  <select
+                    className="input mt-1 block text-sm"
+                    value={assign.managerId}
+                    onChange={e => setAssign(a => ({ ...a, managerId: e.target.value }))}
+                  >
+                    <option value="">Manager…</option>
+                    {asg.managers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs text-nmcn-muted">
+                  2 · Scout section
+                  <select
+                    className="input mt-1 block text-sm"
+                    value={assign.scoutId}
+                    onChange={e => setAssign(a => ({ ...a, scoutId: e.target.value }))}
+                  >
+                    <option value="">Scout…</option>
+                    {asg.scouts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </label>
+              </div>
 
-              {/* 3 — Creator (optional), filtered to the selected lead */}
-              <select
-                className="input text-sm"
-                value={assign.backstageCreatorId}
-                disabled={!assign.teamLeadId}
-                onChange={e => setAssign(a => ({ ...a, backstageCreatorId: e.target.value }))}
-              >
-                <option value="">
-                  {assign.teamLeadId ? "3 · Creator (blank = whole team)…" : "3 · Pick a team lead first"}
-                </option>
-                {leadCreators.map(c => (
-                  <option key={c.backstageCreatorId} value={c.backstageCreatorId}>@{c.username}</option>
-                ))}
-              </select>
-              {assign.teamLeadId && leadCreators.length === 0 && (
-                <p className="text-[11px] text-nmcn-muted">
-                  No creators on file under this lead yet — assigning with a blank creator still covers their whole team.
-                </p>
-              )}
+              {/* 3 — Creators: multi-select across ALL profiles on file. */}
+              <div className="text-xs text-nmcn-muted">
+                <div className="mb-1 flex items-center justify-between">
+                  <span>3 · Creators — all {asg.creators.length} profiles on file</span>
+                  <span className="text-nmcn-gold">{picked.length} selected</span>
+                </div>
+                <input
+                  className="input mb-1 text-sm"
+                  placeholder="Search by username or team lead…"
+                  value={creatorQuery}
+                  onChange={e => setCreatorQuery(e.target.value)}
+                />
+                <div className="max-h-56 space-y-1 overflow-y-auto rounded-lg border border-nmcn-border p-2">
+                  {shownCreators.map(c => (
+                    <label key={c.backstageCreatorId} className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-white/5">
+                      <input
+                        type="checkbox"
+                        checked={picked.includes(c.backstageCreatorId)}
+                        onChange={() => toggleCreator(c.backstageCreatorId)}
+                        className="accent-nmcn-gold"
+                      />
+                      <span className="text-sm text-white">@{c.username}</span>
+                      <span className="truncate text-[11px] text-nmcn-muted">{c.teamLead || "no team lead in data"}</span>
+                    </label>
+                  ))}
+                  {shownCreators.length === 0 && (
+                    <p className="p-1 text-[11px] text-nmcn-muted">No profile matches &quot;{creatorQuery}&quot;.</p>
+                  )}
+                </div>
+                <div className="mt-1 flex gap-3">
+                  <button className="text-nmcn-blue hover:underline" onClick={() => setPicked(shownCreators.map(c => c.backstageCreatorId))}>
+                    Select all shown ({shownCreators.length})
+                  </button>
+                  <button className="text-nmcn-muted hover:underline" onClick={() => setPicked([])}>
+                    Clear ({picked.length})
+                  </button>
+                </div>
+              </div>
 
               <button
                 className="btn-gold w-full whitespace-nowrap text-sm disabled:opacity-50"
-                disabled={!assign.teamLeadId || !assign.managerId}
-                onClick={() => save(assign.backstageCreatorId ? "creator" : "lead")}
+                disabled={busy || !assign.teamLeadId || (!assign.managerId && !assign.scoutId)}
+                onClick={save}
               >
-                Assign
+                {picked.length
+                  ? `Assign ${picked.length} creator${picked.length === 1 ? "" : "s"} + team`
+                  : "Assign manager/scout to team"}
               </button>
 
               <p className="text-[11px] leading-relaxed text-nmcn-muted">
-                Blank creator = the manager covers everyone under that lead. Pick a creator to assign only that person.
+                Manager and/or scout go onto the selected team. Ticked creators are attached to them too —
+                how you add someone who joins or take off someone who leaves. Every row below stays editable.
               </p>
               {asg.managers.length === 0 && <p className="text-xs text-nmcn-muted">No manager staff accounts yet. Create one below.</p>}
             </div>
           </div>
-          <ul className="divide-y divide-nmcn-border/40 text-sm">
-            {asg.assignments.map(a => (
-              <li key={a.id} className="flex items-center justify-between py-2">
-                <span className="text-white">
-                  {a.manager.name} <span className="text-nmcn-muted">→ {a.teamLead ? `Team lead ${a.teamLead.name}` : `Creator @${a.creatorUsername || a.backstageCreatorId}`}</span>
-                </span>
-                <button className="text-nmcn-muted hover:text-red-400" onClick={() => remove(a.id)} aria-label="Remove"><Trash2 className="h-4 w-4" /></button>
-              </li>
-            ))}
-            {asg.assignments.length === 0 && <li className="py-2 text-nmcn-muted">No manager assignments yet.</li>}
-          </ul>
+          {/* Team roster — grouped by team lead. Every row is editable inline:
+              change a role, move a creator to another profile, or remove
+              someone from the team completely. */}
+          <div className="mt-6">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+              Team roster · edit anyone here
+            </p>
+            <div className="space-y-3">
+              {asg.teamLeads.map(t => {
+                // Anchor rows (lead set) = managers/scouts on the team — includes
+                // legacy rows that also carry a creator. Pure creator rows have
+                // no anchor of their own; their team comes from the data sheet.
+                const onTeam = asg.assignments.filter(a => a.leadId === t.id && a.teamLead !== null);
+                const creatorRows = asg.assignments.filter(a => a.leadId === t.id && a.teamLead === null && a.backstageCreatorId !== null);
+                return (
+                  <div key={t.id} className="rounded-lg border border-nmcn-border p-3">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-semibold text-white">
+                        {t.name} <span className="text-xs font-normal text-nmcn-muted">{t.email}</span>
+                      </span>
+                      <span className="whitespace-nowrap text-sm text-nmcn-gold">{t.creators} creators on file</span>
+                    </div>
+                    {t.mappedBackstageEmails.length > 0 && (
+                      <p className="text-[11px] text-nmcn-blue">Backstage: {t.mappedBackstageEmails.join(", ")}</p>
+                    )}
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-nmcn-muted">On team:</span>
+
+                      {/* Managers & scouts on this team */}
+                      {onTeam.map(a => (
+                        <span key={a.id} className="flex flex-wrap items-center gap-1 rounded-full border border-nmcn-border px-2 py-1 text-xs">
+                          <span className={a.manager.role === "scout" ? "text-nmcn-blue" : "text-white"}>
+                            {a.manager.role === "scout" ? "Scout" : a.manager.role === "team_lead" ? "Lead" : a.manager.role === "battle_coordinator" ? "Coordinator" : "Manager"} {a.manager.name}
+                          </span>
+                          {a.backstageCreatorId && (
+                            <span className="text-nmcn-muted">→ @{a.creatorUsername || a.backstageCreatorId}</span>
+                          )}
+                          {canEditAll && (
+                            <button className="text-nmcn-muted hover:text-nmcn-gold" title="Change role" onClick={() => setEditId(editId === a.id ? null : a.id)}>
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                          )}
+                          <button className="text-nmcn-muted hover:text-red-400" title="Remove from team" onClick={() => remove(a.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                          {editId === a.id && canEditAll && (
+                            <select
+                              className="input ml-1 py-0 text-xs"
+                              value={a.manager.role}
+                              onChange={e => setRole(a.manager.id, e.target.value)}
+                            >
+                              <option value="manager">Manager</option>
+                              <option value="scout">Scout</option>
+                              <option value="team_lead">Team lead</option>
+                              <option value="battle_coordinator">Battle coordinator</option>
+                            </select>
+                          )}
+                        </span>
+                      ))}
+
+                      {/* Creators attached to this team */}
+                      {creatorRows.map(a => (
+                        <span key={a.id} className="flex flex-wrap items-center gap-1 rounded-full border border-nmcn-border px-2 py-1 text-xs">
+                          <span className="text-white">@{a.creatorUsername || a.backstageCreatorId}</span>
+                          <button className="text-nmcn-muted hover:text-nmcn-gold" title="Move to another profile" onClick={() => setEditId(editId === a.id ? null : a.id)}>
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button className="text-nmcn-muted hover:text-red-400" title="Remove from team" onClick={() => remove(a.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                          {editId === a.id && (
+                            <select
+                              className="input ml-1 py-0 text-xs"
+                              value={a.backstageCreatorId || ""}
+                              onChange={e => reassign(a.id, e.target.value)}
+                            >
+                              <option value="">Move to another profile…</option>
+                              {asg.creators.map(c => (
+                                <option key={c.backstageCreatorId} value={c.backstageCreatorId}>@{c.username}</option>
+                              ))}
+                            </select>
+                          )}
+                        </span>
+                      ))}
+
+                      {onTeam.length === 0 && creatorRows.length === 0 && (
+                        <span className="text-xs text-nmcn-muted">
+                          No managers, scouts or attached creators yet — use the assign box above.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {asg.teamLeads.length === 0 && (
+                <p className="text-sm text-nmcn-muted">No team lead accounts yet — create one below.</p>
+              )}
+            </div>
+
+            {/* Rows not attached to any known team yet */}
+            {(() => {
+              const orphans = asg.assignments.filter(a => a.leadId === null);
+              if (!orphans.length) return null;
+              return (
+                <div className="mt-3 rounded-lg border border-amber-400/30 p-3">
+                  <p className="mb-2 text-xs font-semibold text-amber-300">Not on any team yet</p>
+                  <div className="flex flex-wrap gap-2">
+                    {orphans.map(a => (
+                      <span key={a.id} className="flex items-center gap-1 rounded-full border border-nmcn-border px-2 py-1 text-xs">
+                        <span className="text-white">
+                          {a.manager.role === "scout" ? "Scout" : "Manager"} {a.manager.name}
+                          {a.backstageCreatorId ? ` → @${a.creatorUsername || a.backstageCreatorId}` : ""}
+                        </span>
+                        <button className="text-nmcn-muted hover:text-red-400" title="Remove" onClick={() => remove(a.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Profile ↔ account: bind a Backstage profile (of the 162) to a site
+              account — for when a creator signs up or you create them. */}
+          <div className="mt-6 space-y-2 rounded-lg border border-nmcn-border p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+              Link a creator profile to an account
+            </p>
+            <p className="text-xs text-nmcn-muted">
+              When a creator makes an account (or you make one for them), pick their profile from the data
+              sheet so their stats follow the account automatically.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <select
+                className="input min-w-[220px] flex-1 text-sm"
+                value={linkForm.accountId}
+                onChange={e => setLinkForm(f => ({ ...f, accountId: e.target.value }))}
+              >
+                <option value="">Account…</option>
+                {asg.creatorAccounts.map(a => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} · {a.email}{a.linked ? ` — linked to @${a.linked.username}` : ""}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="input min-w-[220px] flex-1 text-sm"
+                value={linkForm.creatorId}
+                onChange={e => setLinkForm(f => ({ ...f, creatorId: e.target.value }))}
+              >
+                <option value="">Profile ({asg.creators.length})…</option>
+                {asg.creators.map(c => (
+                  <option key={c.backstageCreatorId} value={c.backstageCreatorId}>
+                    @{c.username}{c.accountId ? " — linked" : ""}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="btn-gold whitespace-nowrap text-sm disabled:opacity-50"
+                disabled={busy || !linkForm.accountId || !linkForm.creatorId}
+                onClick={linkProfile}
+              >
+                Link
+              </button>
+            </div>
+            {linkMsg && <p className="text-sm text-nmcn-gold">{linkMsg}</p>}
+            {(() => {
+              const linked = asg.creatorAccounts.filter(a => a.linked);
+              if (!linked.length) return null;
+              return (
+                <ul className="divide-y divide-nmcn-border/40 text-xs">
+                  {linked.map(a => (
+                    <li key={a.id} className="flex items-center justify-between gap-2 py-1.5">
+                      <span className="text-nmcn-text">
+                        <span className="text-white">{a.name}</span> → @{a.linked!.username}
+                      </span>
+                      <button
+                        className="text-nmcn-muted hover:text-red-400"
+                        onClick={() => unlinkProfile(a.linked!.backstageCreatorId)}
+                        aria-label={`Unlink ${a.name}`}
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+          </div>
 
           {/* Shortcut: add a team lead or manager without leaving this page.
               Uses the same /api/admin/staff/accounts "createStaff" flow as Staff → Accounts. */}
@@ -771,6 +1052,8 @@ function AssignmentsPanel() {
                 >
                   <option value="team_lead">Team Lead</option>
                   <option value="manager">Manager</option>
+                  <option value="scout">Scout</option>
+                  <option value="battle_coordinator">Battle Coordinator</option>
                 </select>
               </label>
               <button type="submit" className="btn-gold text-sm disabled:opacity-50" disabled={busy}>

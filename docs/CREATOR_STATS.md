@@ -35,17 +35,44 @@ automatically — no per-creator clicking, and nothing is hidden from anyone.
 
 Mappings are additive: the original Backstage email rule keeps working alongside them.
 
-### Assigning managers
+### Assigning managers, scouts and creators
 
-The assign box runs top to bottom: **1 · team lead → 2 · manager → 3 · creator → Assign**.
+The assign box runs top to bottom: **1 · team lead → 2 · manager / scout (own
+dropdowns) → 3 · creators (multi-select) → Assign**.
 
-- The team lead step is the anchor and is always required. **Owner accounts are
-  included** even though the owner's profile does not exist in the Backstage
-  export — so managers can be assigned under the owner's account too.
-- Step 3 is filtered to creators whose Backstage manager is the selected lead
-  (their own email plus any mapped emails).
-- Blank creator = the manager covers **everyone** under that lead. Picked
-  creator = the manager is assigned to **only that person**.
+- Step 1 is the anchor and is always required. **Owner accounts are included**
+  even though the owner's profile does not exist in the Backstage export.
+- Step 2 has a **separate manager and scout dropdown** — pick either or both.
+- Step 3 lists **every profile from the data sheet** (162 rows), with a search
+  box, *Select all shown*, and a running count. Tick as many creators as you
+  want in one go; they attach to the selected manager/scout.
+- Assign writes one row per (person, team) plus one row per (person, creator);
+  rows that already exist count as "already covered", never as errors.
+
+### Editing the roster (who can do what)
+
+The **Team roster** under the assign box groups everyone by team lead. Every
+row has inline edit controls:
+
+- **Owner (admin):** everything — assign, remove, **change any role**
+  (manager ↔ scout ↔ team lead ↔ battle coordinator) from the pencil menu,
+  move creators between profiles, link/unlink profiles to accounts.
+- **Team lead:** remove or move rows on **their own team** (and add managers to
+  it). Server-enforced — other teams' rows return 403.
+- **Manager:** remove or move rows **anchored to themselves** only.
+- Removals are row-level deletes of the assignment only — no stats, progress or
+  certificates are ever touched.
+
+### Linking a profile to a creator account
+
+When a creator signs up (or the owner creates the account for them), use
+**Link a creator profile to an account**: pick the account, pick their profile
+from the 162, hit *Link*. Rules enforced server-side:
+
+- one account holds **one** Creator ID (re-linking releases the old profile);
+- the profile's stats rows all move to the account (all export snapshots);
+- unlinking (`✕`) releases the profile without touching any data;
+- owner-only, and every action lands in the audit log.
 
 ## Uploading
 
