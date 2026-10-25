@@ -34,3 +34,8 @@ yarn-error.log*
 next-env.d.ts
 .env*
 
+
+# Backstage exports contain confidential creator data: never commit them
+*.xlsx
+*.xls
+*.csv
