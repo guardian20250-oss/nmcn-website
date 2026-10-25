@@ -57,11 +57,29 @@ row has inline edit controls:
 - **Owner (admin):** everything — assign, remove, **change any role**
   (manager ↔ scout ↔ team lead ↔ battle coordinator) from the pencil menu,
   move creators between profiles, link/unlink profiles to accounts.
-- **Team lead:** remove or move rows on **their own team** (and add managers to
-  it). Server-enforced — other teams' rows return 403.
-- **Manager:** remove or move rows **anchored to themselves** only.
+- **Team lead:** sees **their own team only** — their managers, scouts and
+  creators. They can add managers/scouts to it and remove or move its rows;
+  other teams' rows are not visible and return 403 server-side.
+- **Manager:** sees their own assignments plus their teams' creators; can remove
+  or move rows **anchored to themselves** only.
 - Removals are row-level deletes of the assignment only — no stats, progress or
   certificates are ever touched.
+
+### Manual assignment = the default sort
+
+Round one: the owner assigns managers/scouts/creators by hand. From then on
+every surface uses those **manual routes as the default team sort**, in this
+order:
+
+1. the manual route (creator → their manager/scout's anchored team),
+2. the export's own anchor row,
+3. the export's "Creator Network manager" column (own email + mapped emails).
+
+This applies to the dashboard's Team lead column (routed creators appear under
+their assigned lead immediately), the roster grouping, and stats visibility —
+team leads and managers see routed creators even when the export column is
+blank or stale. New uploads therefore inherit the owner's assignment without
+re-doing it.
 
 ### Linking a profile to a creator account
 

@@ -124,22 +124,80 @@ export async function GET(request: NextRequest) {
       linkedByAccount.set(r.creatorAccountId, { backstageCreatorId: r.backstageCreatorId, username: r.username });
     }
   }
-  // Team a creator-only row belongs to: its Backstage manager column mapped
-  // onto a staff account. Lets the UI group every row under its team lead.
+  // Team a creator-only row belongs to. Resolution order (the owner's manual
+  // assignment is the DEFAULT SORT for everything that follows):
+  //   1. manual route — the creator's manager/scout is anchored on a team,
+  //   2. the export's own anchor row,
+  //   3. the export's "Creator Network manager" column mapped to an account.
+  const anchorsByManager = new Map<number, number>();
+  for (const a of assignments) {
+    if (a.teamLead) anchorsByManager.set(a.manager.id, a.teamLead.id);
+  }
+  const routeOfCreator = new Map<string, number>();
+  for (const a of assignments) {
+    if (a.backstageCreatorId && !a.teamLead) {
+      const via = anchorsByManager.get(a.manager.id);
+      if (via !== undefined && !routeOfCreator.has(a.backstageCreatorId)) {
+        routeOfCreator.set(a.backstageCreatorId, via);
+      }
+    }
+  }
   const leadOfCreator = new Map(latestRows.map(r => [r.backstageCreatorId, r.teamLead]));
-  const leadIdFor = (a: { teamLeadId: number | null; backstageCreatorId: string | null }) => {
-    if (a.teamLeadId !== null) return a.teamLeadId;
-    if (!a.backstageCreatorId) return null;
-    const email = leadOfCreator.get(a.backstageCreatorId);
-    if (!email) return null;
-    return emailToAdmin.get(emailKey(email)) ?? null;
+  const leadIdFor = (a: { teamLead: { id: number } | null; backstageCreatorId: string | null }) => {
+    if (a.backstageCreatorId) {
+      const route = routeOfCreator.get(a.backstageCreatorId);
+      if (route !== undefined) return route;
+    }
+    if (a.teamLead) return a.teamLead.id;
+    if (a.backstageCreatorId) {
+      const email = leadOfCreator.get(a.backstageCreatorId);
+      if (email) return emailToAdmin.get(emailKey(email)) ?? null;
+    }
+    return null;
   };
+
+  const withLead = assignments.map(a => ({ ...a, creatorUsername: a.backstageCreatorId ? usernameById.get(a.backstageCreatorId) ?? null : null, leadId: leadIdFor(a) }));
+
+  // ── View scope: a team lead sees their own team (managers, scouts,
+  // creators); a manager sees their own rows and their teams' creators.
+  let outTeamLeads = teamLeads;
+  let outCreators = creators;
+  let scoped = withLead;
+  if (staff.role === "team_lead") {
+    scoped = withLead.filter(a => a.leadId === staff.id || a.manager.id === staff.id);
+    const myEmails = new Set([
+      emailKey(staff.email),
+      ...mappings.filter(m => m.adminId === staff.id).map(m => emailKey(m.backstageEmail)),
+    ]);
+    const onMyTeam = new Set(scoped.filter(a => a.backstageCreatorId).map(a => a.backstageCreatorId));
+    outCreators = creators.filter(c =>
+      onMyTeam.has(c.backstageCreatorId) ||
+      routeOfCreator.get(c.backstageCreatorId) === staff.id ||
+      (c.teamLead && myEmails.has(emailKey(c.teamLead)))
+    );
+    outTeamLeads = teamLeads.filter(t => t.id === staff.id);
+  } else if (staff.role === "manager") {
+    scoped = withLead.filter(a => a.manager.id === staff.id);
+    const leadIds = new Set(scoped.map(a => a.leadId).filter((x): x is number => x !== null));
+    const leadEmails = new Set<string>();
+    for (const id of leadIds) {
+      const t = teamLeads.find(x => x.id === id);
+      if (t) leadEmails.add(emailKey(t.email));
+      for (const m of mappings) if (m.adminId === id) leadEmails.add(emailKey(m.backstageEmail));
+    }
+    const mineIds = new Set(scoped.filter(a => a.backstageCreatorId).map(a => a.backstageCreatorId));
+    outCreators = creators.filter(c =>
+      mineIds.has(c.backstageCreatorId) ||
+      (c.teamLead && leadEmails.has(emailKey(c.teamLead)))
+    );
+    outTeamLeads = teamLeads.filter(t => leadIds.has(t.id));
+  }
 
   return NextResponse.json({
     viewerRole: staff.role,
     managers,
     scouts,
-    teamLeads: teamLeads.map(t => ({
+    teamLeads: outTeamLeads.map(t => ({
       ...t,
       creators: countByAdmin.get(t.id) || 0,
       mappedBackstageEmails: mappingsByAdmin.get(t.id) || [],
@@ -149,13 +207,12 @@ export async function GET(request: NextRequest) {
     unmatchedTeamLeads: [...countByLead.entries()]
       .filter(([k]) => !leadEmails.has(k) && !mappedEmails.has(k))
       .map(([value, count]) => ({ value, count })),
-    creators,
-    creatorAccounts: creatorAccounts.map(a => ({ ...a, linked: linkedByAccount.get(a.id) ?? null })),
-    assignments: assignments.map(a => ({
-      ...a,
-      creatorUsername: a.backstageCreatorId ? usernameById.get(a.backstageCreatorId) ?? null : null,
-      leadId: leadIdFor({ teamLeadId: a.teamLead?.id ?? null, backstageCreatorId: a.backstageCreatorId }),
-    })),
+    creators: outCreators,
+    // Profile ↔ account linking is an owner tool.
+    creatorAccounts: staff.role === "admin"
+      ? creatorAccounts.map(a => ({ ...a, linked: linkedByAccount.get(a.id) ?? null }))
+      : [],
+    assignments: scoped,
   });
 }
 
@@ -175,6 +232,10 @@ export async function POST(request: NextRequest) {
     }
     if (!Number.isInteger(adminId) || adminId <= 0) {
       return NextResponse.json({ error: "Choose the staff account this email belongs to" }, { status: 400 });
+    }
+    // Non-admins may only map an email onto their own account.
+    if (staff.role !== "admin" && adminId !== staff.id) {
+      return NextResponse.json({ error: "You can only link an email to your own account" }, { status: 403 });
     }
     const target = await prisma.admin.findUnique({ where: { id: adminId }, select: { id: true, name: true, email: true, role: true } });
     if (!target || !["admin", "manager", "team_lead"].includes(target.role)) {

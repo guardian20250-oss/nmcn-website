@@ -936,8 +936,9 @@ function AssignmentsPanel() {
             })()}
           </div>
 
-          {/* Profile ↔ account: bind a Backstage profile (of the 162) to a site
-              account — for when a creator signs up or you create them. */}
+          {/* Profile ↔ account (owner only): bind a Backstage profile (of the
+              162) to a site account — for when a creator signs up or you create them. */}
+          {canEditAll && (
           <div className="mt-6 space-y-2 rounded-lg border border-nmcn-border p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
               Link a creator profile to an account
@@ -1003,6 +1004,7 @@ function AssignmentsPanel() {
               );
             })()}
           </div>
+          )}
 
           {/* Shortcut: add a team lead or manager without leaving this page.
               Uses the same /api/admin/staff/accounts "createStaff" flow as Staff → Accounts. */}

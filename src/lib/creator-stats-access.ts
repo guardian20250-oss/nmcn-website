@@ -57,6 +57,20 @@ export async function getStatsViewer(request: NextRequest) {
     // lead whose Backstage email differs from their site email still gets their
     // creators. Additive: the original rule is never removed.
     access.teamLeadEmails = [...new Set([emailKey(staff.email), ...(await mappedBackstageEmails([staff.id]))])];
+    // Manual routes: creators attached to a manager/scout anchored on this
+    // team belong to this lead regardless of the export's team column — after
+    // the owner's round-one assignment, this is the default sort.
+    const anchors = await prisma.creatorStatManagerAssignment.findMany({
+      where: { teamLeadId: staff.id },
+      select: { managerId: true },
+    });
+    if (anchors.length) {
+      const routed = await prisma.creatorStatManagerAssignment.findMany({
+        where: { managerId: { in: anchors.map(a => a.managerId) }, teamLeadId: null, backstageCreatorId: { not: null } },
+        select: { backstageCreatorId: true },
+      });
+      access.creatorIds = [...new Set(routed.map(r => r.backstageCreatorId).filter((x): x is string => Boolean(x)))];
+    }
   } else if (scope === "manager") {
     const rows = await prisma.creatorStatManagerAssignment.findMany({
       where: { managerId: staff.id },

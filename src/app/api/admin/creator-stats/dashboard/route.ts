@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   const where = { ...statsRowScope(scope, access), ...(isPeriodType(period) ? { periodType: period } : {}) };
 
-  const [rows, exportDates, light] = await Promise.all([
+  const [rows, exportDates, light, routeEmail] = await Promise.all([
     prisma.creatorStat.findMany({
       where: asOf ? { ...where, exportedAt: asOf } : where,
       orderBy: [{ exportedAt: "desc" }, { id: "desc" }],
@@ -45,9 +45,36 @@ export async function GET(request: NextRequest) {
     // light history for "vs previous" deltas (same period type, earlier export)
     prisma.creatorStat.findMany({
       where: { ...where, exportedAt: { gte: new Date(Date.now() - 400 * 86_400_000) } },
-      orderBy: { exportedAt: "desc" },
+      orderBy: [{ exportedAt: "desc" }, { id: "desc" }],
       select: { backstageCreatorId: true, exportedAt: true, periodType: true, diamondsL30D: true },
     }),
+    // Manual routes (the owner's round-one assignment) = the default sort:
+    // creator → its manager/scout's anchored team → that lead's email.
+    (async () => {
+      const [anchors, creatorRows] = await Promise.all([
+        prisma.creatorStatManagerAssignment.findMany({ where: { teamLeadId: { not: null } }, select: { managerId: true, teamLeadId: true } }),
+        prisma.creatorStatManagerAssignment.findMany({ where: { teamLeadId: null, backstageCreatorId: { not: null } }, select: { backstageCreatorId: true, managerId: true } }),
+      ]);
+      const managerTeam = new Map<number, number>();
+      for (const a of anchors) if (a.teamLeadId !== null) managerTeam.set(a.managerId, a.teamLeadId);
+      const routeTeam = new Map<string, number>();
+      for (const r of creatorRows) {
+        if (!r.backstageCreatorId) continue;
+        const t = managerTeam.get(r.managerId);
+        if (t !== undefined && !routeTeam.has(r.backstageCreatorId)) routeTeam.set(r.backstageCreatorId, t);
+      }
+      const leadIds = [...new Set([...routeTeam.values()])];
+      const leads = leadIds.length
+        ? await prisma.admin.findMany({ where: { id: { in: leadIds } }, select: { id: true, email: true } })
+        : [];
+      const emailById = new Map(leads.map(l => [l.id, l.email]));
+      const out = new Map<string, string>();
+      for (const [cid, tid] of routeTeam) {
+        const e = emailById.get(tid);
+        if (e) out.set(cid, e);
+      }
+      return out;
+    })(),
   ]);
 
   const byCreator = new Map<string, typeof light>();
@@ -66,7 +93,14 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.diamondsL30D - a.diamondsL30D)
       .map(r => {
         const prev = (byCreator.get(r.backstageCreatorId) || []).find(p => p.periodType === r.periodType && p.exportedAt < r.exportedAt);
-        return { ...r, likes: Number(r.likes), prevDiamondsL30D: prev?.diamondsL30D ?? null };
+        return {
+          ...r,
+          // Manual route wins over the export column (owner's default sort);
+          // creators routed into a team appear under that lead immediately.
+          teamLead: routeEmail.get(r.backstageCreatorId) ?? r.teamLead,
+          likes: Number(r.likes),
+          prevDiamondsL30D: prev?.diamondsL30D ?? null,
+        };
       }),
   });
 }
