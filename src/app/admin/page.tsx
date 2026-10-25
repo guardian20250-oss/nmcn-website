@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Award, Users, MessageSquare, LogOut, Loader2, Quote, BookOpen, Users as UsersIcon, LifeBuoy, BadgeCheck, Search, XCircle, Download, Shield, Globe } from "lucide-react";
 import GetHelpButton from "@/components/GetHelpButton";
+import CreatorStatsSearch from "@/components/admin/CreatorStatsSearch";
+import StatsWebhookSettings from "@/components/admin/StatsWebhookSettings";
 
 interface CertResult {
   code: string;
@@ -140,6 +142,9 @@ export default function AdminDashboard() {
             <LogOut className="h-4 w-4" /> Logout
           </button>
         </div>
+
+        {/* Creator stats quick search — type a name, see stats, edit the profile */}
+        <CreatorStatsSearch role={role} />
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-nmcn-border bg-nmcn-panel/50 px-4 py-3">
           <div className="flex items-center gap-3">
@@ -421,6 +426,13 @@ export default function AdminDashboard() {
                 </div>
               </Link>
             </div>
+          </section>
+        )}
+
+        {/* Discord stats-reminder webhook — dashboard-configurable (owner only) */}
+        {isAdmin && (
+          <section className="mt-8">
+            <StatsWebhookSettings />
           </section>
         )}
 

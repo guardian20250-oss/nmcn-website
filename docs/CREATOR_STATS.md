@@ -135,15 +135,33 @@ Additive only: 5 new tables (`creator_stat_snapshots`, `creator_stats`,
 The site checks for stale uploads and posts to a Discord webhook when a team is
 overdue, so nobody has to remember to upload.
 
-- Set `DISCORD_STATS_WEBHOOK` in the project environment variables to your Discord
-  webhook URL. Leave it unset to disable reminders entirely.
-- `CRON_SECRET` protects the scheduled endpoint; Vercel's cron job sends it
-  (the endpoint returns 503 until it is set, and 401 for any other caller).
+- **Webhook (dashboard-configurable):** Admin → Dashboard → *Discord stats
+  reminders* box — paste the webhook URL, *Save* (stored in `SiteSetting`
+  `stats_discord_webhook`), *Send test* proves it end-to-end. The cron route
+  (`src/lib/stats-webhook.ts`) reads the dashboard value first and falls back
+  to the `DISCORD_STATS_WEBHOOK` env var if none is saved. Owner-only.
+- `CRON_SECRET` **must stay a Vercel env var** — Vercel itself reads it from
+  the environment to sign cron requests before any app code runs. The endpoint
+  returns 503 until it is set, and 401 for any other caller.
 - The endpoint is `GET /api/cron/stats-reminders`, scheduled daily at 09:00 UTC
   via the `crons` entry in `vercel.json`.
 - A team is **overdue** when its newest Backstage export row is older than
   7 days. One message per run lists every overdue team with days since its
   last upload (capped at 20 teams to respect Discord's 2000-char limit).
+
+## Dashboard quick search (`/admin` → Creator Stats box)
+
+The main admin dashboard has a search bar over the creator stats:
+
+- Searches the **latest row per creator** by Backstage username, team lead, or
+  the linked account's name/email (`GET /api/admin/creator-stats/search?q=`).
+- Scope-enforced like every stats route: owner → all, team lead → own team,
+  manager → own slice.
+- Expand a result for the stats grid (diamonds, valid days, hours, followers,
+  fan club, likes, last live, export date, graduation/tier status).
+- **Owner can edit the linked profile in place** (name, email, TikTok handle,
+  role, status → `PATCH /api/admin/creators`) and **link/unlink a site account**
+  to the profile — same rules as the Creator Stats page.
 
 ## Privacy
 

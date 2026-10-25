@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getStatsWebhook } from "@/lib/stats-webhook";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,9 @@ const MAX_MENTIONS = 20;
  *
  * Config:
  *   CRON_SECRET            — Vercel cron sends it as `Authorization: Bearer …`
- *   DISCORD_STATS_WEBHOOK  — Discord webhook URL; unset = reminders disabled
+ *                            (must stay a Vercel env var — see stats-webhook.ts)
+ *   Discord webhook        — saved on the admin dashboard (SiteSetting), with
+ *                            DISCORD_STATS_WEBHOOK as env fallback; unset = disabled
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -29,8 +32,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const webhook = process.env.DISCORD_STATS_WEBHOOK;
-  if (!webhook) return NextResponse.json({ disabled: true, reason: "DISCORD_STATS_WEBHOOK not set" });
+  const { url: webhook } = await getStatsWebhook();
+  if (!webhook) return NextResponse.json({ disabled: true, reason: "No Discord webhook configured (dashboard or env)" });
 
   // Latest export date per team ("Creator Network manager" column).
   const rows = await prisma.creatorStat.groupBy({
