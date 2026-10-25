@@ -62,11 +62,11 @@ export async function getStatsViewer(request: NextRequest) {
       where: { managerId: staff.id },
       select: { backstageCreatorId: true, teamLead: { select: { id: true, email: true, role: true } } },
     });
-    const leadIds = rows.filter(r => r.teamLead?.role === "team_lead").map(r => r.teamLead!.id);
+    const leadIds = rows.filter(r => ["team_lead", "admin"].includes(r.teamLead?.role || "")).map(r => r.teamLead!.id);
     // The manager's own mapped emails, plus each assigned lead's mapped emails.
     access.teamLeadEmails = [...new Set([
       emailKey(staff.email),
-      ...rows.filter(r => r.teamLead?.role === "team_lead").map(r => emailKey(r.teamLead!.email)),
+      ...rows.filter(r => ["team_lead", "admin"].includes(r.teamLead?.role || "")).map(r => emailKey(r.teamLead!.email)),
       ...(await mappedBackstageEmails([staff.id, ...leadIds])),
     ])];
     access.creatorIds = rows.map(r => r.backstageCreatorId).filter((x): x is string => Boolean(x));

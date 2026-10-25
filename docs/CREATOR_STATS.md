@@ -35,6 +35,18 @@ automatically — no per-creator clicking, and nothing is hidden from anyone.
 
 Mappings are additive: the original Backstage email rule keeps working alongside them.
 
+### Assigning managers
+
+The assign box runs top to bottom: **1 · team lead → 2 · manager → 3 · creator → Assign**.
+
+- The team lead step is the anchor and is always required. **Owner accounts are
+  included** even though the owner's profile does not exist in the Backstage
+  export — so managers can be assigned under the owner's account too.
+- Step 3 is filtered to creators whose Backstage manager is the selected lead
+  (their own email plus any mapped emails).
+- Blank creator = the manager covers **everyone** under that lead. Picked
+  creator = the manager is assigned to **only that person**.
+
 ## Uploading
 
 1. LIVE Backstage → Manage creators → Export (.xlsx). Team leads can export just their own team.

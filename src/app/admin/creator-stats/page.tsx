@@ -47,10 +47,10 @@ interface History {
 type Person = { id: number; name: string; email: string };
 interface Assignments {
   managers: Person[];
-  teamLeads: (Person & { creators: number; mappedBackstageEmails: string[] })[];
+  teamLeads: (Person & { role: string; creators: number; mappedBackstageEmails: string[] })[];
   unmatchedTeamLeads: { value: string; count: number }[];
   mappings: { id: number; backstageEmail: string; adminId: number; admin: Person }[];
-  creators: { backstageCreatorId: string; username: string }[];
+  creators: { backstageCreatorId: string; username: string; teamLead: string | null }[];
   assignments: { id: number; backstageCreatorId: string | null; creatorUsername: string | null; manager: Person; teamLead: Person | null }[];
 }
 
@@ -494,13 +494,17 @@ function AssignmentsPanel() {
   const reload = () => setVersion(v => v + 1);
 
   const save = async (kind: "lead" | "creator") => {
-    if (!assign.managerId || (kind === "lead" ? !assign.teamLeadId : !assign.backstageCreatorId)) return;
+    // The flow is team lead → manager → creator → Assign. The lead is the
+    // anchor: it is always required. The creator is optional — blank means the
+    // manager covers the whole team under that lead.
+    if (!assign.managerId || !assign.teamLeadId) return;
+    if (kind === "creator" && !assign.backstageCreatorId) return;
     const body = kind === "lead"
       ? { managerId: assign.managerId, teamLeadId: assign.teamLeadId }
       : { managerId: assign.managerId, backstageCreatorId: assign.backstageCreatorId };
     const res = await fetch("/api/admin/creator-stats/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Failed"); return; }
-    setAssign(a => ({ ...a, teamLeadId: "", backstageCreatorId: "" })); setVersion(v => v + 1);
+    setAssign(a => ({ ...a, backstageCreatorId: "" })); setVersion(v => v + 1);
   };
   const remove = async (id: number) => { await fetch(`/api/admin/creator-stats/assignments?id=${id}`, { method: "DELETE" }); setVersion(v => v + 1); };
 
@@ -547,6 +551,17 @@ function AssignmentsPanel() {
       reload();
     } catch { setStaffMsg("Network error"); } finally { setBusy(false); }
   };
+
+  // Step 3 of the assign flow: creators whose Backstage "Creator Network
+  // manager" is the selected lead — the lead's own email plus any Backstage
+  // emails mapped to that account. Empty until a lead is picked.
+  const lead = asg?.teamLeads.find(t => String(t.id) === assign.teamLeadId);
+  const leadEmails = new Set(
+    lead ? [lead.email, ...lead.mappedBackstageEmails].map(e => e.trim().toLowerCase()) : []
+  );
+  const leadCreators = (asg?.creators || []).filter(
+    c => c.teamLead && leadEmails.has(c.teamLead.trim().toLowerCase())
+  );
 
   return (
     <section className="card mt-6 p-6">
@@ -633,26 +648,67 @@ function AssignmentsPanel() {
               )}
             </div>
             <div className="space-y-2 rounded-lg border border-nmcn-border p-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Assign to a manager</p>
-              <select className="input text-sm" value={assign.managerId} onChange={e => setAssign({ ...assign, managerId: e.target.value })}>
-                <option value="">Manager…</option>
+              <p className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+                Assign a manager · team lead → manager → creator
+              </p>
+
+              {/* 1 — Team lead (the anchor). Owner accounts are included even
+                  when their profile does not exist in the Backstage export. */}
+              <select
+                className="input text-sm"
+                value={assign.teamLeadId}
+                onChange={e => setAssign(a => ({ ...a, teamLeadId: e.target.value, backstageCreatorId: "" }))}
+              >
+                <option value="">1 · Team lead…</option>
+                {asg.teamLeads.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.role === "admin" ? "owner" : `${t.creators} creators`})
+                  </option>
+                ))}
+              </select>
+
+              {/* 2 — Manager being assigned */}
+              <select
+                className="input text-sm"
+                value={assign.managerId}
+                onChange={e => setAssign(a => ({ ...a, managerId: e.target.value }))}
+              >
+                <option value="">2 · Manager…</option>
                 {asg.managers.map(m => <option key={m.id} value={m.id}>{m.name} · {m.email}</option>)}
               </select>
-              <div className="flex gap-2">
-                <select className="input text-sm" value={assign.teamLeadId} onChange={e => setAssign({ ...assign, teamLeadId: e.target.value })}>
-                  <option value="">Team lead…</option>
-                  {asg.teamLeads.map(t => <option key={t.id} value={t.id}>{t.name} ({t.creators})</option>)}
-                </select>
-                <button className="btn-gold whitespace-nowrap text-sm" onClick={() => save("lead")}>Add lead</button>
-              </div>
-              <div className="flex gap-2">
-                <select className="input text-sm" value={assign.backstageCreatorId} onChange={e => setAssign({ ...assign, backstageCreatorId: e.target.value })}>
-                  <option value="">Specific creator…</option>
-                  {asg.creators.map(c => <option key={c.backstageCreatorId} value={c.backstageCreatorId}>@{c.username}</option>)}
-                </select>
-                <button className="btn-outline whitespace-nowrap text-sm" onClick={() => save("creator")}>Add creator</button>
-              </div>
-              {asg.managers.length === 0 && <p className="text-xs text-nmcn-muted">No manager staff accounts yet. Create them under Staff.</p>}
+
+              {/* 3 — Creator (optional), filtered to the selected lead */}
+              <select
+                className="input text-sm"
+                value={assign.backstageCreatorId}
+                disabled={!assign.teamLeadId}
+                onChange={e => setAssign(a => ({ ...a, backstageCreatorId: e.target.value }))}
+              >
+                <option value="">
+                  {assign.teamLeadId ? "3 · Creator (blank = whole team)…" : "3 · Pick a team lead first"}
+                </option>
+                {leadCreators.map(c => (
+                  <option key={c.backstageCreatorId} value={c.backstageCreatorId}>@{c.username}</option>
+                ))}
+              </select>
+              {assign.teamLeadId && leadCreators.length === 0 && (
+                <p className="text-[11px] text-nmcn-muted">
+                  No creators on file under this lead yet — assigning with a blank creator still covers their whole team.
+                </p>
+              )}
+
+              <button
+                className="btn-gold w-full whitespace-nowrap text-sm disabled:opacity-50"
+                disabled={!assign.teamLeadId || !assign.managerId}
+                onClick={() => save(assign.backstageCreatorId ? "creator" : "lead")}
+              >
+                Assign
+              </button>
+
+              <p className="text-[11px] leading-relaxed text-nmcn-muted">
+                Blank creator = the manager covers everyone under that lead. Pick a creator to assign only that person.
+              </p>
+              {asg.managers.length === 0 && <p className="text-xs text-nmcn-muted">No manager staff accounts yet. Create one below.</p>}
             </div>
           </div>
           <ul className="divide-y divide-nmcn-border/40 text-sm">

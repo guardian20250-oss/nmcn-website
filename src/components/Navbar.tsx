@@ -178,7 +178,7 @@ export default function Navbar() {
   return (
     <>
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-nmcn-border bg-nmcn-black/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-nmcn-blue bg-nmcn-blue/10 font-heading text-lg font-bold text-nmcn-blue">
             N
@@ -188,16 +188,15 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        {/* flex-wrap: on mid-width screens (or when logged in, which adds links)
+            the links wrap onto a second line instead of clipping "Contact". */}
+        <nav className="hidden flex-wrap items-center gap-x-6 gap-y-2 md:flex lg:gap-x-8">
           {navLinks.map((link) => (
             <NavLink key={link.href} link={link} />
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Link href="/academy" className="btn-outline text-sm">
-            Academy
-          </Link>
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
           {!loggedIn && (
             <Link href="/academy/account?mode=register" className="btn-outline text-sm">
               Create Account

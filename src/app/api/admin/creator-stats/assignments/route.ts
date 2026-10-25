@@ -27,7 +27,10 @@ export async function GET(request: NextRequest) {
       },
     }),
     prisma.admin.findMany({ where: { role: "manager" }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
-    prisma.admin.findMany({ where: { role: "team_lead" }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
+    // Staff anchors for the assign flow: team leads AND owner accounts, so the
+    // owner's own account (role admin) can be picked even though their profile
+    // is not in the Backstage export at all.
+    prisma.admin.findMany({ where: { role: { in: ["team_lead", "admin"] } }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true, role: true } }),
     prisma.creatorStat.findMany({
       orderBy: { exportedAt: "desc" },
       distinct: ["backstageCreatorId"],
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest) {
       select: { id: true, backstageEmail: true, adminId: true, admin: { select: { id: true, name: true, email: true } } },
     }),
   ]);
-  const creators = [...latestRows].sort((a, b) => a.username.localeCompare(b.username)).map(({ backstageCreatorId, username }) => ({ backstageCreatorId, username }));
+  const creators = [...latestRows].sort((a, b) => a.username.localeCompare(b.username)).map(({ backstageCreatorId, username, teamLead }) => ({ backstageCreatorId, username, teamLead }));
 
   const countByLead = new Map<string, number>();
   for (const c of latestRows) {
@@ -126,7 +129,9 @@ export async function POST(request: NextRequest) {
   let label = "";
   if (teamLeadId) {
     const lead = await prisma.admin.findUnique({ where: { id: teamLeadId }, select: { email: true, role: true } });
-    if (!lead || lead.role !== "team_lead") return NextResponse.json({ error: "Selected account is not a team lead" }, { status: 400 });
+    // Owners (role admin) are accepted too: their account may not exist in the
+    // Backstage export, but managers can still be assigned under them.
+    if (!lead || !["team_lead", "admin"].includes(lead.role)) return NextResponse.json({ error: "Selected account is not a team lead or owner" }, { status: 400 });
     const exists = await prisma.creatorStatManagerAssignment.findFirst({ where: { managerId, teamLeadId } });
     if (!exists) await prisma.creatorStatManagerAssignment.create({ data: { managerId, teamLeadId } });
     label = `team lead ${lead.email}`;

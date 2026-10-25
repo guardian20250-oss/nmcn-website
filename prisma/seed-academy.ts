@@ -4367,6 +4367,21 @@ async function main() {
     console.log(`seed-academy: removed ${replaced.count} replaced course(s)`);
   }
 
+  // The YouTube course was removed from `allCourses`, but earlier builds
+  // already seeded it into the database — so removing it from this file alone
+  // would not take it off the site. Archiving (any status other than
+  // "published") hides it from every academy page and API, and re-running the
+  // seed keeps it hidden forever. ARCHIVE, NOT DELETE: lessons, quiz progress
+  // and certificates are deliberately preserved (a delete would cascade them
+  // away).
+  const archived = await prisma.course.updateMany({
+    where: { slug: "youtube-content-mastery", status: { not: "archived" } },
+    data: { status: "archived" },
+  });
+  if (archived.count > 0) {
+    console.log(`seed-academy: archived ${archived.count} retired course(s)`);
+  }
+
   for (const courseData of allCourses) {
     const course = await prisma.course.upsert({
       where: { slug: courseData.slug },
