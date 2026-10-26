@@ -77,6 +77,68 @@ export function maskWebhook(value: string): string {
   return `${value.slice(0, 40)}…${value.slice(-4)}`;
 }
 
+// ── Webhook list (Exchange-style: one box + a purpose + a list) ─────────────
+// Two purposes share the box below:
+//   reminders → managers channel, "this team is overdue" cron
+//   notify    → creators channel(s), gold "summary uploaded" cards
+// Both keep their original SiteSetting keys so the cron and the card sender
+// read exactly what they always have; this section is only the front door.
+export type HookPurpose = "reminders" | "notify";
+
+export const HOOK_PURPOSES: { value: HookPurpose; label: string; description: string }[] = [
+  { value: "reminders", label: "Manager reminders", description: "Pings managers when a team's export is overdue" },
+  { value: "notify", label: "Creator upload cards", description: "Gold “summary uploaded” card when a Backstage export lands" },
+];
+
+export interface StatsHook {
+  /** `${purpose}:${index}` — an opaque handle the dashboard edits/removes by,
+   *  so the real webhook URL never has to round-trip through the browser. */
+  id: string;
+  purpose: HookPurpose;
+  /** Real URL. The whole section is owner-only. */
+  url: string;
+  source: WebhookSource;
+}
+
+export function parseHookId(id: unknown): { purpose: HookPurpose; index: number } | null {
+  const m = /^(reminders|notify):(\d+)$/.exec(String(id || ""));
+  return m ? { purpose: m[1] as HookPurpose, index: Number(m[2]) } : null;
+}
+
+/** Everything saved (plus the env fallbacks) as one editable list. */
+export async function listStatsHooks(): Promise<StatsHook[]> {
+  const [reminders, notify] = await Promise.all([getStatsWebhook(), getStatsNotifyWebhooks()]);
+  const out: StatsHook[] = [];
+  if (reminders.url) out.push({ id: "reminders:0", purpose: "reminders", url: reminders.url, source: reminders.source });
+  notify.urls.forEach((url, i) => out.push({ id: `notify:${i}`, purpose: "notify", url, source: notify.source }));
+  return out;
+}
+
+/** URLs to actually post to for one purpose (env fallback included). */
+export async function statsHookUrls(purpose: HookPurpose): Promise<string[]> {
+  if (purpose === "notify") return (await getStatsNotifyWebhooks()).urls;
+  const { url } = await getStatsWebhook();
+  return url ? [url] : [];
+}
+
+/** Write a purpose's whole list back. `reminders` is a single slot — the cron
+ *  posts to one managers channel, so extra entries collapse onto the first. */
+export async function saveStatsHookList(purpose: HookPurpose, urls: string[]): Promise<string[]> {
+  const key = purpose === "notify" ? STATS_NOTIFY_WEBHOOK_KEY : STATS_WEBHOOK_KEY;
+  const clean = [...new Set(urls.map(u => u.trim()).filter(Boolean))];
+  const value = purpose === "notify" ? JSON.stringify(clean) : clean[0] || "";
+  if (!value) {
+    await prisma.siteSetting.deleteMany({ where: { key } });
+    return [];
+  }
+  await prisma.siteSetting.upsert({
+    where: { key },
+    create: { key, value },
+    update: { value },
+  });
+  return purpose === "notify" ? clean : clean.slice(0, 1);
+}
+
 // ── Manager reminder schedule ───────────────────────────────────────────────
 // The cron itself fires daily (vercel.json — Vercel's plan limits cron to
 // daily), but the route only POSTS when the configured weekly slot arrives:

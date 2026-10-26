@@ -2,18 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStaffFromRequest } from "@/lib/auth";
 import {
-  getStatsWebhook, getStatsNotifyWebhooks, isValidWebhookUrl, maskWebhook,
+  listStatsHooks, parseHookId, saveStatsHookList, statsHookUrls,
+  isValidWebhookUrl, maskWebhook, HOOK_PURPOSES, type HookPurpose,
   getReminderSchedule, saveReminderSchedule, REMINDER_TIMEZONES,
-  STATS_WEBHOOK_KEY, STATS_NOTIFY_WEBHOOK_KEY,
 } from "@/lib/stats-webhook";
 import { getTeamNames, saveTeamNames, sendStatsUploadedCard, hasSentFirstCard } from "@/lib/stats-notify";
 
 export const runtime = "nodejs";
 
-// Owner-only dashboard control for the stats Discord webhooks —
-//   channel "reminders" → managers channel, daily overdue-team cron (existing)
-//   channel "notify"    → creators channel(s), auto "summary uploaded" cards (new)
-//                         — accepts SEVERAL URLs, one per Discord server.
+// Owner-only dashboard control for the stats Discord webhooks, Exchange-style:
+// one URL box, a "what's this for" dropdown, and a list you can edit or remove.
+//   reminders → managers channel, daily overdue-team cron
+//   notify    → creators channel(s), auto "summary uploaded" cards (multi-URL)
 // Plus: editable team names used in the cards, and a manual "Send now" for
 // when stats were uploaded before the cards existed.
 // CRON_SECRET still lives in Vercel (Vercel signs cron requests with it before any of our code runs).
@@ -24,13 +24,20 @@ async function requireOwner(request: NextRequest) {
   return { staff };
 }
 
-// GET → both webhooks (masked) + where each comes from, team names, team leads.
+/** Normalise a submitted URL. `bad` is echoed back so we can name it. */
+function cleanUrl(raw: unknown): { url: string } | { bad: string } {
+  const url = String(raw || "").trim();
+  if (!url) return { bad: "" };
+  return isValidWebhookUrl(url) ? { url } : { bad: url };
+}
+
+// GET → the webhook list (masked, one stable id per entry), team names,
+// team leads, and the reminder schedule.
 export async function GET(request: NextRequest) {
   const { error } = await requireOwner(request);
   if (error) return error;
-  const [reminders, notify, teamNames, teamLeadRows, schedule, firstCardSent] = await Promise.all([
-    getStatsWebhook(),
-    getStatsNotifyWebhooks(),
+  const [hooks, teamNames, teamLeadRows, schedule, firstCardSent] = await Promise.all([
+    listStatsHooks(),
     getTeamNames(),
     // Known team leads ("Creator Network manager" emails already in the stats).
     prisma.creatorStat.groupBy({ by: ["teamLead"], _count: { _all: true } }),
@@ -42,10 +49,9 @@ export async function GET(request: NextRequest) {
     .filter((t): t is string => Boolean(t))
     .sort((a, b) => a.localeCompare(b));
   return NextResponse.json({
-    webhook: reminders.url ? maskWebhook(reminders.url) : "",
-    source: reminders.source, // dashboard | env | unset
-    notifyWebhooks: notify.urls.map(maskWebhook),
-    notifySource: notify.source,
+    // One flat, editable list: { id, purpose, url (masked), source }
+    hooks: hooks.map(h => ({ ...h, url: maskWebhook(h.url) })),
+    purposes: HOOK_PURPOSES,
     teamNames,
     teamLeads,
     schedule, // { enabled, day, time, timeZone }
@@ -55,7 +61,8 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST → { action: "save" | "clear" | "test" | "save_team_names" | "send_now", ... }
+// POST → { action: "add" | "update" | "remove" | "test" | "save_team_names"
+//        | "save_schedule" | "send_now", ... }
 export async function POST(request: NextRequest) {
   const { staff, error } = await requireOwner(request);
   if (error) return error;
@@ -100,105 +107,118 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, schedule });
   }
 
-  const channel = body.channel === "notify" ? "notify" : "reminders";
-  const key = channel === "notify" ? STATS_NOTIFY_WEBHOOK_KEY : STATS_WEBHOOK_KEY;
+  // ── Webhook list CRUD (Exchange-style) ───────────────────────────────────
+  //   add    { url, purpose }         append (reminders = single slot)
+  //   update { id, url }              replace one entry in place
+  //   remove { id }
+  if (action === "add" || action === "update" || action === "remove") {
+    const hooks = await listStatsHooks();
 
-  if (action === "save") {
-    if (channel === "notify") {
-      // Creators channel(s): newline/comma separated — one URL per server.
-      const urls = String(body.url || "")
-        .split(/[\n,]+/)
-        .map(s => s.trim())
-        .filter(Boolean);
-      if (!urls.length) return NextResponse.json({ error: "Paste at least one webhook URL" }, { status: 400 });
-      const bad = urls.find(u => !isValidWebhookUrl(u));
-      if (bad) {
-        return NextResponse.json({ error: `"${maskWebhook(bad)}" doesn't look like a Discord webhook URL (expected https://discord.com/api/webhooks/…)` }, { status: 400 });
-      }
-      await prisma.siteSetting.upsert({
-        where: { key },
-        create: { key, value: JSON.stringify(urls) },
-        update: { value: JSON.stringify(urls) },
+    if (action === "remove") {
+      const target = hooks.find(h => h.id === body.id);
+      const ref = parseHookId(body.id);
+      if (!target || !ref) return NextResponse.json({ error: "That webhook is no longer saved — reload the page" }, { status: 404 });
+      await saveStatsHookList(ref.purpose, hooks.filter(h => h.purpose === ref.purpose && h.id !== target.id).map(h => h.url));
+      await prisma.creatorStatAuditLog.create({
+        data: {
+          action: "webhook_removed", adminId: staff.id, adminEmail: staff.email,
+          details: `[${staff.role}] Removed ${target.purpose} webhook ${maskWebhook(target.url)}`,
+        },
       });
-      return NextResponse.json({ ok: true, notifyWebhooks: urls.map(maskWebhook), notifySource: "dashboard" });
+      return NextResponse.json({ ok: true });
     }
-    const url = String(body.url || "").trim();
-    if (!isValidWebhookUrl(url)) {
-      return NextResponse.json({ error: "That doesn't look like a Discord webhook URL (expected https://discord.com/api/webhooks/…)" }, { status: 400 });
-    }
-    await prisma.siteSetting.upsert({
-      where: { key },
-      create: { key, value: url },
-      update: { value: url },
-    });
-    return NextResponse.json({ ok: true, webhook: maskWebhook(url), source: "dashboard" });
-  }
 
-  if (action === "clear") {
-    await prisma.siteSetting.deleteMany({ where: { key } });
-    if (channel === "notify") {
-      const resolved = await getStatsNotifyWebhooks();
-      return NextResponse.json({ ok: true, notifyWebhooks: resolved.urls.map(maskWebhook), notifySource: resolved.source });
+    // On update the purpose is fixed — a webhook can't be moved between channels.
+    const purpose = action === "add" ? body.purpose : hooks.find(h => h.id === body.id)?.purpose;
+    if (purpose !== "reminders" && purpose !== "notify") {
+      return NextResponse.json({ error: "Pick what the notification is for" }, { status: 400 });
     }
-    const resolved = await getStatsWebhook();
-    return NextResponse.json({ ok: true, webhook: resolved.url ? maskWebhook(resolved.url) : "", source: resolved.source });
+    const checked = cleanUrl(body.url);
+    if ("bad" in checked) {
+      return NextResponse.json({
+        error: checked.bad
+          ? `"${maskWebhook(checked.bad)}" doesn't look like a Discord webhook URL (expected https://discord.com/api/webhooks/…)`
+          : "Paste a webhook URL",
+      }, { status: 400 });
+    }
+
+    const forPurpose = hooks.filter(h => h.purpose === purpose).map(h => h.url);
+    let next: string[];
+    if (action === "add") {
+      next = [...forPurpose, checked.url];
+    } else {
+      const ref = parseHookId(body.id);
+      if (!ref || forPurpose.length <= ref.index) {
+        return NextResponse.json({ error: "That webhook is no longer saved — reload the page and try again" }, { status: 404 });
+      }
+      next = [...forPurpose];
+      next[ref.index] = checked.url;
+    }
+    // `reminders` collapses to one slot — see saveStatsHookList.
+    const saved = await saveStatsHookList(purpose, next);
+    await prisma.creatorStatAuditLog.create({
+      data: {
+        action: action === "add" ? "webhook_added" : "webhook_updated",
+        adminId: staff.id, adminEmail: staff.email,
+        details: `[${staff.role}] ${action === "add" ? "Added" : "Updated"} ${purpose} webhook ${maskWebhook(checked.url)}`,
+      },
+    });
+    return NextResponse.json({
+      ok: true,
+      note: saved.length < next.length ? "Manager reminders only need one webhook — the new one replaced it." : undefined,
+    });
   }
 
   if (action === "test") {
-    if (channel === "notify") {
-      const { urls, source } = await getStatsNotifyWebhooks();
-      if (!urls.length) return NextResponse.json({ error: "No creators webhook configured yet — save one first" }, { status: 400 });
-      const embed = {
-        title: "📊 Weekly summary uploaded",
-        description: "The **Weekly summary** has been uploaded for:\n• **Team Example**",
-        color: 0xd4af37,
-        fields: [
-          { name: "Creators updated", value: "12", inline: true },
-          { name: "Uploaded by", value: staff.name, inline: true },
-        ],
-        timestamp: new Date().toISOString(),
-        footer: { text: "NMCN Creator Stats" },
-      };
-      const results = await Promise.all(urls.map(async url => {
-        try {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: "NMCN Creator Stats", embeds: [embed] }),
-            signal: AbortSignal.timeout(6000),
-          });
-          return res.ok ? { ok: true as const } : { ok: false as const, error: `HTTP ${res.status}` };
-        } catch {
-          return { ok: false as const, error: "Request failed" };
-        }
-      }));
-      const failed = results.filter(r => !r.ok);
-      if (failed.length === results.length) {
-        return NextResponse.json({ ok: false, error: `Discord rejected all ${results.length} webhooks` }, { status: 502 });
-      }
-      await prisma.creatorStatAuditLog.create({
-        data: { action: "webhook_test", adminId: staff.id, adminEmail: staff.email, details: `[${staff.role}] Sent a Discord stats-notify test to ${results.length - failed.length}/${results.length} webhooks (${source})` },
-      });
-      return NextResponse.json({ ok: true, source, sent: results.length - failed.length, failed: failed.length });
-    }
+    // Test ONE saved webhook: { action: "test", id: "notify:0" }.
+    // Legacy callers can still pass { channel } — that tests the first
+    // webhook for that purpose.
+    const ref = parseHookId(body.id);
+    const purpose: HookPurpose = ref ? ref.purpose : body.channel === "notify" ? "notify" : "reminders";
+    const urls = await statsHookUrls(purpose);
+    const url = ref ? urls[ref.index] : urls[0];
+    if (!url) return NextResponse.json({ error: "That webhook isn't saved any more — reload the page" }, { status: 400 });
 
-    const { url, source } = await getStatsWebhook();
-    if (!url) return NextResponse.json({ error: "No webhook configured yet — save one first" }, { status: 400 });
+    const payload =
+      purpose === "notify"
+        ? {
+            username: "NMCN Creator Stats",
+            embeds: [
+              {
+                title: "📊 Weekly summary uploaded",
+                description: "The **Weekly summary** has been uploaded for:\n• **Team Example**",
+                color: 0xd4af37,
+                fields: [
+                  { name: "Creators updated", value: "12", inline: true },
+                  { name: "Uploaded by", value: staff.name, inline: true },
+                ],
+                timestamp: new Date().toISOString(),
+                footer: { text: "NMCN Creator Stats" },
+              },
+            ],
+          }
+        : {
+            content:
+              "✅ **Stats reminders test** — sent from the nmcn dashboard. If you can read this, weekly upload reminders will land here.",
+          };
+
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: `✅ **Stats reminders test** — sent from the nmcn dashboard. If you can read this, weekly upload reminders will land here.`,
-      }),
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       return NextResponse.json({ ok: false, error: `Discord rejected it (HTTP ${res.status})`, detail: text.slice(0, 200) }, { status: 502 });
     }
     await prisma.creatorStatAuditLog.create({
-      data: { action: "webhook_test", adminId: staff.id, adminEmail: staff.email, details: `[${staff.role}] Sent a Discord stats-reminders test (${source})` },
+      data: {
+        action: "webhook_test", adminId: staff.id, adminEmail: staff.email,
+        details: `[${staff.role}] Sent a Discord ${purpose} test to ${maskWebhook(url)}`,
+      },
     });
-    return NextResponse.json({ ok: true, source });
+    return NextResponse.json({ ok: true, purpose });
   }
 
   // Manual card: { action: "send_now", periodType: "weekly"|"monthly",

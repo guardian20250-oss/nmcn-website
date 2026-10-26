@@ -1,11 +1,14 @@
 "use client";
 
-// Stats Discord settings — laid out like the Exchange's Notification
-// Settings panel (tickets page): plain labelled fields, Save, Send test.
+// Stats Discord settings.
 //
-//   1. Reminders webhook (managers channel) — daily overdue-team cron.
-//   2. Creators webhook(s) — auto "summary uploaded" cards. Paste one URL
-//      per line to post the same card to several Discord servers.
+//   1. Webhooks — Exchange-style: ONE url box, a "what's this for" dropdown,
+//      and a list you can edit, remove or send a test to. Two purposes:
+//        · Manager reminders — daily/weekly "this team is overdue" cron
+//        · Creator upload cards — gold "summary uploaded" embed on import
+//      (Cards accept several URLs, one per Discord server. Reminders is a
+//       single slot — the cron posts to one managers channel.)
+//   2. When reminders go out — day/time/timezone, dashboard-configurable.
 //   3. Team names — the export only has the team lead's email; give each
 //      team a real name here (editable any time).
 //   4. Send now — send the first card manually for stats that were already
@@ -14,13 +17,21 @@
 // CRON_SECRET still lives in Vercel (Vercel signs cron calls with it);
 // this box shows whether it's set so nothing is silently broken.
 import { useEffect, useState } from "react";
-import { Loader2, Send, Save, Trash2, XCircle, CheckCircle } from "lucide-react";
+import { Loader2, Send, Save, Trash2, Pencil, XCircle, CheckCircle, Plus, X } from "lucide-react";
+
+type HookPurpose = "reminders" | "notify";
+
+interface Hook {
+  /** `${purpose}:${index}` — edit/remove by this, never by the real URL. */
+  id: string;
+  purpose: HookPurpose;
+  url: string; // masked by the API
+  source: "dashboard" | "env" | "unset";
+}
 
 interface Status {
-  webhook: string;
-  source: "dashboard" | "env" | "unset";
-  notifyWebhooks: string[];
-  notifySource: "dashboard" | "env" | "unset";
+  hooks: Hook[];
+  purposes: { value: HookPurpose; label: string; description: string }[];
   teamNames: Record<string, string>;
   teamLeads: string[];
   schedule: { enabled: boolean; day: number; time: string; timeZone: string };
@@ -31,17 +42,37 @@ interface Status {
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+const PURPOSE_TITLE: Record<HookPurpose, string> = {
+  reminders: "Manager reminders",
+  notify: "Creator upload card",
+};
+
+const PURPOSE_BLURB: Record<HookPurpose, string> = {
+  reminders: "“This team is overdue” ping for managers",
+  notify: "Gold embed card when a Backstage export lands",
+};
+
+// Shown before the first load lands, so the dropdown is never empty.
+const FALLBACK_PURPOSES: { value: HookPurpose; label: string; description: string }[] = [
+  { value: "notify", label: PURPOSE_TITLE.notify, description: PURPOSE_BLURB.notify },
+  { value: "reminders", label: PURPOSE_TITLE.reminders, description: PURPOSE_BLURB.reminders },
+];
+
 const inputClass =
   "w-full bg-nmcn-deep/80 border border-nmcn-border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-nmcn-muted/50 focus:outline-none focus:border-nmcn-blue/50";
 const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-wider text-nmcn-muted";
 
 export default function StatsWebhookSettings() {
   const [status, setStatus] = useState<Status | null>(null);
-  const [url, setUrl] = useState("");
-  const [notifyUrls, setNotifyUrls] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+
+  // The one URL box — used for both adding and editing.
+  const [draftUrl, setDraftUrl] = useState("");
+  const [draftPurpose, setDraftPurpose] = useState<HookPurpose>("notify");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   // Team names editor
   const [names, setNames] = useState<Record<string, string>>({});
@@ -90,7 +121,9 @@ export default function StatsWebhookSettings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const post = async (body: Record<string, unknown>, okMsg: string) => {
+  // ── Webhook list: add / edit / remove / test ──────────────────────────────
+  const submitHook = async () => {
+    if (!draftUrl.trim()) return;
     setBusy(true);
     setMsg("");
     setErr("");
@@ -98,24 +131,22 @@ export default function StatsWebhookSettings() {
       const res = await fetch("/api/admin/stats-webhook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(
+          editingId
+            ? { action: "update", id: editingId, url: draftUrl.trim() }
+            : { action: "add", purpose: draftPurpose, url: draftUrl.trim() }
+        ),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(d.error || "Something went wrong");
+        setErr(d.error || "Could not save that webhook");
         return;
       }
-      if (body.action === "save") {
-        if (body.channel === "notify") {
-          if (d.notifyWebhooks !== undefined) setStatus(s => (s ? { ...s, notifyWebhooks: d.notifyWebhooks, notifySource: d.notifySource } : s));
-          setNotifyUrls("");
-        } else {
-          if (d.webhook !== undefined) setStatus(s => (s ? { ...s, webhook: d.webhook, source: d.source } : s));
-          setUrl("");
-        }
-      }
-      if (body.action === "clear") load();
-      setMsg(okMsg);
+      setMsg(editingId ? "Webhook updated ✓" : "Webhook added ✓");
+      if (d.note) setMsg(`${d.note} ✓`);
+      setDraftUrl("");
+      setEditingId(null);
+      await load();
     } catch {
       setErr("Network error");
     } finally {
@@ -123,6 +154,64 @@ export default function StatsWebhookSettings() {
     }
   };
 
+  const removeHook = async (h: Hook) => {
+    if (!confirm(`Remove the ${PURPOSE_TITLE[h.purpose].toLowerCase()} webhook ${h.url}?`)) return;
+    setBusyId(h.id);
+    setErr("");
+    try {
+      const res = await fetch("/api/admin/stats-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remove", id: h.id }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setErr(d.error || "Could not remove that webhook"); return; }
+      if (editingId === h.id) { setEditingId(null); setDraftUrl(""); }
+      setMsg("Webhook removed ✓");
+      await load();
+    } catch {
+      setErr("Network error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const testHook = async (h: Hook) => {
+    setBusyId(h.id);
+    setErr("");
+    try {
+      const res = await fetch("/api/admin/stats-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test", id: h.id }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setErr(d.error || "Discord rejected the test"); return; }
+      setMsg(`Test sent to ${h.url} ✓`);
+    } catch {
+      setErr("Network error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const startEdit = (h: Hook) => {
+    setEditingId(h.id);
+    setDraftPurpose(h.purpose);
+    setDraftUrl("");
+    setMsg("");
+    setErr("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setDraftUrl("");
+  };
+
+  const sourceLabel = (source: Hook["source"]) =>
+    source === "dashboard" ? "saved on this dashboard ✓" : source === "env" ? "Vercel env var" : "not configured";
+
+  // ── Team names ────────────────────────────────────────────────────────────
   const saveTeamNames = async () => {
     // Fold in any new row typed at the bottom before saving.
     const merged = { ...names };
@@ -205,72 +294,114 @@ export default function StatsWebhookSettings() {
     }
   };
 
-  const sourceLabel = (source: Status["source"], none: string) =>
-    source === "dashboard" ? "Saved on this dashboard ✓" : source === "env" ? "Set as a Vercel env var" : none;
-
   // Every known team lead gets a row; saved names for unknown emails too.
   const teamRows = [
     ...new Set([...(status?.teamLeads || []), ...Object.keys(names)]),
   ].sort((a, b) => a.localeCompare(b));
 
+  const hooks = status?.hooks || [];
+  const editing = editingId ? hooks.find(h => h.id === editingId) || null : null;
+
   return (
     <div className="rounded-xl border border-nmcn-border bg-nmcn-panel/50 p-4 sm:p-5 space-y-6">
       <div>
-        <p className="text-sm font-semibold text-white">Discord notifications</p>
+        <p className="text-sm font-semibold text-white">Discord webhooks</p>
         <p className="text-xs text-nmcn-muted">
-          Reminders go to managers · &quot;summary uploaded&quot; cards go to creators
+          Paste a webhook URL, pick what it&apos;s for, add it. Everything saved is listed below.
         </p>
       </div>
 
-      {/* 1 — Managers reminders webhook (unchanged behaviour) */}
+      {/* 1 — One URL box + a purpose dropdown */}
       <div>
-        <label className={labelClass}>Managers channel — weekly upload reminders</label>
-        {status && (
-          <p className="mb-1.5 break-all text-xs text-nmcn-muted">
-            Current:{" "}
-            {status.webhook ? (
-              <span className="font-mono text-nmcn-gold">{status.webhook}</span>
-            ) : (
-              <span className="text-amber-300">none — reminders are off</span>
-            )}{" "}
-            · {sourceLabel(status.source, "not configured")}
-          </p>
-        )}
+        <label className={labelClass}>{editing ? "Edit webhook" : "Add a webhook"}</label>
         <div className="flex flex-wrap gap-2">
           <input
-            className={`${inputClass} min-w-[260px] flex-1`}
-            placeholder="https://discord.com/api/webhooks/…"
-            value={url}
-            onChange={e => setUrl(e.target.value)}
+            className={`${inputClass} min-w-[240px] flex-1`}
+            placeholder={editing ? editing.url : "https://discord.com/api/webhooks/…"}
+            value={draftUrl}
+            onChange={e => setDraftUrl(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") submitHook(); }}
           />
+          <select
+            className={`${inputClass} w-auto`}
+            value={draftPurpose}
+            onChange={e => setDraftPurpose(e.target.value as HookPurpose)}
+            disabled={!!editing}
+            title={editing ? "A webhook can't be moved to a different channel" : "What is this notification for?"}
+          >
+            {(status?.purposes || FALLBACK_PURPOSES).map(p => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
           <button
             className="btn-gold text-sm disabled:opacity-50"
-            disabled={busy || !url.trim()}
-            onClick={() => post({ action: "save", channel: "reminders", url: url.trim() }, "Reminders webhook saved ✓")}
+            disabled={busy || !draftUrl.trim()}
+            onClick={submitHook}
           >
-            <Save className="mr-1 inline h-3.5 w-3.5" /> Save
+            {busy ? <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" /> : editing ? <Save className="mr-1 inline h-3.5 w-3.5" /> : <Plus className="mr-1 inline h-3.5 w-3.5" />}
+            {editing ? "Save changes" : "Add"}
           </button>
-          <button
-            className="btn-outline text-sm disabled:opacity-50"
-            disabled={busy || status?.source === "unset"}
-            onClick={() => post({ action: "test", channel: "reminders" }, "Test reminder sent to Discord ✓")}
-          >
-            {busy ? <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1 inline h-3.5 w-3.5" />}
-            Send test
-          </button>
-          {status?.source === "dashboard" && (
-            <button
-              className="btn-outline text-sm text-red-400 disabled:opacity-50"
-              disabled={busy}
-              onClick={() => post({ action: "clear", channel: "reminders" }, "Reminders webhook cleared")}
-            >
-              <Trash2 className="mr-1 inline h-3.5 w-3.5" /> Clear
+          {editing && (
+            <button className="btn-outline text-sm" disabled={busy} onClick={cancelEdit}>
+              <X className="mr-1 inline h-3.5 w-3.5" /> Cancel
             </button>
           )}
         </div>
+        <p className="mt-1.5 text-xs text-nmcn-muted">
+          Discord → Server Settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.
+          Creator upload cards can have one per Discord server.
+        </p>
       </div>
 
-      {/* 1b — Reminder schedule (gates the managers cron above) */}
+      {/* 1b — The list: each webhook editable / removable / testable */}
+      <div>
+        <label className={labelClass}>Saved webhooks ({hooks.length})</label>
+        {hooks.length === 0 ? (
+          <p className="rounded-lg border border-nmcn-border p-3 text-sm text-nmcn-muted">
+            Nothing saved yet — nothing will be posted to Discord until you add one above.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {hooks.map(h => (
+              <li
+                key={h.id}
+                className={`rounded-lg border p-3 ${editingId === h.id ? "border-nmcn-gold/60 bg-nmcn-gold/5" : "border-nmcn-border"}`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white">{PURPOSE_TITLE[h.purpose]}</p>
+                    <p className="text-xs text-nmcn-muted">{PURPOSE_BLURB[h.purpose]}</p>
+                    <p className="mt-1 break-all font-mono text-xs text-nmcn-gold">{h.url}</p>
+                    <p className="text-[11px] text-nmcn-muted">via {sourceLabel(h.source)}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <button
+                      className="btn-outline text-xs disabled:opacity-50"
+                      disabled={busyId === h.id}
+                      onClick={() => testHook(h)}
+                      title="Send a test to this webhook"
+                    >
+                      {busyId === h.id ? <Loader2 className="inline h-3 w-3 animate-spin" /> : <Send className="inline h-3 w-3" />} Test
+                    </button>
+                    <button className="btn-outline text-xs disabled:opacity-50" disabled={busyId === h.id} onClick={() => startEdit(h)}>
+                      <Pencil className="inline h-3 w-3" /> Edit
+                    </button>
+                    <button
+                      className="btn-outline text-xs text-red-400 disabled:opacity-50"
+                      disabled={busyId === h.id}
+                      onClick={() => removeHook(h)}
+                    >
+                      <Trash2 className="inline h-3 w-3" /> Remove
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* 2 — Reminder schedule (gates the managers cron) */}
       <div>
         <label className={labelClass}>When should the manager reminder go out?</label>
         <p className="mb-2 text-xs text-nmcn-muted">
@@ -316,59 +447,6 @@ export default function StatsWebhookSettings() {
             <XCircle className="h-4 w-4" /> {schedErr}
           </p>
         )}
-      </div>
-
-      {/* 2 — Creators channels webhook(s) */}
-      <div>
-        <label className={labelClass}>Creators channel(s) — &quot;summary uploaded&quot; cards</label>
-        {status && (
-          <p className="mb-1.5 break-all text-xs text-nmcn-muted">
-            Current:{" "}
-            {status.notifyWebhooks.length ? (
-              <span className="font-mono text-nmcn-gold">{status.notifyWebhooks.join(" · ")}</span>
-            ) : (
-              <span className="text-amber-300">none — cards are off</span>
-            )}{" "}
-            · {sourceLabel(status.notifySource, "not configured")}
-          </p>
-        )}
-        <textarea
-          className={`${inputClass} font-mono`}
-          rows={3}
-          placeholder={"https://discord.com/api/webhooks/…\n(one URL per line — add one per Discord server)"}
-          value={notifyUrls}
-          onChange={e => setNotifyUrls(e.target.value)}
-        />
-        <div className="mt-1 text-xs text-nmcn-muted">
-          Discord → Server Settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.
-          Every card is posted to all saved servers.
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <button
-            className="btn-gold text-sm disabled:opacity-50"
-            disabled={busy || !notifyUrls.trim()}
-            onClick={() => post({ action: "save", channel: "notify", url: notifyUrls }, "Creators webhook(s) saved ✓")}
-          >
-            <Save className="mr-1 inline h-3.5 w-3.5" /> Save
-          </button>
-          <button
-            className="btn-outline text-sm disabled:opacity-50"
-            disabled={busy || !status?.notifyWebhooks.length}
-            onClick={() => post({ action: "test", channel: "notify" }, "Test card sent to Discord ✓")}
-          >
-            {busy ? <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1 inline h-3.5 w-3.5" />}
-            Send test
-          </button>
-          {status?.notifySource === "dashboard" && (
-            <button
-              className="btn-outline text-sm text-red-400 disabled:opacity-50"
-              disabled={busy}
-              onClick={() => post({ action: "clear", channel: "notify" }, "Creators webhook cleared")}
-            >
-              <Trash2 className="mr-1 inline h-3.5 w-3.5" /> Clear
-            </button>
-          )}
-        </div>
       </div>
 
       {/* 3 — Team names */}
