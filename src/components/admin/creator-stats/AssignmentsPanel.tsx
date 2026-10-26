@@ -303,6 +303,50 @@ export default function AssignmentsPanel() {
                 </label>
               </div>
 
+              {/* 2b — Everyone else: promote to manager/scout so the two
+                  dropdowns above can offer them. Owner-only (setRole is), and
+                  it reloads, so the person pops straight into the list above. */}
+              {canEditAll && (asg.others?.length ?? 0) > 0 && (
+                <div className="rounded-lg border border-nmcn-border p-2">
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-nmcn-muted">
+                    Not assignable yet — promote to use above ({asg.others.length})
+                  </p>
+                  <div className="max-h-36 space-y-1 overflow-y-auto">
+                    {asg.others.map(p => (
+                      <div key={p.id} className="flex items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-sm text-white" title={p.email}>{p.name}</span>
+                        <span
+                          className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${
+                            p.role === "team_lead" ? "border-amber-500/40 text-amber-300" : "border-nmcn-border text-nmcn-muted"
+                          }`}
+                        >
+                          {p.role.replace("_", " ")}
+                        </span>
+                        <button
+                          className="btn-outline whitespace-nowrap px-2 py-0.5 text-[11px] disabled:opacity-50"
+                          disabled={busy}
+                          title={`Make ${p.name} a manager`}
+                          onClick={() => setRole(p.id, "manager")}
+                        >
+                          Manager
+                        </button>
+                        <button
+                          className="btn-outline whitespace-nowrap px-2 py-0.5 text-[11px] disabled:opacity-50"
+                          disabled={busy}
+                          title={`Make ${p.name} a scout`}
+                          onClick={() => setRole(p.id, "scout")}
+                        >
+                          Scout
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-nmcn-muted">
+                    Promoting a team lead moves them out of the &quot;Team lead&quot; list above — promote them back any time.
+                  </p>
+                </div>
+              )}
+
               {/* 3 — Creators: multi-select across ALL profiles on file. */}
               <div className="text-xs text-nmcn-muted">
                 <div className="mb-1 flex items-center justify-between">

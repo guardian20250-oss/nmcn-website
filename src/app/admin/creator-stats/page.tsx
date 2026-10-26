@@ -140,7 +140,8 @@ export default function CreatorStatsAdminPage() {
   }
   if (!dash) return null;
   const asOfDates = [...new Map(dash.exportDates.map(e => [e.exportedAt, e])).values()];
-  // Owners, leads and managers can all reach the backend management page.
+  // Owners, leads and managers can all reach the backend management page —
+  // managers only for the upload panel (staff management is owner/lead only).
   const canManage = isAll || dash.viewer.role === "team_lead" || dash.viewer.role === "manager";
 
   return (
@@ -171,7 +172,7 @@ export default function CreatorStatsAdminPage() {
             {canManage && (
               <a href="/admin/creator-stats/manage" className="btn-outline text-sm">
                 <Settings2 className="mr-1 inline h-4 w-4" />
-                Manage creators &amp; staff
+                {dash.viewer.role === "manager" ? "Upload Backstage export" : "Manage creators & staff"}
               </a>
             )}
             <a href="/admin" className="text-sm text-nmcn-muted transition hover:text-nmcn-blue">← Dashboard</a>

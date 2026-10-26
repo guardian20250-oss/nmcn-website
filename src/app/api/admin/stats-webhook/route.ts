@@ -6,7 +6,7 @@ import {
   isValidWebhookUrl, maskWebhook, HOOK_PURPOSES, type HookPurpose,
   getReminderSchedule, saveReminderSchedule, REMINDER_TIMEZONES,
 } from "@/lib/stats-webhook";
-import { getTeamNames, saveTeamNames, sendStatsUploadedCard, hasSentFirstCard } from "@/lib/stats-notify";
+import { getTeamNames, saveTeamNames, sendStatsUploadedCard, hasSentFirstCard, buildStatsUploadedEmbed } from "@/lib/stats-notify";
 
 export const runtime = "nodejs";
 
@@ -179,33 +179,36 @@ export async function POST(request: NextRequest) {
     const url = ref ? urls[ref.index] : urls[0];
     if (!url) return NextResponse.json({ error: "That webhook isn't saved any more — reload the page" }, { status: 400 });
 
-    const payload =
+    // Real team leads, so the test reproduces an owner upload exactly — the
+    // isMasterFile:true shape that was dropping the teams — and reuses the
+    // real card (My Stats link included) instead of a hand-written copy.
+    const teamRows =
       purpose === "notify"
-        ? {
+        ? await prisma.creatorStat.groupBy({ by: ["teamLead"], _count: { _all: true } })
+        : [];
+    const bodyJson =
+      purpose === "notify"
+        ? JSON.stringify({
             username: "NMCN Creator Stats",
             embeds: [
-              {
-                title: "📊 Weekly summary uploaded",
-                description: "The **Weekly summary** has been uploaded for:\n• **Team Example**",
-                color: 0xd4af37,
-                fields: [
-                  { name: "Creators updated", value: "12", inline: true },
-                  { name: "Uploaded by", value: staff.name, inline: true },
-                ],
-                timestamp: new Date().toISOString(),
-                footer: { text: "NMCN Creator Stats" },
-              },
+              await buildStatsUploadedEmbed({
+                periodType: "weekly",
+                teamLeads: teamRows.map(r => r.teamLead).filter((t): t is string => Boolean(t)).slice(0, 5),
+                isMasterFile: true,
+                importedCount: 12,
+                uploadedBy: staff.name,
+              }),
             ],
-          }
-        : {
+          })
+        : JSON.stringify({
             content:
               "✅ **Stats reminders test** — sent from the nmcn dashboard. If you can read this, weekly upload reminders will land here.",
-          };
+          });
 
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: bodyJson,
       signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) {
@@ -226,7 +229,13 @@ export async function POST(request: NextRequest) {
   if (action === "send_now") {
     const periodType = body.periodType === "monthly" ? "monthly" : "weekly";
     const isMasterFile = body.scope === "master";
-    const teamLeads: string[] = isMasterFile ? [] : [String(body.scope || "").trim()].filter(Boolean);
+    // Master file: name every known team. It used to pass an empty list, so a
+    // manual master card posted with no teams on it either.
+    const teamLeads: string[] = isMasterFile
+      ? (await prisma.creatorStat.groupBy({ by: ["teamLead"], _count: { _all: true } }))
+          .map(r => r.teamLead)
+          .filter((t): t is string => Boolean(t))
+      : [String(body.scope || "").trim()].filter(Boolean);
     if (!isMasterFile && !teamLeads.length) {
       return NextResponse.json({ error: "Choose the master file or a team" }, { status: 400 });
     }

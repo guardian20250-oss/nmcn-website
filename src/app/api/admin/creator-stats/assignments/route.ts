@@ -5,10 +5,17 @@ import { emailKey } from "@/lib/creator-stats-access";
 
 export const runtime = "nodejs";
 
-// The owner edits everything. Team leads and managers may also edit — but only
-// their own slice (see writeForbidden): a lead edits their own team's rows, a
-// manager edits rows anchored to them.
-const EDIT_ROLES = ["admin", "team_lead", "manager"];
+// The owner edits everything; team leads may edit their own slice (see
+// writeForbidden).
+//
+// Managers are deliberately NOT on this list. Their only backend job is
+// uploading a Backstage export (/api/admin/creator-stats), so this route — the
+// roster, every staff account, the manager/scout lists, the mappings — is
+// closed to them. The manager-specific branches further down (the scoped GET
+// view and the "manager may only add themselves" POST check) are retained so
+// access can be widened again without rediscovering the scoping rules, but
+// nothing role=manager reaches them today: the gate below returns 403 first.
+const EDIT_ROLES = ["admin", "team_lead"];
 
 async function requireEditor(request: NextRequest) {
   const staff = await getStaffFromRequest(request);
@@ -46,7 +53,7 @@ export async function GET(request: NextRequest) {
   const { staff, error } = await requireEditor(request);
   if (!staff) return error;
   // Latest row per creator (uploads can be partial, so never rely on one snapshot).
-  const [assignments, managers, scouts, teamLeads, latestRows, mappings, creatorAccounts, linkedRows, hiddenRows] = await Promise.all([
+  const [assignments, managers, scouts, others, teamLeads, latestRows, mappings, creatorAccounts, linkedRows, hiddenRows] = await Promise.all([
     prisma.creatorStatManagerAssignment.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -58,6 +65,15 @@ export async function GET(request: NextRequest) {
     prisma.admin.findMany({ where: { role: "manager" }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
     // Scouts are assignable to teams too (same assignment rows, role shown in the UI).
     prisma.admin.findMany({ where: { role: "scout" }, orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
+    // Everyone else — NOT assignable yet, because both dropdowns and the
+    // server-side check only accept role manager/scout. Without this list an
+    // account created with any other role could never be picked at all.
+    // Owners promote them to manager/scout straight from the assign box.
+    prisma.admin.findMany({
+      where: { role: { notIn: ["manager", "scout"] } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, email: true, role: true },
+    }),
     // Staff anchors for the assign flow: team leads AND owner accounts, so the
     // owner's own account (role admin) can be picked even though their profile
     // is not in the Backstage export at all.
@@ -214,6 +230,8 @@ export async function GET(request: NextRequest) {
     viewerRole: staff.role,
     managers,
     scouts,
+    // Who's left to promote into manager/scout — owner-only, since setRole is.
+    others: staff.role === "admin" ? others.filter(o => o.id !== staff.id) : [],
     teamLeads: outTeamLeads.map(t => ({
       ...t,
       creators: countByAdmin.get(t.id) || 0,

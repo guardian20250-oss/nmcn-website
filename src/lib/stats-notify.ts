@@ -75,15 +75,27 @@ export async function resolveTeamName(teamLeadEmail: string | null): Promise<str
   const key = teamLeadEmail.trim().toLowerCase();
   const names = await getTeamNames();
   if (names[key]) return names[key];
-  const staff = await prisma.admin.findFirst({
-    where: { email: { equals: teamLeadEmail, mode: "insensitive" } },
-    select: { name: true },
-  });
-  return staff?.name || teamLeadEmail;
+  try {
+    const staff = await prisma.admin.findFirst({
+      where: { email: { equals: teamLeadEmail, mode: "insensitive" } },
+      select: { name: true },
+    });
+    if (staff?.name) return staff.name;
+  } catch {
+    // A DB blip while building the embed must not fail the whole card —
+    // sendStatsUploadedCard awaits this OUTSIDE its per-URL try/catch, so a
+    // throw here would 500 an import whose data already committed.
+  }
+  return teamLeadEmail;
 }
 
 // Gold matches --color-nmcn-gold on the site.
 const EMBED_COLOR = 0xd4af37;
+
+// Where creators check their own numbers. Discord needs an absolute URL, so
+// fall back to the live domain when NEXT_PUBLIC_SITE_URL isn't set in Vercel.
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://nexusmafiaagency.com").replace(/\/+$/, "");
+export const CREATOR_STATS_URL = `${SITE_URL}/academy/stats`;
 
 export interface StatsUploadedPayload {
   periodType: "weekly" | "monthly";
@@ -100,23 +112,37 @@ export async function buildStatsUploadedEmbed(payload: StatsUploadedPayload) {
   const label = periodLabel(payload.periodType); // "Weekly" | "Monthly"
   const periodText = payload.periodType === "monthly" ? "End of month summary" : "Weekly summary";
 
+  // Resolve the team names for BOTH card shapes. The master (owner) branch
+  // used to build the description on its own and never touched teamLeads, so
+  // owner uploads posted a card with no teams on it at all.
+  const teams = [...new Set(await Promise.all(payload.teamLeads.map(resolveTeamName)))];
+
   let title: string;
   let description: string;
   if (payload.isMasterFile) {
     title = `${label} summary stats uploaded`;
     description = `The **${periodText}** has been uploaded — all teams are now up to date.`;
   } else {
-    const teams = await Promise.all(payload.teamLeads.map(resolveTeamName));
-    const unique = [...new Set(teams)];
     title = `${label} summary uploaded`;
-    description =
-      `The **${periodText}** has been uploaded for:\n` +
-      unique.map(t => `• **${t}**`).join("\n");
+    description = `The **${periodText}** has been uploaded for:`;
+  }
+  // Discord caps an embed description at 4096 chars — a pathological export
+  // could blow that with hundreds of teams, so keep the list bounded.
+  if (teams.length) {
+    const shown = teams.slice(0, 40);
+    const rest = teams.length - shown.length;
+    description +=
+      "\n" +
+      shown.map(t => `• **${t}**`).join("\n") +
+      (rest > 0 ? `\n• _…and ${rest} more team${rest === 1 ? "" : "s"}_` : "");
   }
 
   return {
     title: `📊 ${title}`,
-    description,
+    // Clickable title + an explicit link line, so the way to My Stats is on
+    // the card itself (mobile taps the description line).
+    url: CREATOR_STATS_URL,
+    description: `${description}\n\n[View your stats →](${CREATOR_STATS_URL})`,
     color: EMBED_COLOR,
     fields: [
       { name: "Creators updated", value: String(payload.importedCount), inline: true },

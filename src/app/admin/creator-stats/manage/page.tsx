@@ -9,8 +9,10 @@
 //   • Remove / restore creators from stats
 // The dashboard itself (/admin/creator-stats) links here and stays pure numbers.
 //
-// Same audience as the panels inside it: owner, manager or team lead. The
-// APIs enforce that server-side too — this check only decides what we show.
+// Same audience as the panels inside it: owner or team lead. Managers can open
+// the page too, but only for the upload panel — they have no staff-management
+// access (the assignments API returns 403 for role=manager). The APIs enforce
+// all of this server-side; the checks here only decide what we render.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Settings2 } from "lucide-react";
@@ -53,6 +55,8 @@ export default function CreatorStatsManagePage() {
   }
 
   const isOwner = scope === "all";
+  // Managers get the upload panel only — no roster, no staff, no assignments.
+  const isManager = scope === "manager";
 
   return (
     <div className="min-h-screen px-6 pb-16 pt-24">
@@ -64,7 +68,9 @@ export default function CreatorStatsManagePage() {
               Creator Stats · Management
             </h1>
             <p className="text-sm text-nmcn-muted">
-              Uploads, history, teams, roster and staff. The numbers live on the{" "}
+              {isManager
+                ? "Upload a Backstage export here. The numbers live on the "
+                : "Uploads, history, teams, roster and staff. The numbers live on the "}
               <a href="/admin/creator-stats" className="text-nmcn-gold hover:underline">dashboard</a>.
             </p>
           </div>
@@ -79,8 +85,11 @@ export default function CreatorStatsManagePage() {
 
         <UploadPanel isOwner={isOwner} onImported={() => setRefreshKey(k => k + 1)} />
 
-        {/* Remount after an import so the roster picks up newly added creators. */}
-        <AssignmentsPanel key={refreshKey} />
+        {/* Staff management is owner / team lead only. The assignments API
+            returns 403 for managers, so rendering this for them would just
+            show an empty panel. Remount after an import so the roster picks up
+            newly added creators. */}
+        {!isManager && <AssignmentsPanel key={refreshKey} />}
       </div>
     </div>
   );

@@ -22,6 +22,8 @@ export interface Assignments {
   viewerRole: string;
   managers: Person[];
   scouts: Person[];
+  /** Owner-only: staff accounts that aren't manager/scout yet — promote these. */
+  others: (Person & { role: string })[];
   teamLeads: (Person & { role: string; creators: number; mappedBackstageEmails: string[] })[];
   unmatchedTeamLeads: { value: string; count: number }[];
   mappings: { id: number; backstageEmail: string; adminId: number; admin: Person }[];
