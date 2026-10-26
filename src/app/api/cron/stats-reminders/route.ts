@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getStatsWebhook } from "@/lib/stats-webhook";
+import { getStatsWebhook, getReminderSchedule, getReminderLastSent, setReminderLastSent, zonedNow, timeToMinutes } from "@/lib/stats-webhook";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +34,19 @@ export async function GET(request: Request) {
 
   const { url: webhook } = await getStatsWebhook();
   if (!webhook) return NextResponse.json({ disabled: true, reason: "No Discord webhook configured (dashboard or env)" });
+
+  // Schedule gate: the cron fires daily (vercel.json), but the dashboard can
+  // restrict posting to one weekly slot (day + time + timezone). Enabled =
+  // send on the first daily run at/after the chosen time, once per slot.
+  const schedule = await getReminderSchedule();
+  if (schedule.enabled) {
+    const now = zonedNow(schedule.timeZone);
+    if (!now) return NextResponse.json({ ok: true, skipped: "bad-timezone" });
+    const due = now.weekday === schedule.day && now.minutes >= timeToMinutes(schedule.time);
+    if (!due) return NextResponse.json({ ok: true, skipped: "not-due", day: schedule.day, time: schedule.time });
+    const lastSent = await getReminderLastSent();
+    if (lastSent === now.dateKey) return NextResponse.json({ ok: true, skipped: "already-sent" });
+  }
 
   // Latest export date per team ("Creator Network manager" column).
   const rows = await prisma.creatorStat.groupBy({
@@ -74,6 +87,12 @@ export async function GET(request: Request) {
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     return NextResponse.json({ ok: false, status: res.status, detail: text.slice(0, 300) }, { status: 502 });
+  }
+
+  // Record the slot so a same-day retry can't double-post.
+  if (schedule.enabled) {
+    const now = zonedNow(schedule.timeZone);
+    if (now) await setReminderLastSent(now.dateKey);
   }
 
   return NextResponse.json({ ok: true, overdue: overdue.length });

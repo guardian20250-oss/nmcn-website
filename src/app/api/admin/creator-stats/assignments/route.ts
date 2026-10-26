@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
   const { staff, error } = await requireEditor(request);
   if (!staff) return error;
   // Latest row per creator (uploads can be partial, so never rely on one snapshot).
-  const [assignments, managers, scouts, teamLeads, latestRows, mappings, creatorAccounts, linkedRows] = await Promise.all([
+  const [assignments, managers, scouts, teamLeads, latestRows, mappings, creatorAccounts, linkedRows, hiddenRows] = await Promise.all([
     prisma.creatorStatManagerAssignment.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -84,8 +84,14 @@ export async function GET(request: NextRequest) {
       distinct: ["backstageCreatorId"],
       select: { backstageCreatorId: true, username: true, creatorAccountId: true },
     }),
+    // Creators removed from stats (left the agency) — owner can restore them.
+    prisma.creatorStatHidden.findMany({
+      orderBy: { hiddenAt: "desc" },
+      select: { backstageCreatorId: true, hiddenAt: true },
+    }),
   ]);
-  const creators = [...latestRows].sort((a, b) => a.username.localeCompare(b.username)).map(({ backstageCreatorId, username, teamLead, creatorAccountId }) => ({ backstageCreatorId, username, teamLead, accountId: creatorAccountId }));
+  const hiddenIds = new Set(hiddenRows.map(h => h.backstageCreatorId));
+  const usernameOfHidden = new Map(latestRows.map(r => [r.backstageCreatorId, r.username]));
 
   // Per-Backstage-email counts — powers the "no account with that email" box.
   const countByLead = new Map<string, number>();
@@ -110,7 +116,6 @@ export async function GET(request: NextRequest) {
   }
   const leadEmails = new Set(teamLeads.map(t => emailKey(t.email)));
   const mappedEmails = new Set(mappings.map(m => emailKey(m.backstageEmail)));
-  const usernameById = new Map(creators.map(c => [c.backstageCreatorId, c.username]));
   // Group mapped Backstage emails by staff account so the UI can show them inline.
   const mappingsByAdmin = new Map<number, string[]>();
   for (const m of mappings) {
@@ -142,6 +147,18 @@ export async function GET(request: NextRequest) {
       }
     }
   }
+  // Hidden (removed-from-agency) profiles never appear in the roster, the
+  // assign lists, or the stats pages — but the owner can restore them.
+  const creators = [...latestRows]
+    .filter(r => !hiddenIds.has(r.backstageCreatorId))
+    .sort((a, b) => a.username.localeCompare(b.username))
+    .map(({ backstageCreatorId, username, teamLead, creatorAccountId }) => ({
+      backstageCreatorId, username, teamLead, accountId: creatorAccountId,
+      // Team this profile sits on: manual route wins, else the export column
+      // mapped to a staff account. Powers the full roster listing.
+      leadId: routeOfCreator.get(backstageCreatorId) ?? emailToAdmin.get(emailKey(teamLead)) ?? null,
+    }));
+  const usernameById = new Map(creators.map(c => [c.backstageCreatorId, c.username]));
   const leadOfCreator = new Map(latestRows.map(r => [r.backstageCreatorId, r.teamLead]));
   const leadIdFor = (a: { teamLead: { id: number } | null; backstageCreatorId: string | null }) => {
     if (a.backstageCreatorId) {
@@ -208,6 +225,14 @@ export async function GET(request: NextRequest) {
       .filter(([k]) => !leadEmails.has(k) && !mappedEmails.has(k))
       .map(([value, count]) => ({ value, count })),
     creators: outCreators,
+    // Removed-from-stats profiles — an owner tool (restore lives here).
+    hidden: staff.role === "admin"
+      ? hiddenRows.map(h => ({
+          backstageCreatorId: h.backstageCreatorId,
+          username: usernameOfHidden.get(h.backstageCreatorId) ?? "(unknown)",
+          hiddenAt: h.hiddenAt,
+        }))
+      : [],
     // Profile ↔ account linking is an owner tool.
     creatorAccounts: staff.role === "admin"
       ? creatorAccounts.map(a => ({ ...a, linked: linkedByAccount.get(a.id) ?? null }))
@@ -307,6 +332,46 @@ export async function POST(request: NextRequest) {
       },
     });
     return NextResponse.json({ ok: true, username: profile.username, account: account.name });
+  }
+
+  // — Remove a creator from the stats pages (left the agency) / restore. —
+  // Owner-only. No stats rows are deleted: a hide flag makes the profile
+  // invisible on every stats view AND future imports skip it, so a re-upload
+  // never brings them back. Restore deletes the flag (rows were kept intact).
+  if (body.action === "hideCreator" || body.action === "unhideCreator") {
+    if (staff.role !== "admin") {
+      return NextResponse.json({ error: "Only the owner can remove or restore creators" }, { status: 403 });
+    }
+    const cid = String(body.backstageCreatorId || "").trim().slice(0, 40);
+    const profile = await prisma.creatorStat.findFirst({
+      where: { backstageCreatorId: cid }, orderBy: { exportedAt: "desc" }, select: { username: true },
+    });
+    if (!profile) return NextResponse.json({ error: "No profile with that Creator ID" }, { status: 404 });
+
+    if (body.action === "hideCreator") {
+      try {
+        await prisma.creatorStatHidden.create({ data: { backstageCreatorId: cid, hiddenBy: staff.id } });
+      } catch (e) {
+        // P2002 = already hidden.
+        if ((e as { code?: string })?.code === "P2002") {
+          return NextResponse.json({ error: "That creator is already removed from stats." }, { status: 409 });
+        }
+        throw e;
+      }
+      await prisma.creatorStatAuditLog.create({
+        data: { action: "stats_hide", adminId: staff.id, adminEmail: staff.email, details: `[${staff.role}] Removed @${profile.username} (${cid}) from all stats pages` },
+      });
+      return NextResponse.json({ ok: true, username: profile.username, hidden: true });
+    }
+
+    const removed = await prisma.creatorStatHidden.deleteMany({ where: { backstageCreatorId: cid } });
+    if (removed.count === 0) {
+      return NextResponse.json({ error: "That creator is not removed from stats" }, { status: 409 });
+    }
+    await prisma.creatorStatAuditLog.create({
+      data: { action: "stats_unhide", adminId: staff.id, adminEmail: staff.email, details: `[${staff.role}] Restored @${profile.username} (${cid}) to the stats pages` },
+    });
+    return NextResponse.json({ ok: true, username: profile.username, hidden: false });
   }
 
   // — Assign managers/scouts to a team and/or several creators at once. —

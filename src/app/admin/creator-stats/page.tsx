@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Upload, Search, Trophy, AlertTriangle, Users, Trash2, Link2, History as HistoryIcon, Pencil } from "lucide-react";
+import { Loader2, Upload, Search, Trophy, AlertTriangle, Users, Trash2, Link2, History as HistoryIcon, Pencil, UserX, RotateCcw } from "lucide-react";
 
 // Staff dashboard for Creator Stats.
 //   Owner/co-owner (admin): every creator, all columns, uploads, assignments, audit.
@@ -26,6 +26,12 @@ interface Dash {
   teamLeadEmails: string[]; assignedCreatorCount: number;
   goals: { validDays: number; liveHours: number; tier5: number };
   period: "all" | "weekly" | "monthly"; asOf: string | null;
+  monthStart: string; monthTotals: { diamonds: number; hours: number };
+  series: {
+    exports: { exportedAt: string; periodType: string; diamonds: number; hours: number; creators: number }[];
+    week: { current: { exportedAt: string; diamonds: number; hours: number } | null; previous: { exportedAt: string; diamonds: number; hours: number } | null };
+    month: { current: { diamonds: number; hours: number }; previous: { diamonds: number; hours: number } };
+  };
   exportDates: { exportedAt: string; periodType: string; creators: number }[];
   rows: Row[];
 }
@@ -52,7 +58,8 @@ interface Assignments {
   teamLeads: (Person & { role: string; creators: number; mappedBackstageEmails: string[] })[];
   unmatchedTeamLeads: { value: string; count: number }[];
   mappings: { id: number; backstageEmail: string; adminId: number; admin: Person }[];
-  creators: { backstageCreatorId: string; username: string; teamLead: string | null; accountId: number | null }[];
+  creators: { backstageCreatorId: string; username: string; teamLead: string | null; accountId: number | null; leadId: number | null }[];
+  hidden: { backstageCreatorId: string; username: string; hiddenAt: string }[];
   creatorAccounts: { id: number; name: string; email: string; assignedRole: string; status: string; linked: { backstageCreatorId: string; username: string } | null }[];
   assignments: { id: number; backstageCreatorId: string | null; creatorUsername: string | null; manager: Person & { role: string }; teamLead: Person | null; leadId: number | null }[];
 }
@@ -60,7 +67,6 @@ interface Assignments {
 const fmt = (n: number) => n.toLocaleString("en-US");
 const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 const typeLabel = (t: string) => (t === "monthly" ? "Monthly" : "Weekly");
-type SortKey = "username" | "teamLead" | "diamondsL30D" | "validDaysL30D" | "liveDurationL30D" | "followers" | "lastLive" | "exportedAt";
 
 export default function CreatorStatsAdminPage() {
   const router = useRouter();
@@ -69,10 +75,9 @@ export default function CreatorStatsAdminPage() {
   const [err, setErr] = useState("");
   const [query, setQuery] = useState<{ period: string; asOf: string }>({ period: "all", asOf: "" });
   const [version, setVersion] = useState(0);
-  const [search, setSearch] = useState("");
-  const [goalFilter, setGoalFilter] = useState<"all" | "behind" | "ontrack">("all");
-  const [leadFilter, setLeadFilter] = useState("");
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "diamondsL30D", dir: -1 });
+  const [pickedIds, setPickedIds] = useState<string[]>([]); // dropdown multi-select
+  const [pickOpen, setPickOpen] = useState(false);
+  const [pickQuery, setPickQuery] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
 
   useEffect(() => {
@@ -100,16 +105,13 @@ export default function CreatorStatsAdminPage() {
 
   const rows = useMemo(() => {
     if (!dash) return [];
-    const q = search.trim().toLowerCase();
+    const picked = new Set(pickedIds);
+    // The table only shows creators picked in the dropdown (the full list
+    // lives there now). Sorted by diamonds, like the summary boxes.
     return dash.rows
-      .filter(r => !q || r.username.includes(q) || (r.teamLead || "").toLowerCase().includes(q) || (r.creatorAccount?.name || "").toLowerCase().includes(q))
-      .filter(r => goalFilter === "all" || (goalFilter === "behind" ? behind(r) : !behind(r)))
-      .filter(r => !leadFilter || r.teamLead === leadFilter)
-      .sort((a, b) => {
-        const av = a[sort.key] ?? "", bv = b[sort.key] ?? "";
-        return (av < bv ? -1 : av > bv ? 1 : 0) * sort.dir;
-      });
-  }, [dash, search, goalFilter, leadFilter, sort, behind]);
+      .filter(r => picked.has(r.backstageCreatorId))
+      .sort((a, b) => b.diamondsL30D - a.diamondsL30D);
+  }, [dash, pickedIds]);
 
   const totals = useMemo(() => {
     const all = dash?.rows || [];
@@ -117,21 +119,16 @@ export default function CreatorStatsAdminPage() {
       creators: all.length,
       diamonds: all.reduce((s, r) => s + r.diamondsL30D, 0),
       hours: Math.round(all.reduce((s, r) => s + r.liveDurationL30D, 0)),
+      // Month-to-date: every upload this calendar month, added up (server-computed).
+      monthDiamonds: dash?.monthTotals.diamonds ?? 0,
+      monthHours: dash?.monthTotals.hours ?? 0,
       avgDays: all.length ? Math.round((all.reduce((s, r) => s + r.validDaysL30D, 0) / all.length) * 10) / 10 : 0,
       behind: all.filter(behind).length,
       fanClub: all.reduce((s, r) => s + r.fanClubDiamondsL30D, 0),
     };
   }, [dash, behind]);
 
-  const leads = useMemo(() => [...new Set((dash?.rows || []).map(r => r.teamLead).filter(Boolean) as string[])].sort(), [dash]);
   const top = (key: "diamondsL30D" | "liveDurationL30D" | "validDaysL30D") => [...(dash?.rows || [])].sort((a, b) => b[key] - a[key]).slice(0, 5);
-
-  const th = (key: SortKey, label: string) => (
-    <th className="cursor-pointer whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted hover:text-white"
-      onClick={() => setSort(s => ({ key, dir: s.key === key ? (s.dir === 1 ? -1 : 1) : -1 }))}>
-      {label}{sort.key === key ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
-    </th>
-  );
 
   if (loading && !dash) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-nmcn-blue" /></div>;
@@ -178,24 +175,28 @@ export default function CreatorStatsAdminPage() {
           </div>
         </div>
 
+        <UploadPanel isOwner={isAll} onImported={reload} />
+
         {dash.exportDates.length === 0 && (
           <div className="card mb-6 p-6 text-sm text-nmcn-muted">
             {isAll || dash.teamLeadEmails.length || dash.assignedCreatorCount
-              ? "No stats on file yet. Upload a Backstage export below."
+              ? "No stats on file yet. Upload a Backstage export above."
               : dash.scope === "team_lead"
-                ? "No stats on file for creators listed under your email yet. Upload your team's Backstage export below."
+                ? "No stats on file for creators listed under your email yet. Upload your team's Backstage export above."
                 : "No team leads or creators are assigned to you yet. An owner can assign them on this page."}
           </div>
         )}
 
         {dash.rows.length > 0 && goals && (
           <>
-            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {[
                 ["Creators", fmt(totals.creators)],
-                ["Diamonds (L30D)", fmt(totals.diamonds)],
+                ["Diamonds — this week", fmt(totals.diamonds)],
+                ["Diamonds — this month", fmt(totals.monthDiamonds)],
+                ["LIVE hours — this week", fmt(totals.hours)],
+                ["LIVE hours — this month", fmt(totals.monthHours)],
                 ["Fan Club ◆", fmt(totals.fanClub)],
-                ["LIVE hours", fmt(totals.hours)],
                 ["Avg valid days", String(totals.avgDays)],
                 [`Goal not met (${goals.validDays}d / ${goals.liveHours}h)`, fmt(totals.behind)],
               ].map(([label, value]) => (
@@ -205,6 +206,9 @@ export default function CreatorStatsAdminPage() {
                 </div>
               ))}
             </div>
+            <p className="mt-1 text-xs text-nmcn-muted">
+              Week = latest upload per creator · Month = every upload this month added together (since {fmtDate(dash.monthStart)})
+            </p>
 
             <div className="mt-4 grid gap-4 lg:grid-cols-4">
               {([["diamondsL30D", "Top diamonds", (r: Row) => `${fmt(r.diamondsL30D)} ◆`], ["liveDurationL30D", "Most LIVE hours", (r: Row) => `${r.liveDurationL30D}h`], ["validDaysL30D", "Most valid days", (r: Row) => `${r.validDaysL30D}d`]] as const).map(([key, label, show]) => (
@@ -233,33 +237,133 @@ export default function CreatorStatsAdminPage() {
               </div>
             </div>
 
+            {/* ── Graphs: per-upload totals + week/week & month/month ───────── */}
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="card p-4">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">◆ Diamonds per upload</h3>
+                <p className="mb-2 text-[11px] text-nmcn-muted">Total across everyone in your scope, at each upload date</p>
+                <BarChart points={dash.series.exports.map(e => ({ label: fmtDate(e.exportedAt), value: e.diamonds }))} />
+              </div>
+              <div className="card p-4">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">LIVE hours per upload</h3>
+                <p className="mb-2 text-[11px] text-nmcn-muted">Total across everyone in your scope, at each upload date</p>
+                <BarChart points={dash.series.exports.map(e => ({ label: fmtDate(e.exportedAt), value: e.hours }))} />
+              </div>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <CompareCard
+                title="This week vs last week"
+                current={dash.series.week.current}
+                previous={dash.series.week.previous}
+              />
+              <CompareCard
+                title={`This month vs last month (since ${fmtDate(dash.monthStart)})`}
+                current={{ exportedAt: dash.monthStart, diamonds: dash.series.month.current.diamonds, hours: dash.series.month.current.hours }}
+                previous={{ exportedAt: dash.monthStart, diamonds: dash.series.month.previous.diamonds, hours: dash.series.month.previous.hours }}
+              />
+            </div>
+
+            {/* ── Creator picker (replaces the old full list) + their rows ──── */}
             <div className="card mt-4 p-4">
               <div className="mb-3 flex flex-wrap items-center gap-3">
-                <div className="relative min-w-[200px] flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-nmcn-muted" />
-                  <input className="input pl-9 text-sm" placeholder="Search username, team lead or account" value={search} onChange={e => setSearch(e.target.value)} />
-                </div>
-                <select className="input w-auto text-sm" value={goalFilter} onChange={e => setGoalFilter(e.target.value as typeof goalFilter)}>
-                  <option value="all">All creators</option>
-                  <option value="behind">Goal not met</option>
-                  <option value="ontrack">Goal met</option>
-                </select>
-                {leads.length > 1 && (
-                  <select className="input w-auto text-sm" value={leadFilter} onChange={e => setLeadFilter(e.target.value)}>
-                    <option value="">All team leads</option>
-                    {leads.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                <button
+                  className="btn-outline text-sm"
+                  onClick={() => setPickOpen(o => !o)}
+                >
+                  <Users className="mr-1 inline h-4 w-4" />
+                  Pick creators ({pickedIds.length} selected)
+                </button>
+                {pickedIds.length > 0 && (
+                  <button className="text-xs text-nmcn-muted hover:text-white" onClick={() => setPickedIds([])}>
+                    Clear all
+                  </button>
                 )}
-                <span className="text-xs text-nmcn-muted">{rows.length} shown</span>
+                <span className="text-xs text-nmcn-muted">{rows.length} shown · pick one or more above</span>
               </div>
+
+              {pickOpen && (
+                <div className="mb-3 rounded-lg border border-nmcn-border p-3">
+                  <div className="relative mb-2">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-nmcn-muted" />
+                    <input
+                      className="input pl-9 text-sm"
+                      placeholder="Type a username or team lead"
+                      value={pickQuery}
+                      onChange={e => setPickQuery(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-64 space-y-1 overflow-y-auto">
+                    {dash.rows
+                      .filter(r => {
+                        const q = pickQuery.trim().toLowerCase();
+                        return !q || r.username.includes(q) || (r.teamLead || "").toLowerCase().includes(q);
+                      })
+                      .map(r => {
+                        const on = pickedIds.includes(r.backstageCreatorId);
+                        return (
+                          <label key={r.backstageCreatorId} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-nmcn-border/30">
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={() => setPickedIds(p =>
+                                on ? p.filter(id => id !== r.backstageCreatorId) : [...p, r.backstageCreatorId]
+                              )}
+                            />
+                            <span className={on ? "text-nmcn-gold" : "text-white"}>@{r.username}</span>
+                            <span className="truncate text-xs text-nmcn-muted">{r.teamLead || "—"}</span>
+                          </label>
+                        );
+                      })}
+                    {dash.rows.length === 0 && <p className="text-sm text-nmcn-muted">No creators on file.</p>}
+                  </div>
+                  <div className="mt-2 flex gap-3 border-t border-nmcn-border/40 pt-2 text-xs">
+                    <button className="text-nmcn-blue hover:underline" onClick={() => setPickedIds(dash.rows.map(r => r.backstageCreatorId))}>
+                      Select all shown ({dash.rows.length})
+                    </button>
+                    <button className="text-nmcn-muted hover:text-white" onClick={() => { setPickedIds([]); setPickQuery(""); }}>
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {pickedIds.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {pickedIds.map(id => {
+                    const r = dash.rows.find(x => x.backstageCreatorId === id);
+                    if (!r) return null;
+                    return (
+                      <span key={id} className="flex items-center gap-1 rounded-full border border-nmcn-border px-2 py-1 text-xs">
+                        <span className="text-nmcn-gold">@{r.username}</span>
+                        <button className="text-nmcn-muted hover:text-red-400" title="Remove" onClick={() => setPickedIds(p => p.filter(x => x !== id))}>
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              {rows.length === 0 ? (
+                <p className="text-sm text-nmcn-muted">
+                  {dash.rows.length === 0
+                    ? "No stats on file yet."
+                    : "Pick one or more creators from the list above to see their rows here."}
+                </p>
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="border-b border-nmcn-border">
                     <tr>
-                      {th("username", "Creator")}{th("teamLead", "Team lead")}{th("exportedAt", "As of")}{th("diamondsL30D", "Diamonds")}
-                      {th("validDaysL30D", "Valid days")}{th("liveDurationL30D", "LIVE hrs")}
+                      <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted">Creator</th>
+                      <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted">Team lead</th>
+                      <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted">As of</th>
+                      <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted">Diamonds</th>
+                      <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted">Valid days</th>
+                      <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted">LIVE hrs</th>
                       <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted" title="Against 8 valid days and 20 LIVE hours, as of that row's upload">Goals</th>
-                      {th("followers", "Followers")}
+                      <th className="whitespace-nowrap px-2 py-2 text-left font-semibold text-nmcn-muted">Followers</th>
                       <th className="px-2 py-2 text-left font-semibold text-nmcn-muted">Tier</th>
                       <th className="px-2 py-2 text-left font-semibold text-nmcn-muted">Notes</th>
                     </tr>
@@ -287,11 +391,11 @@ export default function CreatorStatsAdminPage() {
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           </>
         )}
 
-        <UploadPanel isOwner={isAll} onImported={reload} />
         {(isAll || dash?.viewer.role === "team_lead" || dash?.viewer.role === "manager") && <AssignmentsPanel />}
       </div>
     </div>
@@ -323,6 +427,67 @@ function DetailRow({ r, isAll, open, onToggle, children }: { r: Row; isAll: bool
         </tr>
       )}
     </>
+  );
+}
+
+// ── Graphs ──────────────────────────────────────────────────────────────────
+// Gold bar chart for per-upload totals (no chart lib — same SVG style as the
+// creator-facing trend line).
+function BarChart({ points }: { points: { label: string; value: number }[] }) {
+  if (points.length === 0) return <p className="text-sm text-nmcn-muted">No uploads to chart yet.</p>;
+  const max = Math.max(...points.map(p => p.value), 1);
+  const H = 120;
+  return (
+    <div className="flex items-end gap-2" style={{ height: H }}>
+      {points.map((p, i) => (
+        <div key={i} className="flex flex-1 flex-col items-center gap-1" title={`${p.label}: ${fmt(p.value)}`}>
+          <span className="text-[10px] text-nmcn-muted">{p.value >= 1000 ? `${Math.round(p.value / 100) / 10}k` : fmt(Math.round(p.value))}</span>
+          <div className="w-full rounded-t bg-nmcn-gold/80 transition hover:bg-nmcn-gold" style={{ height: `${Math.max((p.value / max) * (H - 34), 2)}px` }} />
+          <span className="w-full truncate text-center text-[9px] text-nmcn-muted">{p.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// This-week-vs-last-week and this-month-vs-last-month comparison card.
+function CompareCard({ title, current, previous }: {
+  title: string;
+  current: { exportedAt: string; diamonds: number; hours: number } | null;
+  previous: { exportedAt: string; diamonds: number; hours: number } | null;
+}) {
+  const pct = (c: number, p: number) => (p > 0 ? Math.round(((c - p) / p) * 100) : null);
+  const dDiamonds = current && previous ? current.diamonds - previous.diamonds : null;
+  const dHours = current && previous ? Math.round((current.hours - previous.hours) * 100) / 100 : null;
+  const pDiamonds = current && previous ? pct(current.diamonds, previous.diamonds) : null;
+  const pHours = current && previous ? pct(current.hours, previous.hours) : null;
+  const delta = (d: number | null, p: number | null, suffix: string) => {
+    if (d === null) return <span className="text-xs text-nmcn-muted">— no comparison yet</span>;
+    const up = d > 0, flat = d === 0;
+    return (
+      <span className={`text-xs ${flat ? "text-nmcn-muted" : up ? "text-emerald-400" : "text-red-400"}`}>
+        {flat ? "•" : up ? "▲" : "▼"} {fmt(Math.abs(d))}{suffix}{p !== null && p !== 0 ? ` (${up ? "+" : ""}${p}%)` : ""}
+      </span>
+    );
+  };
+  return (
+    <div className="card p-4">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">{title}</h3>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-[11px] text-nmcn-muted">Now</p>
+          <p className="text-xl font-bold text-white">{fmt(current?.diamonds ?? 0)} <span className="text-xs font-normal text-nmcn-gold">◆</span></p>
+          {delta(dDiamonds, pDiamonds, " ◆")}
+          <p className="mt-1 text-lg font-semibold text-white">{Math.round(current?.hours ?? 0)}<span className="text-xs font-normal text-nmcn-muted"> hrs</span></p>
+          {delta(dHours, pHours, "h")}
+        </div>
+        <div className="border-l border-nmcn-border/40 pl-4">
+          <p className="text-[11px] text-nmcn-muted">Previous</p>
+          <p className="text-xl font-bold text-nmcn-text">{fmt(previous?.diamonds ?? 0)} <span className="text-xs font-normal text-nmcn-muted">◆</span></p>
+          <p className="mt-1 text-lg font-semibold text-nmcn-text">{Math.round(previous?.hours ?? 0)}<span className="text-xs font-normal text-nmcn-muted"> hrs</span></p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -370,7 +535,7 @@ function UploadPanel({ isOwner, onImported }: { isOwner: boolean; onImported: ()
 
   const c = preview?.counts;
   return (
-    <div className="mt-10 space-y-6">
+    <div className="mb-10 space-y-6">
       <section className="card p-6">
         <h2 className="mb-1 flex items-center gap-2 font-heading text-xl font-semibold text-white"><Upload className="h-5 w-5 text-nmcn-gold" /> Upload Backstage export</h2>
         <p className="mb-4 text-sm text-nmcn-muted">
@@ -383,7 +548,10 @@ function UploadPanel({ isOwner, onImported }: { isOwner: boolean; onImported: ()
             <option value="weekly">Weekly</option>
             <option value="monthly">End of Month</option>
           </select>
-          <input type="file" accept=".xlsx" className="text-sm text-nmcn-text" onChange={e => { setFile(e.target.files?.[0] || null); setPreview(null); setMsg(""); }} />
+          <label className="btn-gold cursor-pointer text-sm">
+            {file ? file.name : "Choose file (.xlsx)"}
+            <input type="file" accept=".xlsx" className="sr-only" onChange={e => { setFile(e.target.files?.[0] || null); setPreview(null); setMsg(""); }} />
+          </label>
           <button className="btn-outline text-sm disabled:opacity-50" disabled={!file || !periodType || busy} onClick={() => send("preview")}>
             {busy && !preview ? <Loader2 className="inline h-4 w-4 animate-spin" /> : "Preview"}
           </button>
@@ -520,6 +688,25 @@ function AssignmentsPanel() {
     } catch { alert("Network error"); } finally { setBusy(false); }
   };
   const remove = async (id: number) => { await fetch(`/api/admin/creator-stats/assignments?id=${id}`, { method: "DELETE" }); setEditId(null); setVersion(v => v + 1); };
+
+  // Owner: remove a departed creator from every stats page (hide flag — no
+  // stats deleted, future uploads skip them) or bring them back.
+  const hideCreator = async (cid: string, username: string) => {
+    if (!confirm(`Remove @${username} from the stats pages? Their stats stay saved but hidden everywhere (including their own My Stats), and future uploads won't bring them back. You can restore them here.`)) return;
+    const res = await fetch("/api/admin/creator-stats/assignments", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "hideCreator", backstageCreatorId: cid }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || "Could not remove that creator"); return; }
+    reload();
+  };
+  const unhideCreator = async (cid: string) => {
+    await fetch("/api/admin/creator-stats/assignments", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "unhideCreator", backstageCreatorId: cid }),
+    });
+    reload();
+  };
 
   // Owner: change someone's role (manager ↔ scout ↔ team lead) from the roster.
   const setRole = async (adminId: number, role: string) => {
@@ -902,34 +1089,48 @@ function AssignmentsPanel() {
                         </span>
                       ))}
 
-                      {/* Creators attached to this team */}
-                      {creatorRows.map(a => (
-                        <span key={a.id} className="flex flex-wrap items-center gap-1 rounded-full border border-nmcn-border px-2 py-1 text-xs">
-                          <span className="text-white">@{a.creatorUsername || a.backstageCreatorId}</span>
-                          <button className="text-nmcn-muted hover:text-nmcn-gold" title="Move to another profile" onClick={() => setEditId(editId === a.id ? null : a.id)}>
-                            <Pencil className="h-3 w-3" />
-                          </button>
-                          <button className="text-nmcn-muted hover:text-red-400" title="Remove from team" onClick={() => remove(a.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                          {editId === a.id && (
-                            <select
-                              className="input ml-1 py-0 text-xs"
-                              value={a.backstageCreatorId || ""}
-                              onChange={e => reassign(a.id, e.target.value)}
-                            >
-                              <option value="">Move to another profile…</option>
-                              {asg.creators.map(c => (
-                                <option key={c.backstageCreatorId} value={c.backstageCreatorId}>@{c.username}</option>
-                              ))}
-                            </select>
-                          )}
-                        </span>
-                      ))}
+                      {/* Every creator profile on this team — the full roster,
+                          whether or not an assignment row exists. Managers and
+                          scouts can finally see who belongs where. */}
+                      {asg.creators.filter(c => c.leadId === t.id).map(c => {
+                        const row = creatorRows.find(a => a.backstageCreatorId === c.backstageCreatorId);
+                        return (
+                          <span key={c.backstageCreatorId} className="flex flex-wrap items-center gap-1 rounded-full border border-nmcn-border px-2 py-1 text-xs">
+                            <span className="text-white">@{c.username}</span>
+                            {row && (
+                              <button className="text-nmcn-muted hover:text-nmcn-gold" title="Move to another profile" onClick={() => setEditId(editId === row.id ? null : row.id)}>
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            )}
+                            {row && (
+                              <button className="text-nmcn-muted hover:text-red-400" title="Remove from team" onClick={() => remove(row.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
+                            {canEditAll && (
+                              <button className="text-nmcn-muted hover:text-red-400" title="Remove from stats entirely (left the agency)" onClick={() => hideCreator(c.backstageCreatorId, c.username)}>
+                                <UserX className="h-3 w-3" />
+                              </button>
+                            )}
+                            {row && editId === row.id && (
+                              <select
+                                className="input ml-1 py-0 text-xs"
+                                value={row.backstageCreatorId || ""}
+                                onChange={e => reassign(row.id, e.target.value)}
+                              >
+                                <option value="">Move to another profile…</option>
+                                {asg.creators.map(o => (
+                                  <option key={o.backstageCreatorId} value={o.backstageCreatorId}>@{o.username}</option>
+                                ))}
+                              </select>
+                            )}
+                          </span>
+                        );
+                      })}
 
-                      {onTeam.length === 0 && creatorRows.length === 0 && (
+                      {onTeam.length === 0 && asg.creators.filter(c => c.leadId === t.id).length === 0 && (
                         <span className="text-xs text-nmcn-muted">
-                          No managers, scouts or attached creators yet — use the assign box above.
+                          No managers, scouts or creators on this team yet — use the assign box above.
                         </span>
                       )}
                     </div>
@@ -964,6 +1165,58 @@ function AssignmentsPanel() {
                 </div>
               );
             })()}
+
+            {/* Creator profiles that don't resolve to any team — assign them so
+                their lead/manager can see them. */}
+            {(() => {
+              const unteamed = asg.creators.filter(c => c.leadId === null);
+              if (!unteamed.length) return null;
+              return (
+                <div className="mt-3 rounded-lg border border-amber-400/30 p-3">
+                  <p className="mb-2 text-xs font-semibold text-amber-300">
+                    Profiles not on a team yet · {unteamed.length}
+                  </p>
+                  <p className="mb-2 text-[11px] text-nmcn-muted">
+                    Their Backstage &quot;Creator Network manager&quot; email matches no staff account. Map the email above or attach them with the assign box.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {unteamed.map(c => (
+                      <span key={c.backstageCreatorId} className="flex items-center gap-1 rounded-full border border-nmcn-border px-2 py-1 text-xs">
+                        <span className="text-white">@{c.username}</span>
+                        {c.teamLead && <span className="text-nmcn-muted">{c.teamLead}</span>}
+                        {canEditAll && (
+                          <button className="text-nmcn-muted hover:text-red-400" title="Remove from stats entirely (left the agency)" onClick={() => hideCreator(c.backstageCreatorId, c.username)}>
+                            <UserX className="h-3 w-3" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Removed from stats (left the agency) — owner can restore. */}
+            {canEditAll && asg.hidden.length > 0 && (
+              <div className="mt-3 rounded-lg border border-nmcn-border p-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+                  Removed from stats · {asg.hidden.length}
+                </p>
+                <p className="mb-2 text-[11px] text-nmcn-muted">
+                  These profiles are hidden on every stats page and skipped on future uploads. Restoring brings their saved stats back.
+                </p>
+                <ul className="max-h-48 space-y-1 overflow-y-auto text-xs">
+                  {asg.hidden.map(h => (
+                    <li key={h.backstageCreatorId} className="flex items-center justify-between gap-2">
+                      <span className="text-white">@{h.username} <span className="text-nmcn-muted">· removed {fmtDate(h.hiddenAt)}</span></span>
+                      <button className="flex items-center gap-1 text-nmcn-blue hover:underline" onClick={() => unhideCreator(h.backstageCreatorId)}>
+                        <RotateCcw className="h-3 w-3" /> Restore
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Profile ↔ account (owner only): bind a Backstage profile (of the

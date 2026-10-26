@@ -43,10 +43,11 @@ export async function GET(request: NextRequest) {
       take: 60,
     }),
     // light history for "vs previous" deltas (same period type, earlier export)
+    // + the month-to-date totals (every upload this calendar month, added up).
     prisma.creatorStat.findMany({
       where: { ...where, exportedAt: { gte: new Date(Date.now() - 400 * 86_400_000) } },
       orderBy: [{ exportedAt: "desc" }, { id: "desc" }],
-      select: { backstageCreatorId: true, exportedAt: true, periodType: true, diamondsL30D: true },
+      select: { backstageCreatorId: true, exportedAt: true, periodType: true, diamondsL30D: true, liveDurationL30D: true },
     }),
     // Manual routes (the owner's round-one assignment) = the default sort:
     // creator → its manager/scout's anchored team → that lead's email.
@@ -80,6 +81,51 @@ export async function GET(request: NextRequest) {
   const byCreator = new Map<string, typeof light>();
   for (const l of light) byCreator.set(l.backstageCreatorId, [...(byCreator.get(l.backstageCreatorId) || []), l]);
 
+  // Month-to-date: every upload exported THIS calendar month, added up per
+  // creator, then across creators — so week 1 + week 2 + … all count.
+  // (The weekly boxes stay on each creator's latest row.)
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const monthAgg = new Map<string, { diamonds: number; hours: number }>();
+  for (const l of light) {
+    if (new Date(l.exportedAt) < monthStart) continue;
+    const a = monthAgg.get(l.backstageCreatorId) || { diamonds: 0, hours: 0 };
+    a.diamonds += l.diamondsL30D;
+    a.hours += l.liveDurationL30D;
+    monthAgg.set(l.backstageCreatorId, a);
+  }
+
+  // ── Graph series ──────────────────────────────────────────────────────────
+  // Per-export totals (every creator in scope summed at each export date) →
+  // the bar charts. Latest export = "this week", the one before = "last week".
+  const exportAgg = new Map<number, { exportedAt: Date; periodType: string; diamonds: number; hours: number; creators: Set<string> }>();
+  for (const l of light) {
+    const t = new Date(l.exportedAt).getTime();
+    const a = exportAgg.get(t) || { exportedAt: new Date(t), periodType: l.periodType, diamonds: 0, hours: 0, creators: new Set<string>() };
+    a.diamonds += l.diamondsL30D;
+    a.hours += l.liveDurationL30D;
+    a.creators.add(l.backstageCreatorId);
+    exportAgg.set(t, a);
+  }
+  const exportsSorted = [...exportAgg.values()].sort((a, b) => b.exportedAt.getTime() - a.exportedAt.getTime());
+  const [latestExport, prevExport] = exportsSorted;
+  // Previous calendar month totals (this month is already monthTotals).
+  const prevMonthStart = new Date(monthStart);
+  prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
+  const prevMonth = { diamonds: 0, hours: 0 };
+  for (const l of light) {
+    const d = new Date(l.exportedAt);
+    if (d >= prevMonthStart && d < monthStart) {
+      prevMonth.diamonds += l.diamondsL30D;
+      prevMonth.hours += l.liveDurationL30D;
+    }
+  }
+  const curMonth = {
+    diamonds: [...monthAgg.values()].reduce((s, a) => s + a.diamonds, 0),
+    hours: [...monthAgg.values()].reduce((s, a) => s + a.hours, 0),
+  };
+
   return NextResponse.json({
     scope,
     viewer: { name: staff.name, role: staff.role },
@@ -88,6 +134,30 @@ export async function GET(request: NextRequest) {
     goals: { validDays: STATS_CONFIG.validDaysGoal, liveHours: STATS_CONFIG.liveHoursGoal, tier5: STATS_CONFIG.tierTargets[5] },
     period: isPeriodType(period) ? period : "all",
     asOf: asOf ? asOf.toISOString() : null,
+    monthStart: monthStart.toISOString(),
+    monthTotals: {
+      diamonds: curMonth.diamonds,
+      hours: Math.round(curMonth.hours),
+    },
+    // Graph data: per-export sums (latest N), this week vs last week,
+    // this month vs last month.
+    series: {
+      exports: [...exportAgg.values()].sort((a, b) => a.exportedAt.getTime() - b.exportedAt.getTime()).slice(-16).map(e => ({
+        exportedAt: e.exportedAt.toISOString(),
+        periodType: e.periodType,
+        diamonds: e.diamonds,
+        hours: Math.round(e.hours * 100) / 100,
+        creators: e.creators.size,
+      })),
+      week: {
+        current: latestExport ? { exportedAt: latestExport.exportedAt.toISOString(), diamonds: latestExport.diamonds, hours: Math.round(latestExport.hours * 100) / 100 } : null,
+        previous: prevExport ? { exportedAt: prevExport.exportedAt.toISOString(), diamonds: prevExport.diamonds, hours: Math.round(prevExport.hours * 100) / 100 } : null,
+      },
+      month: {
+        current: { diamonds: curMonth.diamonds, hours: Math.round(curMonth.hours) },
+        previous: { diamonds: prevMonth.diamonds, hours: Math.round(prevMonth.hours) },
+      },
+    },
     exportDates: exportDates.map(e => ({ exportedAt: e.exportedAt, periodType: e.periodType, creators: e._count._all })),
     rows: rows
       .sort((a, b) => b.diamondsL30D - a.diamondsL30D)

@@ -29,6 +29,8 @@ export const emailKey = (v: string | null | undefined) => (v || "").trim().toLow
 export interface StatsViewerScope {
   teamLeadEmails: string[];
   creatorIds: string[];
+  /** Profiles removed from stats (left the agency) — excluded everywhere. */
+  hiddenCreatorIds: string[];
 }
 
 /**
@@ -51,7 +53,11 @@ export async function getStatsViewer(request: NextRequest) {
   const scope = statsScopeForRole(staff.role);
   if (!scope) return { status: 403 as const };
 
-  const access: StatsViewerScope = { teamLeadEmails: [], creatorIds: [] };
+  const access: StatsViewerScope = { teamLeadEmails: [], creatorIds: [], hiddenCreatorIds: [] };
+  // Creators removed from stats (left the agency) — hidden for EVERYONE,
+  // including the owner. Restoring is an owner action on the assignments panel.
+  const hidden = await prisma.creatorStatHidden.findMany({ select: { backstageCreatorId: true } });
+  access.hiddenCreatorIds = hidden.map(h => h.backstageCreatorId);
   if (scope === "team_lead") {
     // Own signup email PLUS any Backstage email mapped to this account, so a
     // lead whose Backstage email differs from their site email still gets their
@@ -93,16 +99,21 @@ export async function getStatsViewer(request: NextRequest) {
  * see. Non-admin viewers with nothing assigned get a clause matching nothing.
  */
 export function statsRowScope(scope: StatsScope, access: StatsViewerScope) {
-  if (scope === "all") return {};
+  const hidden = access.hiddenCreatorIds?.length
+    ? [{ backstageCreatorId: { notIn: access.hiddenCreatorIds } }]
+    : [];
+  if (scope === "all") return hidden.length ? { AND: hidden } : {};
   const or: object[] = [
     ...[...new Set(access.teamLeadEmails.filter(Boolean))].map(e => ({ teamLead: { equals: e, mode: "insensitive" as const } })),
     ...(access.creatorIds.length ? [{ backstageCreatorId: { in: access.creatorIds } }] : []),
   ];
-  return or.length ? { OR: or } : { id: -1 };
+  const scopeClause = or.length ? { OR: or } : { id: -1 };
+  return hidden.length ? { AND: [scopeClause, ...hidden] } : scopeClause;
 }
 
 /** Same rule as statsRowScope, for rows parsed from an upload (not yet stored). */
 export function rowInScope(scope: StatsScope, access: StatsViewerScope, row: { teamLead: string | null; backstageCreatorId: string }) {
+  if (access.hiddenCreatorIds?.includes(row.backstageCreatorId)) return false;
   if (scope === "all") return true;
   const lead = emailKey(row.teamLead);
   return (Boolean(lead) && access.teamLeadEmails.includes(lead)) || access.creatorIds.includes(row.backstageCreatorId);

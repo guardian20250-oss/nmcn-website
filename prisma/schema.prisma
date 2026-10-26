@@ -366,3 +366,16 @@ model CreatorStatEmailMapping {
   @@index([adminId])
   @@map("creator_stat_email_mappings")
 }
+
+// Creators removed from the stats pages (left the agency). Additive flag table:
+// no stats rows are deleted — the profile is simply filtered out of every
+// stats view, quick search, the creator's own My Stats page, AND future
+// imports skip it, so a re-upload never brings them back. Owner can restore.
+model CreatorStatHidden {
+  id                 Int      @id @default(autoincrement())
+  backstageCreatorId String   @unique @db.VarChar(40)
+  hiddenBy           Int? // staff account that removed them
+  hiddenAt           DateTime @default(now())
+
+  @@map("creator_stat_hidden")
+}

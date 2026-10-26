@@ -96,9 +96,15 @@ export default async function MyStatsPage({ searchParams }: { searchParams: Prom
   }
 
   // SECURITY: only rows linked to the logged-in account, approved fields only.
+  // Removed-from-agency profiles (hidden flag) see no stats at all.
+  const hidden = await prisma.creatorStatHidden.findMany({ select: { backstageCreatorId: true } });
+  const hiddenIds = hidden.map(h => h.backstageCreatorId);
   const readHistory = () =>
     prisma.creatorStat.findMany({
-      where: { creatorAccountId: account.id },
+      where: {
+        creatorAccountId: account.id,
+        ...(hiddenIds.length ? { backstageCreatorId: { notIn: hiddenIds } } : {}),
+      },
       select: CREATOR_SAFE_SELECT,
       orderBy: [{ exportedAt: "desc" }, { id: "desc" }],
       take: 60,
@@ -195,14 +201,7 @@ export default async function MyStatsPage({ searchParams }: { searchParams: Prom
           <div className="card p-5 lg:col-span-2">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-nmcn-muted">Diamonds across uploads</h3>
-              <div className="flex gap-1 text-xs">
-                {(["weekly", "monthly"] as const).map(t => (
-                  <Link key={t} href={`/academy/stats?period=${t}`} scroll={false}
-                    className={`rounded-full border px-3 py-0.5 ${trendType === t ? "border-nmcn-gold text-nmcn-gold" : "border-nmcn-border text-nmcn-muted hover:text-white"}`}>
-                    {periodLabel(t)}
-                  </Link>
-                ))}
-              </div>
+              <span className="text-xs text-nmcn-muted">{periodLabel(trendType)}</span>
             </div>
             <TrendChart points={trend} />
           </div>

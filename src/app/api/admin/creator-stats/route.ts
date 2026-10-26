@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canManageCreatorStats, getStatsViewer, rowInScope } from "@/lib/creator-stats-access";
 import { parseBackstageExport, normalizeHandle, STATS_CONFIG, isPeriodType, periodLabel } from "@/lib/creator-stats";
+import { sendStatsUploadedCard } from "@/lib/stats-notify";
 
 export const runtime = "nodejs";
 
@@ -194,7 +195,19 @@ export async function POST(request: NextRequest) {
     return { ...snap, rowCount: res.count };
   }, { timeout: 30_000 });
 
-  return NextResponse.json({ ok: true, snapshotId: snapshot.id, counts: { ...counts, imported: snapshot.rowCount } });
+  // Creators-channel card: owner/co-owner import = the master file → ONE
+  // combined card; team lead/manager import → one card naming their team(s).
+  // Never throws — a Discord hiccup must not fail the committed import.
+  const teamLeads = [...new Set(rows.map(r => r.row.teamLead).filter((t): t is string => Boolean(t)))];
+  const notify = await sendStatsUploadedCard({
+    periodType,
+    teamLeads,
+    isMasterFile: isOwner,
+    importedCount: snapshot.rowCount,
+    uploadedBy: staff.name,
+  });
+
+  return NextResponse.json({ ok: true, snapshotId: snapshot.id, counts: { ...counts, imported: snapshot.rowCount }, notify });
 }
 
 // DELETE ?id=<snapshotId>: owners can remove any upload; others only their own.
