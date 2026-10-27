@@ -643,7 +643,7 @@ export default function AssignmentsPanel() {
                 <option value="">Account…</option>
                 {asg.creatorAccounts.map(a => (
                   <option key={a.id} value={a.id}>
-                    {a.name} · {a.email}{a.linked ? ` — linked to @${a.linked.username}` : ""}
+                    {a.name} · {a.email}{a.tiktokHandle ? ` · @${a.tiktokHandle.replace(/^@+/, "")}` : ""}{a.linked ? ` — linked to @${a.linked.username}` : ""}
                   </option>
                 ))}
               </select>

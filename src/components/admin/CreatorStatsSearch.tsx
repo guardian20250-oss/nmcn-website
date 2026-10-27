@@ -183,7 +183,7 @@ function CreatorCard({
     status: row.creatorAccount?.status || "active",
   });
   // Link box (owner): loaded on demand so the dashboard stays light.
-  const [accounts, setAccounts] = useState<{ id: number; name: string; email: string; linked: unknown }[] | null>(null);
+  const [accounts, setAccounts] = useState<{ id: number; name: string; email: string; tiktokHandle: string | null; linked: unknown }[] | null>(null);
   const [pickAccount, setPickAccount] = useState("");
 
   const reload = () => {
@@ -286,7 +286,9 @@ function CreatorCard({
           <span className="text-xs text-nmcn-muted">→ {row.teamLead || "no team lead in data"}</span>
           {row.creatorAccount ? (
             <span className="rounded-full border border-nmcn-gold/40 px-2 py-0.5 text-[11px] text-nmcn-gold">
-              {row.creatorAccount.name}
+              {row.creatorAccount.tiktokHandle
+                ? `@${row.creatorAccount.tiktokHandle.replace(/^@+/, "")}`
+                : row.creatorAccount.name}
             </span>
           ) : (
             <span className="rounded-full border border-nmcn-border px-2 py-0.5 text-[11px] text-nmcn-muted">
@@ -396,7 +398,7 @@ function CreatorCard({
                 <option value="">{accounts ? `Account (${accounts.length})…` : "Loading accounts…"}</option>
                 {(accounts || []).map(a => (
                   <option key={a.id} value={a.id}>
-                    {a.name} · {a.email}{a.linked ? " — has a profile" : ""}
+                    {a.tiktokHandle ? `@${a.tiktokHandle.replace(/^@+/, "")}` : a.name} · {a.email}{a.linked ? " — has a profile" : ""}
                   </option>
                 ))}
               </select>

@@ -89,9 +89,10 @@ export async function GET(request: NextRequest) {
       select: { id: true, backstageEmail: true, adminId: true, admin: { select: { id: true, name: true, email: true } } },
     }),
     // Every site account (for the profile ↔ account link box).
+    // tiktokHandle shown in the picker so you can match accounts to profiles.
     prisma.creatorAccount.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, email: true, assignedRole: true, status: true },
+      select: { id: true, name: true, email: true, tiktokHandle: true, assignedRole: true, status: true },
     }),
     // Profiles already bound to an account (any export snapshot).
     prisma.creatorStat.findMany({
@@ -327,9 +328,13 @@ export async function POST(request: NextRequest) {
 
     const accountId = Number(body.creatorAccountId);
     const account = Number.isInteger(accountId)
-      ? await prisma.creatorAccount.findUnique({ where: { id: accountId }, select: { id: true, name: true, email: true } })
+      ? await prisma.creatorAccount.findUnique({ where: { id: accountId }, select: { id: true, name: true, email: true, tiktokHandle: true } })
       : null;
     if (!account) return NextResponse.json({ error: "Choose the account this profile belongs to" }, { status: 400 });
+    // Show the @handle where we have one — government names stay out of the log.
+    const accountLabel = account.tiktokHandle
+      ? `@${account.tiktokHandle.replace(/^@+/, "")}`
+      : `${account.name} (${account.email})`;
 
     // One account, one Creator ID (same rule the upload path enforces): if the
     // account already holds a different profile, release it first.
@@ -344,12 +349,12 @@ export async function POST(request: NextRequest) {
     await prisma.creatorStatAuditLog.create({
       data: {
         action: "profile_link", adminId: staff.id, adminEmail: staff.email,
-        details: `[${staff.role}] Linked profile @${profile.username} (${cid}) to ${account.name} (${account.email})`
+        details: `[${staff.role}] Linked profile @${profile.username} (${cid}) to ${accountLabel}`
           + (prev ? `; released @${prev.username} (${prev.backstageCreatorId}) from that account` : "")
           + (profile.creatorAccountId && profile.creatorAccountId !== accountId ? `; took over from account #${profile.creatorAccountId}` : ""),
       },
     });
-    return NextResponse.json({ ok: true, username: profile.username, account: account.name });
+    return NextResponse.json({ ok: true, username: profile.username, account: accountLabel });
   }
 
   // — Remove a creator from the stats pages (left the agency) / restore. —

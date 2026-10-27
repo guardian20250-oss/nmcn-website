@@ -29,7 +29,7 @@ export interface Assignments {
   mappings: { id: number; backstageEmail: string; adminId: number; admin: Person }[];
   creators: { backstageCreatorId: string; username: string; teamLead: string | null; accountId: number | null; leadId: number | null }[];
   hidden: { backstageCreatorId: string; username: string; hiddenAt: string }[];
-  creatorAccounts: { id: number; name: string; email: string; assignedRole: string; status: string; linked: { backstageCreatorId: string; username: string } | null }[];
+  creatorAccounts: { id: number; name: string; email: string; tiktokHandle: string | null; assignedRole: string; status: string; linked: { backstageCreatorId: string; username: string } | null }[];
   assignments: { id: number; backstageCreatorId: string | null; creatorUsername: string | null; manager: Person & { role: string }; teamLead: Person | null; leadId: number | null }[];
 }
 
