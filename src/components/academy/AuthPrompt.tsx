@@ -323,7 +323,8 @@ export default function AuthPrompt({ initialMode }: { initialMode?: Mode }) {
       </form>
 
       <p className="mt-3 text-center text-xs text-nmcn-muted">
-        Optional — guests can complete training without an account.
+        An account is required for all academy training — everyone joins as an internal
+        Creator or an external Independent Creator.
       </p>
       <button
         type="button"

@@ -6,12 +6,13 @@ import {
   getCreatorAccountFromRequest,
   getCoursesForRole,
   changeCreatorPassword,
+  registerStaffRegistration,
 } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { mode, name, email, password, tiktokHandle } = body;
+    const { mode, name, email, password, tiktokHandle, accountType, role } = body;
 
     if (mode === "logout" || body.action === "logout") {
       const response = NextResponse.json({ ok: true });
@@ -98,13 +99,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
       }
 
+      // Account type chosen in the Create Account popup's Creators tab:
+      // "independent" = external Independent Creator, anything else = internal Creator.
+      const independent = accountType === "independent";
       const result = await registerCreatorAccount({
         name,
         email: email.toLowerCase(),
         password,
         tiktokHandle: tiktokHandle || "",
-        assignedRole: "creator",
-        independentCreator: false,
+        assignedRole: independent ? "independent_creator" : "creator",
+        independentCreator: independent,
         status: "pending",
       });
 
@@ -129,6 +133,39 @@ export async function POST(request: NextRequest) {
         path: "/",
       });
       return response;
+    }
+
+    if (mode === "registerStaff") {
+      if (!name || !email || !password || !role) {
+        return NextResponse.json(
+          { error: "Name, email, password, and role are required" },
+          { status: 400 }
+        );
+      }
+      if (String(password).length < 8) {
+        return NextResponse.json(
+          { error: "Password must be at least 8 characters" },
+          { status: 400 }
+        );
+      }
+      try {
+        await registerStaffRegistration({
+          name: String(name),
+          email: String(email).toLowerCase(),
+          password: String(password),
+          role: String(role),
+        });
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Could not submit staff request" },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json({
+        pending: true,
+        message:
+          "Staff request submitted! An admin will review your requested role and activate your account.",
+      });
     }
 
     if (mode === "login") {

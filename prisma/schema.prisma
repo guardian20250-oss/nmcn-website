@@ -26,6 +26,24 @@ model Admin {
   @@map("admins")
 }
 
+// Public staff sign-ups from the Create Account popup's Staff tab.
+// Rows wait here until an admin reviews them in the Pending queue and
+// approves (an Admin account is created from the stored credentials)
+// or rejects. Separate from Admin on purpose: pending applicants must
+// never appear in staff lists, login, or admin email notifications.
+model StaffRegistration {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("scout")
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("staff_registrations")
+}
+
 model Creator {
   id           Int      @id @default(autoincrement())
   email        String   @unique

@@ -41,6 +41,7 @@ export default function StaffAccountsPage() {
   const [approveForm, setApproveForm] = useState({ accountId: "", assignedRole: "creator" });
   const [approveLoading, setApproveLoading] = useState(false);
   const [accountRoles, setAccountRoles] = useState<Record<string, string>>({});
+  const [pendingStaff, setPendingStaff] = useState<any[]>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [actionError, setActionError] = useState("");
   const [editingCreator, setEditingCreator] = useState<any | null>(null);
@@ -78,6 +79,7 @@ export default function StaffAccountsPage() {
       if (res.ok) {
         const data = await res.json();
         setAccounts(data.accounts);
+        setPendingStaff(data.pendingStaff || []);
       } else if (res.status === 401) {
         router.push("/admin/login");
         return;
@@ -165,6 +167,56 @@ export default function StaffAccountsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "rejectAccount", accountId: Number(accountId) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        await fetchAccounts();
+      } else {
+        setActionError(data.error || "Reject failed");
+      }
+    } catch {
+      setActionError("Reject failed — network error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleApproveStaff = async (regId: number) => {
+    if (!regId || busyId !== null) return;
+    setActionError("");
+    // Negative id so the creator-approve spinner check can't collide.
+    setBusyId(-regId);
+    setApproveLoading(true);
+    try {
+      const targetRole = accountRoles[`staff:${regId}`] || "scout";
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approveStaff", accountId: Number(regId), role: targetRole }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        await fetchAccounts();
+      } else {
+        setActionError(data.error || "Approve failed");
+      }
+    } catch {
+      setActionError("Approve failed — network error");
+    } finally {
+      setApproveLoading(false);
+      setBusyId(null);
+    }
+  };
+
+  const handleRejectStaff = async (regId: number) => {
+    if (!regId || busyId !== null) return;
+    setActionError("");
+    setBusyId(-regId);
+    try {
+      const res = await fetch("/api/admin/staff/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "rejectStaff", accountId: Number(regId) }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -425,7 +477,7 @@ export default function StaffAccountsPage() {
   const creators = accounts?.creators || activeAccounts.filter((a: any) => !isIndependent(a));
   const independent = accounts?.independent || activeAccounts.filter(isIndependent);
   const tabDefs = [
-    { id: "pending", label: "Pending", count: pending.length },
+    { id: "pending", label: "Pending", count: pending.length + pendingStaff.length },
     { id: "creators", label: "Creators", count: creators.length },
     { id: "independent", label: "Independent", count: independent.length },
     { id: "staff", label: "Staff", count: staff.length },
@@ -890,6 +942,84 @@ export default function StaffAccountsPage() {
         {/* Pending */}
         {activeTab === "pending" && (
           <div>
+            {/* Staff sign-ups from the public Create Account popup.
+                The role is editable before approving — wrong choices can
+                be fixed right here. */}
+            {pendingStaff.length > 0 && (
+              <div className="mb-8">
+                <h2 className="font-heading mb-1 text-lg font-semibold text-white">
+                  Staff Sign-Ups ({pendingStaff.length})
+                </h2>
+                <p className="mb-4 text-sm text-nmcn-muted">
+                  People requesting a staff account. Check the requested role, change it if
+                  needed, then approve to activate their login.
+                </p>
+                <div className="grid gap-4">
+                  {pendingStaff.map((reg) => (
+                    <div key={`staff-${reg.id}`} className="card p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-nmcn-border bg-nmcn-blue/10">
+                            <Shield className="h-5 w-5 text-nmcn-blue" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white">{reg.name}</p>
+                            <p className="text-sm text-nmcn-muted">{reg.email}</p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-nmcn-muted">
+                          {new Date(reg.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-nmcn-muted">Requested role:</span>
+                          <select
+                            value={accountRoles[`staff:${reg.id}`] || reg.role}
+                            disabled={busyId !== null}
+                            onChange={(e) =>
+                              setAccountRoles((prev) => ({
+                                ...prev,
+                                [`staff:${reg.id}`]: e.target.value,
+                              }))
+                            }
+                            className="input py-1 px-2 text-xs"
+                            aria-label={`Role for ${reg.name}`}
+                          >
+                            <optgroup label="Staff">
+                              <option value="scout">Scout</option>
+                              <option value="manager">Manager</option>
+                              <option value="team_lead">Team Lead</option>
+                              <option value="battle_coordinator">Battle Coordinator</option>
+                              <option value="admin">Administrator</option>
+                            </optgroup>
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRejectStaff(reg.id)}
+                            disabled={busyId !== null}
+                            className="btn-ghost text-sm text-red-400 disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApproveStaff(reg.id)}
+                            disabled={busyId !== null}
+                            className="btn-gold text-sm disabled:opacity-50"
+                          >
+                            {busyId === -reg.id && approveLoading ? "..." : "Approve"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-lg font-semibold text-white">
                 Pending Accounts ({pending.length})

@@ -236,6 +236,88 @@ export async function createStaffAccount(data: {
   });
 }
 
+// ── Staff self-registration (public sign-up → admin approval queue) ──────────
+// Applicants from the Create Account popup's Staff tab land in
+// staff_registrations as "pending". Approval copies their credentials into
+// Admin (password is already bcrypt-hashed here, so it is stored as-is).
+
+export async function registerStaffRegistration(data: {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}) {
+  if (!VALID_ROLES.includes(data.role as StaffRole)) {
+    throw new Error("Invalid role");
+  }
+  const existingAdmin = await prisma.admin.findUnique({
+    where: { email: data.email },
+    select: { id: true },
+  });
+  if (existingAdmin) throw new Error("An account with this email already exists");
+
+  const existingReg = await prisma.staffRegistration.findUnique({
+    where: { email: data.email },
+    select: { id: true, status: true },
+  });
+  if (existingReg && existingReg.status === "pending") {
+    throw new Error("A staff request for this email is already awaiting approval");
+  }
+
+  const hashed = await hashPassword(data.password);
+  if (existingReg) {
+    // A previously handled request for this email — reopen it as pending.
+    return prisma.staffRegistration.update({
+      where: { id: existingReg.id },
+      data: { name: data.name, password: hashed, role: data.role, status: "pending" },
+    });
+  }
+  return prisma.staffRegistration.create({
+    data: { name: data.name, email: data.email, password: hashed, role: data.role, status: "pending" },
+  });
+}
+
+export async function getPendingStaffRegistrations() {
+  return prisma.staffRegistration.findMany({
+    where: { status: "pending" },
+    select: { id: true, email: true, name: true, role: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function approveStaffRegistration(id: number, role: string) {
+  if (!VALID_ROLES.includes(role as StaffRole)) throw new Error("Invalid role");
+  const reg = await prisma.staffRegistration.findUnique({ where: { id } });
+  if (!reg) throw new Error("Registration not found");
+  if (reg.status !== "pending") throw new Error("This request has already been handled");
+
+  const exists = await prisma.admin.findUnique({
+    where: { email: reg.email },
+    select: { id: true },
+  });
+  if (exists) throw new Error("An admin account with this email already exists");
+
+  await prisma.admin.create({
+    data: {
+      name: reg.name,
+      email: reg.email,
+      password: reg.password, // already hashed at registration
+      role,
+      mustChangePassword: false,
+    },
+  });
+  return prisma.staffRegistration.update({ where: { id }, data: { status: "approved" } });
+}
+
+export async function rejectStaffRegistration(id: number) {
+  const reg = await prisma.staffRegistration.findUnique({
+    where: { id },
+    select: { id: true, status: true },
+  });
+  if (!reg) throw new Error("Registration not found");
+  return prisma.staffRegistration.update({ where: { id }, data: { status: "rejected" } });
+}
+
 export async function changeAdminPassword(adminId: number, newPassword: string) {
   if (!newPassword || newPassword.length < 8) {
     throw new Error("Password must be at least 8 characters");

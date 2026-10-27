@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, BookOpen, Target } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCreatorAccountByToken } from "@/lib/auth";
 import CourseProgressClient from "@/components/academy/CourseProgressClient";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +14,17 @@ export default async function CoursePage({
   params: Promise<{ courseSlug: string }>;
 }) {
   const { courseSlug } = await params;
+
+  // Academy requires an account: guests and pending accounts go back to
+  // the academy landing, which shows the create-account / sign-in prompts.
+  let account: Awaited<ReturnType<typeof getCreatorAccountByToken>> = null;
+  try {
+    const cookieStore = await cookies();
+    account = await getCreatorAccountByToken(cookieStore.get("creator-token")?.value);
+  } catch {
+    account = null;
+  }
+  if (!account || account.status === "pending") redirect("/academy");
 
   let course;
   try {

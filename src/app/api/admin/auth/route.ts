@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { verifyAdmin, generateToken, changeAdminPassword, getStaffFromRequest } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -64,6 +65,25 @@ export async function POST(request: NextRequest) {
 
     const admin = await verifyAdmin(email, password);
     if (!admin) {
+      // A staff sign-up may be waiting in the approval queue — tell the
+      // applicant instead of a generic "invalid credentials" error.
+      const normalized = String(email).toLowerCase();
+      const activeExists = await prisma.admin.findFirst({
+        where: { email: { equals: normalized, mode: "insensitive" } },
+        select: { id: true },
+      });
+      if (!activeExists) {
+        const reg = await prisma.staffRegistration.findFirst({
+          where: { email: { equals: normalized, mode: "insensitive" }, status: "pending" },
+          select: { id: true },
+        });
+        if (reg) {
+          return NextResponse.json({
+            pending: true,
+            message: "Your staff account request is pending approval.",
+          });
+        }
+      }
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
@@ -75,6 +95,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       message: "Login successful",
       name: admin.name,
+      role: admin.role,
       mustChangePassword: admin.mustChangePassword,
     });
     response.cookies.set("admin-token", token, {

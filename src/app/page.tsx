@@ -5,6 +5,7 @@ import GetHelpButton from "@/components/GetHelpButton";
 import TodaySchedule from "@/components/TodaySchedule";
 import OpenLoginButton from "@/components/OpenLoginButton";
 import { getSiteSettings } from "@/lib/site-settings";
+import { verifyToken } from "@/lib/auth";
 import {
   Swords,
   Users,
@@ -50,19 +51,22 @@ export default async function HomePage() {
   ];
 
   let isLoggedIn = false;
+  let isStaff = false;
   try {
     const cookieStore = await cookies();
-    isLoggedIn = Boolean(
-      cookieStore.get("creator-token")?.value || cookieStore.get("admin-token")?.value
-    );
+    const staffToken = cookieStore.get("admin-token")?.value;
+    isLoggedIn = Boolean(cookieStore.get("creator-token")?.value || staffToken);
+    // Staff are already part of the network — they don't see Apply Now.
+    isStaff = Boolean(staffToken && verifyToken(staffToken));
   } catch {
     isLoggedIn = false;
+    isStaff = false;
   }
 
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative overflow-hidden px-6 pt-32 pb-20 text-center">
+      <section className="relative overflow-hidden px-4 pt-32 pb-20 text-center sm:px-6">
         <div className="absolute inset-0 bg-[radial-gradient(800px_500px_at_60%_20%,rgba(0,180,216,0.1),transparent_60%)]" />
         <div className="relative mx-auto max-w-4xl">
           <span className="mb-6 inline-block rounded-full border border-nmcn-border px-4 py-1.5 text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
@@ -76,13 +80,19 @@ export default async function HomePage() {
           <p className="mx-auto mb-8 max-w-2xl text-lg text-nmcn-muted">
             {settings.hero_subtitle}
           </p>
+          {/* Apply Now sits on its own above the battle schedule so it can't
+              be missed; staff never see it — they're already in. */}
+          {!isStaff && (
+            <div className="mb-8 flex justify-center">
+              <Link href="/join" className="btn-gold px-10 py-3 text-base">
+                Apply Now
+              </Link>
+            </div>
+          )}
           <TodaySchedule />
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/academy" className="btn-outline px-8 py-3 text-base">
               Creator Academy
-            </Link>
-            <Link href="/join" className="btn-gold px-8 py-3 text-base">
-              Apply Now
             </Link>
             {isLoggedIn ? (
               <Link
@@ -102,7 +112,7 @@ export default async function HomePage() {
       </section>
 
       {/* Stats */}
-      <section className="px-6 py-16">
+      <section className="px-4 sm:px-6 py-16">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-4">
           {stats.map((s, i) => (
             <div key={i} className="stat-card">
@@ -116,7 +126,7 @@ export default async function HomePage() {
       <div className="section-divider mx-auto max-w-5xl" />
 
       {/* What We Do */}
-      <section className="px-6 py-20">
+      <section className="px-4 sm:px-6 py-20">
         <div className="mx-auto max-w-7xl">
           <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
             What We Do
@@ -151,7 +161,7 @@ export default async function HomePage() {
       <div className="section-divider mx-auto max-w-5xl" />
 
       {/* Why NMCN */}
-      <section className="px-6 py-20">
+      <section className="px-4 sm:px-6 py-20">
         <div className="mx-auto max-w-7xl">
           <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
             Why NMCN
@@ -196,7 +206,7 @@ export default async function HomePage() {
       <div className="section-divider mx-auto max-w-5xl" />
 
       {/* Support */}
-      <section className="px-6 py-20">
+      <section className="px-4 sm:px-6 py-20">
         <div className="mx-auto max-w-3xl text-center">
           <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-[3px] text-nmcn-blue">
             Support
@@ -233,7 +243,7 @@ export default async function HomePage() {
       <div className="section-divider mx-auto max-w-5xl" />
 
       {/* CTA */}
-      <section className="px-6 py-20 text-center">
+      <section className="px-4 sm:px-6 py-20 text-center">
         <div className="mx-auto max-w-3xl">
           <h2 className="mb-4 font-heading text-3xl font-bold text-white md:text-4xl">
             Ready to <span className="gold-text">Level Up</span>?

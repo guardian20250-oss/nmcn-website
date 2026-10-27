@@ -2,16 +2,26 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X, LogIn, Loader2, User } from "lucide-react";
+import { Menu, X, LogIn, Loader2, User, LogOut } from "lucide-react";
 import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
+import CreateAccountModal from "@/components/CreateAccountModal";
 
 const baseNavLinks = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
   { href: "https://nmcnbattleexchange.com/pickup-board", label: "Pickup Board", external: true },
   { href: "/academy", label: "Academy" },
   { href: "/contact", label: "Contact" },
 ];
+
+// Where each staff role lands after login. The role comes back from the
+// login endpoint now — every staff role's home is the staff dashboard.
+const STAFF_HOME: Record<string, string> = {
+  admin: "/admin",
+  manager: "/admin",
+  team_lead: "/admin",
+  scout: "/admin",
+  battle_coordinator: "/admin",
+};
 
 function NavLink({ link, onClick }: { link: { href: string; label: string; external?: boolean }; onClick?: () => void }) {
   if (link.external) {
@@ -53,6 +63,7 @@ export default function Navbar() {
   const [creator, setCreator] = useState<SessionUser | null>(null);
   const [staff, setStaff] = useState<SessionUser | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -100,8 +111,19 @@ export default function Navbar() {
   ];
 
   const navLinks = loggedIn
-    ? [...baseNavLinks.slice(0, 2), { href: "/battle-exchange", label: "Battle Exchange" }, ...baseNavLinks.slice(2, 4), ...statsLinks, ...baseNavLinks.slice(4)]
+    ? [
+        ...baseNavLinks.slice(0, 1),
+        { href: "/battle-exchange", label: "Battle Exchange" },
+        ...baseNavLinks.slice(1, 3),
+        ...statsLinks,
+        ...baseNavLinks.slice(3),
+        // Dashboard sits next to Contact for staff only — login already
+        // auto-directs staff there, this is just a shortcut.
+        ...(staff ? [{ href: "/admin", label: "Dashboard" }] : []),
+      ]
     : baseNavLinks;
+
+  const isStaff = Boolean(staff);
 
   const submitLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,13 +147,19 @@ export default function Navbar() {
           setLoginError(sdata.error || "Invalid email or password");
           return;
         }
+        if (sdata.pending) {
+          setLoginError(sdata.message || "Your staff account request is pending approval.");
+          return;
+        }
         if (sdata.mustChangePassword) {
           setLoginOpen(false);
           setStaff({ id: 0, email, name: sdata.name, mustChangePassword: true });
           setForceStaff(true);
           return;
         }
-        window.location.href = "/admin";
+        // Role detected from the login response — every staff role's home
+        // is the staff dashboard.
+        window.location.href = STAFF_HOME[String(sdata.role || "")] || "/admin";
         return;
       }
       if (!res.ok) {
@@ -148,12 +176,30 @@ export default function Navbar() {
         setForceCreator(true);
         return;
       }
-      window.location.reload();
+      // Role-based redirect: independent creators (external) go to the
+      // academy, internal creators to their stats page.
+      window.location.href =
+        data.user?.independentCreator || data.user?.role === "independent_creator"
+          ? "/academy"
+          : "/academy/stats";
     } catch {
       setLoginError("Network error. Please try again.");
     } finally {
       setLoginBusy(false);
     }
+  };
+
+  const logoutStaff = async () => {
+    try {
+      await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout" }),
+      });
+    } catch {
+      // still reload below — worst case the cookie clears on next request
+    }
+    window.location.reload();
   };
 
   const accountButton = loggedIn ? (
@@ -163,10 +209,12 @@ export default function Navbar() {
         My Account
       </Link>
     ) : (
-      <Link href="/admin" className="btn-outline flex items-center gap-2 text-sm">
-        <User className="h-4 w-4" />
-        Dashboard
-      </Link>
+      // Staff: login already auto-directs them to the dashboard, so this
+      // button is Log Out now — Dashboard lives in the nav row instead.
+      <button onClick={logoutStaff} className="btn-outline flex items-center gap-2 text-sm">
+        <LogOut className="h-4 w-4" />
+        Log Out
+      </button>
     )
   ) : (
     <button onClick={() => setLoginOpen(true)} className="btn-gold flex items-center gap-2 text-sm">
@@ -198,50 +246,53 @@ export default function Navbar() {
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
           {!loggedIn && (
-            <Link href="/academy/account?mode=register" className="btn-outline text-sm">
+            <button onClick={() => setCreateOpen(true)} className="btn-outline text-sm">
               Create Account
-            </Link>
+            </button>
           )}
           {accountButton}
-          <Link
-            href="/join"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-gold text-sm"
-          >
-            Apply Now
-          </Link>
+          {!isStaff && (
+            <Link
+              href="/join"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-gold text-sm"
+            >
+              Apply Now
+            </Link>
+          )}
         </div>
 
         <button
           className="text-nmcn-muted md:hidden"
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-nav"
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-nmcn-border bg-nmcn-black/95 px-6 py-4 md:hidden">
-          <nav className="flex flex-col gap-4">
+        <div id="mobile-nav" className="border-t border-nmcn-border bg-nmcn-black/95 px-6 py-3 md:hidden">
+          {/* gap-1 + the .mobile-nav padding rule in globals.css give every
+              link a ~44px tap target; the standalone Academy link that used to
+              sit here duplicated the one already in navLinks. */}
+          <nav className="mobile-nav flex flex-col gap-1">
             {navLinks.map((link) => (
               <NavLink key={link.href} link={link} onClick={() => setMobileOpen(false)} />
             ))}
-            <Link
-                href="/academy"
-                onClick={() => setMobileOpen(false)}
-                className="btn-outline mt-2 text-center text-sm"
-            >
-              Academy
-            </Link>
             {!loggedIn && (
-              <Link
-                  href="/academy/account?mode=register"
-                  onClick={() => setMobileOpen(false)}
-                  className="btn-outline mt-2 text-center text-sm"
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  setCreateOpen(true);
+                }}
+                className="btn-outline mt-2 text-center text-sm"
               >
                 Create Account
-              </Link>
+              </button>
             )}
             {!loggedIn && (
               <button
@@ -265,21 +316,25 @@ export default function Navbar() {
               </Link>
             )}
             {loggedIn && !creator && (
-              <Link
-                  href="/admin"
-                  onClick={() => setMobileOpen(false)}
-                  className="btn-outline mt-2 text-center text-sm"
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  logoutStaff();
+                }}
+                className="btn-outline mt-2 text-center text-sm"
               >
-                Dashboard
+                Log Out
+              </button>
+            )}
+            {!isStaff && (
+              <Link
+                  href="/join"
+                onClick={() => setMobileOpen(false)}
+                className="btn-gold mt-2 text-center text-sm"
+              >
+                Apply Now
               </Link>
             )}
-            <Link
-                href="/join"
-              onClick={() => setMobileOpen(false)}
-              className="btn-gold mt-2 text-center text-sm"
-            >
-              Apply Now
-            </Link>
           </nav>
         </div>
       )}
@@ -356,14 +411,27 @@ export default function Navbar() {
               </button>
 
               <p className="text-center text-xs text-nmcn-muted">
-                <Link href="/academy/account?mode=register" className="text-nmcn-blue hover:underline">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginOpen(false);
+                    setCreateOpen(true);
+                  }}
+                  className="text-nmcn-blue hover:underline"
+                >
                   Create Account
-                </Link>
+                </button>
               </p>
             </form>
           </div>
         </div>
       )}
+
+      <CreateAccountModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onOpenLogin={() => setLoginOpen(true)}
+      />
 
       <ForcePasswordChangeModal
         variant="creator"

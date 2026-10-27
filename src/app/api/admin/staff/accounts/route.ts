@@ -12,6 +12,9 @@ import {
   deleteCreatorAccount,
   resetCreatorPassword,
   resetStaffPassword,
+  getPendingStaffRegistrations,
+  approveStaffRegistration,
+  rejectStaffRegistration,
 } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
@@ -50,6 +53,25 @@ export async function POST(request: NextRequest) {
       }
       const account = await rejectAccount(id);
       return NextResponse.json({ account });
+    }
+
+    if (action === "approveStaff") {
+      const id = Number(accountId);
+      const targetRole = String(role || "");
+      if (!id || !targetRole) {
+        return NextResponse.json({ error: "Registration ID and role are required" }, { status: 400 });
+      }
+      const registration = await approveStaffRegistration(id, targetRole);
+      return NextResponse.json({ registration });
+    }
+
+    if (action === "rejectStaff") {
+      const id = Number(accountId);
+      if (!id) {
+        return NextResponse.json({ error: "Registration ID is required" }, { status: 400 });
+      }
+      const registration = await rejectStaffRegistration(id);
+      return NextResponse.json({ registration });
     }
 
     if (action === "updateStaff") {
@@ -151,7 +173,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const accounts = await getAllAccounts();
-    return NextResponse.json({ accounts, role: staff.role });
+    const pendingStaff = await getPendingStaffRegistrations();
+    return NextResponse.json({ accounts, pendingStaff, role: staff.role });
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
