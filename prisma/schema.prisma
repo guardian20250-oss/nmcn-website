@@ -37,6 +37,9 @@ model StaffRegistration {
   name      String
   password  String
   role      String   @default("scout")
+  // TikTok @ the applicant typed at signup — shown in the pending queue so
+  // the owner can link their Backstage profile to their account.
+  tiktokHandle String? @db.VarChar(100)
   status    String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

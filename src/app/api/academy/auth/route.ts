@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
           email: String(email).toLowerCase(),
           password: String(password),
           role: String(role),
+          tiktokHandle: String(tiktokHandle || ""),
         });
       } catch (err) {
         return NextResponse.json(

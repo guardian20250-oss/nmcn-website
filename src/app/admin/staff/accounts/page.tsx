@@ -965,6 +965,11 @@ export default function StaffAccountsPage() {
                           <div>
                             <p className="font-semibold text-white">{reg.name}</p>
                             <p className="text-sm text-nmcn-muted">{reg.email}</p>
+                            {reg.tiktokHandle && (
+                              <p className="text-xs text-nmcn-gold">
+                                @{String(reg.tiktokHandle).replace(/^@+/, "")}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <span className="text-xs text-nmcn-muted">

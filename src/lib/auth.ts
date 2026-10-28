@@ -246,6 +246,7 @@ export async function registerStaffRegistration(data: {
   email: string;
   password: string;
   role: string;
+  tiktokHandle?: string;
 }) {
   if (!VALID_ROLES.includes(data.role as StaffRole)) {
     throw new Error("Invalid role");
@@ -265,22 +266,23 @@ export async function registerStaffRegistration(data: {
   }
 
   const hashed = await hashPassword(data.password);
+  const tiktokHandle = data.tiktokHandle?.trim() || null;
   if (existingReg) {
     // A previously handled request for this email — reopen it as pending.
     return prisma.staffRegistration.update({
       where: { id: existingReg.id },
-      data: { name: data.name, password: hashed, role: data.role, status: "pending" },
+      data: { name: data.name, password: hashed, role: data.role, tiktokHandle, status: "pending" },
     });
   }
   return prisma.staffRegistration.create({
-    data: { name: data.name, email: data.email, password: hashed, role: data.role, status: "pending" },
+    data: { name: data.name, email: data.email, password: hashed, role: data.role, tiktokHandle, status: "pending" },
   });
 }
 
 export async function getPendingStaffRegistrations() {
   return prisma.staffRegistration.findMany({
     where: { status: "pending" },
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
+    select: { id: true, email: true, name: true, role: true, tiktokHandle: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });
 }

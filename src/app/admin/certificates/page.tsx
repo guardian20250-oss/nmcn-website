@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, Loader2, Search, ShieldCheck, XCircle, Download } from "lucide-react";
+import { Award, Loader2, Search, ShieldCheck, XCircle, Download, Eye } from "lucide-react";
 
 interface CertRow {
   id: number;
@@ -244,6 +244,7 @@ export default function AdminCertificatesPage() {
                     <th className="pb-2 pr-4">Course</th>
                     <th className="pb-2 pr-4">Source</th>
                     <th className="pb-2">Issued</th>
+                    <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -268,8 +269,18 @@ export default function AdminCertificatesPage() {
                           {r.creator ? "Account" : "Guest"}
                         </span>
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 pr-4">
                         {new Date(r.completedAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3">
+                        <a
+                          href={`/api/admin/certificates/download?code=${encodeURIComponent(r.code)}&inline=1`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-outline inline-flex items-center gap-1 text-xs"
+                        >
+                          <Eye className="h-3 w-3" /> View
+                        </a>
                       </td>
                     </tr>
                   ))}

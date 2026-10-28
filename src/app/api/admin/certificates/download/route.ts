@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code")?.trim().toUpperCase();
+    // inline=1 → open in a browser tab (View) instead of forcing a download.
+    const inline = searchParams.get("inline") === "1";
 
     if (!code) {
       return NextResponse.json({ error: "Code required" }, { status: 400 });
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="certificate-${code}.pdf"`,
+        "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="certificate-${code}.pdf"`,
       },
     });
   } catch (err) {

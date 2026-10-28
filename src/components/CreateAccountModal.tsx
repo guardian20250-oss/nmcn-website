@@ -77,6 +77,7 @@ export default function CreateAccountModal({
                 email,
                 password,
                 role: staffRole,
+                tiktokHandle,
               }),
       });
       const data = await res.json().catch(() => ({}));
@@ -223,19 +224,17 @@ export default function CreateAccountModal({
                 />
               </div>
 
-              {tab === "creators" && (
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
-                    TikTok handle
-                  </label>
-                  <input
-                    className="input"
-                    placeholder="TikTok handle (optional)"
-                    value={tiktokHandle}
-                    onChange={(e) => setTiktokHandle(e.target.value)}
-                  />
-                </div>
-              )}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
+                  TikTok handle
+                </label>
+                <input
+                  className="input"
+                  placeholder="TikTok handle (optional)"
+                  value={tiktokHandle}
+                  onChange={(e) => setTiktokHandle(e.target.value)}
+                />
+              </div>
 
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-nmcn-muted">
