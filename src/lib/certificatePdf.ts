@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { CERTIFICATE_BACKDROP_DATA_URL } from "./certificateBackdrop";
 
 export function downloadCertificatePdf(opts: {
   learnerName: string;
@@ -42,6 +43,9 @@ function buildCertificateDoc(opts: {
 
   doc.setFillColor(0, 0, 0);
   doc.rect(0, 0, w, h, "F");
+
+  // NMCN logo watermark backdrop (pre-dimmed so text below stays readable).
+  doc.addImage(CERTIFICATE_BACKDROP_DATA_URL, "JPEG", 0, 0, w, h);
 
   doc.setDrawColor(212, 175, 55);
   doc.setLineWidth(1.2);
